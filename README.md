@@ -5,9 +5,9 @@
 ## Alunos integrantes da equipe
 
 * Arthur Mendes Lima
-* Nicolas Alexandre Torres Dias
 * Heitor Lima Moreira
 * Matheus Procópio Duarte
+* Nicolas Alexandre Torres Dias
 
 ## Professores responsáveis
 

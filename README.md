@@ -1,18 +1,18 @@
-# [Nome do projeto]
+Financial Controller
 
 [Escreva um ou dois  parágrafo resumindo o objetivo do seu projeto.]
 
 ## Alunos integrantes da equipe
 
-* [Nome completo do aluno 1]
-* [Nome completo do aluno 2]
-* [Nome completo do aluno 3]
-* [Nome completo do aluno 4]
+* Arthur Mendes Lima
+* Nicolas Alexandre Torres Dias
+* Heitor Lima Moreira
+* Matheus Procópio Duarte
 
 ## Professores responsáveis
 
-* [Nome completo do professor 1]
-* [Nome completo do professor 2]
+* Wladmir Cardoso Brandao
+* Carolina Stephanie Jerônimo de Almeida
 
 ## Instruções de utilização
 

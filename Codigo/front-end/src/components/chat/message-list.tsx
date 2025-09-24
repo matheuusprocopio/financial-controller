@@ -1,8 +1,7 @@
 "use client"
 
 import { useRef, useEffect } from "react"
-import { Message } from "./message"
-import type { MessageType } from "./message"
+import { Message, MessageType } from "./message"
 
 interface MessageListProps {
   messages: MessageType[]

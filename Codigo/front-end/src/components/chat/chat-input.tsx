@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { FileUploadModal } from "@/components/ui/file-upload-modal"
 import { Send, Mic, Paperclip } from "lucide-react"
-import type { MessageType } from "./message"
+import { MessageType } from "./message"
 
 interface ChatInputProps {
   onSendMessage: (message: MessageType) => void

@@ -1,4 +1,4 @@
-import { ChatType } from "@/types/Chat.types";
+import { ChatType } from "@/types/chat.types";
 
 const chatMocks: ChatType[] = [
   {

@@ -1,5 +1,6 @@
 "use client";
 
+import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCategoryForm";
 import { cn } from "@/lib/utils";
 import { UIMessage } from "ai";
 
@@ -31,8 +32,18 @@ const MessageComponentContent = ({
               </p>
             </div>
           );
-        case "tool-createCategory":
-          return <div className="max-w-[80%]"></div>;
+        case "tool-createNewCategory":
+          let output = { name: "" };
+
+          if (part.state == "output-available") {
+            output = part.output as { name: string };
+          }
+
+          return (
+            <div key={`${message.id}-createNewCategory-tool-${i}`} className="max-w-[80%]">
+              <CreateCategoryForm categoryName={output.name} />
+            </div>
+          );
       }
     });
   };

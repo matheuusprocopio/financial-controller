@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -32,6 +32,7 @@ interface IFormCard {
   submitLabel?: string;
   onSubmit: (data: Record<string, string>) => void;
   className?: string;
+  defaultFormData: Record<string, string>;
 }
 
 const FormCard = ({
@@ -41,6 +42,7 @@ const FormCard = ({
   submitLabel = "Enviar",
   onSubmit,
   className,
+  defaultFormData,
 }: IFormCard) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -54,6 +56,10 @@ const FormCard = ({
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  useEffect(() => {
+    setFormData(defaultFormData);
+  }, [defaultFormData]);
 
   if (isSubmitted) {
     return (

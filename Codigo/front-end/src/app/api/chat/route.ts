@@ -1,3 +1,4 @@
+import { tools } from "@/lib/tools";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 
@@ -9,6 +10,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: openai("gpt-4o"),
     messages: convertToModelMessages(messages),
+    tools,
   });
 
   return result.toUIMessageStreamResponse();

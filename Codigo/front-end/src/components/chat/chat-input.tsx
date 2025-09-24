@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { FileUploadModal } from "@/components/ui/file-upload-modal"
-import { Send, Mic, Paperclip } from "lucide-react"
-import { MessageType } from "./message"
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { FileUploadModal } from "@/components/ui/file-upload-modal";
+import { Send, Mic, Paperclip } from "lucide-react";
+import { MessageType } from "@/types/message.types";
 
 interface ChatInputProps {
-  onSendMessage: (message: MessageType) => void
+  onSendMessage: (message: MessageType) => void;
 }
 
 function VoiceWaveAnimation() {
@@ -28,84 +28,86 @@ function VoiceWaveAnimation() {
         />
       ))}
     </div>
-  )
+  );
 }
 
 export function ChatInput({ onSendMessage }: ChatInputProps) {
-  const [inputValue, setInputValue] = useState("")
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [inputValue, setInputValue] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (isRecording) {
-      setRecordingTime(0)
+      setRecordingTime(0);
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
-      }, 1000)
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
     } else {
       if (timerRef.current) {
-        clearInterval(timerRef.current)
-        timerRef.current = null
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
-      setRecordingTime(0)
+      setRecordingTime(0);
     }
 
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current)
+        clearInterval(timerRef.current);
       }
-    }
-  }, [isRecording])
+    };
+  }, [isRecording]);
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const handleSendMessage = () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim()) return;
 
     const newMessage: MessageType = {
       id: Date.now().toString(),
       content: inputValue,
       sender: "user",
       timestamp: new Date(),
-    }
+    };
 
-    onSendMessage(newMessage)
-    setInputValue("")
-  }
+    onSendMessage(newMessage);
+    setInputValue("");
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+      e.preventDefault();
+      handleSendMessage();
     }
-  }
+  };
 
   const handleFileUpload = () => {
-    setIsUploadModalOpen(true)
-  }
+    setIsUploadModalOpen(true);
+  };
 
   const handleFilesUploaded = (files: File[]) => {
     files.forEach((file) => {
       const newMessage: MessageType = {
         id: Date.now().toString() + Math.random(),
-        content: `Arquivo enviado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`,
+        content: `Arquivo enviado: ${file.name} (${(file.size / 1024).toFixed(
+          1
+        )} KB)`,
         sender: "user",
         timestamp: new Date(),
-      }
-      onSendMessage(newMessage)
-    })
-  }
+      };
+      onSendMessage(newMessage);
+    });
+  };
 
   const toggleRecording = () => {
-    setIsRecording(!isRecording)
-  }
+    setIsRecording(!isRecording);
+  };
 
   return (
     <div className="border-t bg-background p-4">
@@ -113,13 +115,20 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
         {isRecording && (
           <div className="flex items-center justify-center gap-4 mb-3 p-2 bg-destructive/10 rounded-lg">
             <VoiceWaveAnimation />
-            <span className="text-sm font-medium text-destructive">Gravando: {formatTime(recordingTime)}</span>
+            <span className="text-sm font-medium text-destructive">
+              Gravando: {formatTime(recordingTime)}
+            </span>
           </div>
         )}
 
         <div className="flex items-end gap-2">
           {/* File Upload Button */}
-          <Button variant="ghost" size="icon" onClick={handleFileUpload} className="flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFileUpload}
+            className="flex-shrink-0"
+          >
             <Paperclip className="w-4 h-4" />
           </Button>
 
@@ -137,7 +146,12 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
           </div>
 
           {/* Send Button */}
-          <Button onClick={handleSendMessage} disabled={!inputValue.trim()} size="icon" className="flex-shrink-0">
+          <Button
+            onClick={handleSendMessage}
+            disabled={!inputValue.trim()}
+            size="icon"
+            className="flex-shrink-0"
+          >
             <Send className="w-4 h-4" />
           </Button>
 
@@ -160,5 +174,5 @@ export function ChatInput({ onSendMessage }: ChatInputProps) {
         onUpload={handleFilesUploaded}
       />
     </div>
-  )
+  );
 }

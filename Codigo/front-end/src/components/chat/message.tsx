@@ -1,15 +1,11 @@
+"use client";
+
 import type React from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MessageType } from "@/types/message.types";
 
-export type MessageType = {
-  id: string;
-  content: string;
-  sender: "user" | "agent";
-  timestamp: Date;
-  components?: React.ReactNode;
-};
 
 interface MessageProps {
   message: MessageType;

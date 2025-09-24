@@ -1,73 +1,38 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Trash2, DollarSign, PlusCircle, FileText } from "lucide-react"
-import { MessageList } from "@/components/chat/message-list"
-import { ChatInput } from "@/components/chat/chat-input"
-import { ConfirmationModal } from "@/components/ui/confirmation-modal"
-import { ConfirmationCard } from "@/components/chat/gen-ui/confirmation-card"
-import { ActionCard } from "@/components/chat/gen-ui/action-card"
-import { FormCard } from "@/components/chat/gen-ui/form-card"
-import { MessageType } from "@/components/chat/message"
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Trash2, DollarSign, PlusCircle, FileText } from "lucide-react";
+import { MessageList } from "@/components/chat/message-list";
+import { ChatInput } from "@/components/chat/chat-input";
+import { ConfirmationModal } from "@/components/ui/confirmation-modal";
+import { ConfirmationCard } from "@/components/chat/gen-ui/confirmation-card";
+import { ActionCard } from "@/components/chat/gen-ui/action-card";
+import { FormCard } from "@/components/chat/gen-ui/form-card";
+import { MessageType } from "@/types/message.types";
+import { intialMessages } from "@/data/initialMessages";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<MessageType[]>([
-    {
-      id: "1",
-      content: "Olá! Sou seu assistente de finanças com IA. Como posso ajudá-lo hoje?",
-      sender: "agent",
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      content: "Experimente estes comandos para ver os componentes Gen UI em ação:",
-      sender: "agent",
-      timestamp: new Date(),
-      components: (
-        <Card className="p-4">
-          <h3 className="font-semibold mb-3">Comandos Disponíveis:</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-mono">deletar</span>
-              <span>- Mostra confirmação de exclusão</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-mono">
-                nova transação
-              </span>
-              <span>- Abre formulário de transação</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-mono">ações</span>
-              <span>- Mostra botões de ação</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-mono">
-                qualquer coisa
-              </span>
-              <span>- Mostra análise financeira</span>
-            </div>
-          </div>
-        </Card>
-      ),
-    },
-  ])
-
-  const [showClearModal, setShowClearModal] = useState(false)
+  const [messages, setMessages] = useState<MessageType[]>([...intialMessages]);
+  const [showClearModal, setShowClearModal] = useState(false);
 
   const handleSendMessage = (newMessage: MessageType) => {
-    setMessages((prev) => [...prev, newMessage])
+    setMessages((prev) => [...prev, newMessage]);
 
     if (newMessage.sender === "user") {
       setTimeout(() => {
-        const userMessage = newMessage.content.toLowerCase()
+        const userMessage = newMessage.content.toLowerCase();
 
-        if (userMessage.includes("deletar") || userMessage.includes("remover") || userMessage.includes("excluir")) {
+        if (
+          userMessage.includes("deletar") ||
+          userMessage.includes("remover") ||
+          userMessage.includes("excluir")
+        ) {
           const agentResponse: MessageType = {
             id: (Date.now() + 1).toString(),
-            content: "Detectei que você quer deletar algo. Preciso de sua confirmação:",
+            content:
+              "Detectei que você quer deletar algo. Preciso de sua confirmação:",
             sender: "agent",
             timestamp: new Date(),
             components: (
@@ -83,8 +48,8 @@ export default function ChatPage() {
                     content: "Item deletado com sucesso!",
                     sender: "agent",
                     timestamp: new Date(),
-                  }
-                  setMessages((prev) => [...prev, confirmResponse])
+                  };
+                  setMessages((prev) => [...prev, confirmResponse]);
                 }}
                 onCancel={() => {
                   const cancelResponse: MessageType = {
@@ -92,8 +57,8 @@ export default function ChatPage() {
                     content: "Operação cancelada. Nenhum item foi deletado.",
                     sender: "agent",
                     timestamp: new Date(),
-                  }
-                  setMessages((prev) => [...prev, cancelResponse])
+                  };
+                  setMessages((prev) => [...prev, cancelResponse]);
                 }}
               >
                 <Card className="p-3 border-destructive/20 bg-destructive/5">
@@ -103,18 +68,24 @@ export default function ChatPage() {
                     </div>
                     <div>
                       <div className="font-medium text-sm">Transação #1234</div>
-                      <div className="text-xs text-muted-foreground">Compra no supermercado - R$ 150,00</div>
+                      <div className="text-xs text-muted-foreground">
+                        Compra no supermercado - R$ 150,00
+                      </div>
                     </div>
                   </div>
                 </Card>
               </ConfirmationCard>
             ),
-          }
-          setMessages((prev) => [...prev, agentResponse])
-        } else if (userMessage.includes("adicionar") || userMessage.includes("nova transação")) {
+          };
+          setMessages((prev) => [...prev, agentResponse]);
+        } else if (
+          userMessage.includes("adicionar") ||
+          userMessage.includes("nova transação")
+        ) {
           const agentResponse: MessageType = {
             id: (Date.now() + 1).toString(),
-            content: "Vou ajudá-lo a adicionar uma nova transação. Preencha os dados abaixo:",
+            content:
+              "Vou ajudá-lo a adicionar uma nova transação. Preencha os dados abaixo:",
             sender: "agent",
             timestamp: new Date(),
             components: (
@@ -129,9 +100,25 @@ export default function ChatPage() {
                     placeholder: "Ex: Compra no supermercado",
                     required: true,
                   },
-                  { name: "amount", label: "Valor", type: "number", placeholder: "0.00", required: true },
-                  { name: "category", label: "Categoria", type: "text", placeholder: "Ex: Alimentação" },
-                  { name: "notes", label: "Observações", type: "textarea", placeholder: "Informações adicionais..." },
+                  {
+                    name: "amount",
+                    label: "Valor",
+                    type: "number",
+                    placeholder: "0.00",
+                    required: true,
+                  },
+                  {
+                    name: "category",
+                    label: "Categoria",
+                    type: "text",
+                    placeholder: "Ex: Alimentação",
+                  },
+                  {
+                    name: "notes",
+                    label: "Observações",
+                    type: "textarea",
+                    placeholder: "Informações adicionais...",
+                  },
                 ]}
                 submitLabel="Adicionar Transação"
                 onSubmit={(data) => {
@@ -140,14 +127,17 @@ export default function ChatPage() {
                     content: `Transação adicionada: ${data.description} - R$ ${data.amount}`,
                     sender: "agent",
                     timestamp: new Date(),
-                  }
-                  setMessages((prev) => [...prev, confirmResponse])
+                  };
+                  setMessages((prev) => [...prev, confirmResponse]);
                 }}
               />
             ),
-          }
-          setMessages((prev) => [...prev, agentResponse])
-        } else if (userMessage.includes("ações") || userMessage.includes("opções")) {
+          };
+          setMessages((prev) => [...prev, agentResponse]);
+        } else if (
+          userMessage.includes("ações") ||
+          userMessage.includes("opções")
+        ) {
           const agentResponse: MessageType = {
             id: (Date.now() + 1).toString(),
             content: "Aqui estão algumas ações que você pode realizar:",
@@ -167,8 +157,8 @@ export default function ChatPage() {
                         content: "Gerando relatório mensal...",
                         sender: "agent",
                         timestamp: new Date(),
-                      }
-                      setMessages((prev) => [...prev, response])
+                      };
+                      setMessages((prev) => [...prev, response]);
                     },
                   },
                   {
@@ -181,8 +171,8 @@ export default function ChatPage() {
                         content: "Vamos adicionar uma nova receita...",
                         sender: "agent",
                         timestamp: new Date(),
-                      }
-                      setMessages((prev) => [...prev, response])
+                      };
+                      setMessages((prev) => [...prev, response]);
                     },
                   },
                   {
@@ -195,19 +185,20 @@ export default function ChatPage() {
                         content: "Abrindo configurações de orçamento...",
                         sender: "agent",
                         timestamp: new Date(),
-                      }
-                      setMessages((prev) => [...prev, response])
+                      };
+                      setMessages((prev) => [...prev, response]);
                     },
                   },
                 ]}
               />
             ),
-          }
-          setMessages((prev) => [...prev, agentResponse])
+          };
+          setMessages((prev) => [...prev, agentResponse]);
         } else {
           const agentResponse: MessageType = {
             id: (Date.now() + 1).toString(),
-            content: "Entendi sua solicitação. Vou processar essas informações financeiras para você.",
+            content:
+              "Entendi sua solicitação. Vou processar essas informações financeiras para você.",
             sender: "agent",
             timestamp: new Date(),
             components: (
@@ -229,23 +220,12 @@ export default function ChatPage() {
                 </div>
               </Card>
             ),
-          }
-          setMessages((prev) => [...prev, agentResponse])
+          };
+          setMessages((prev) => [...prev, agentResponse]);
         }
-      }, 1000)
+      }, 1000);
     }
-  }
-
-  const handleClearHistory = () => {
-    setMessages([
-      {
-        id: "1",
-        content: "Olá! Sou seu assistente de finanças com IA. Como posso ajudá-lo hoje?",
-        sender: "agent",
-        timestamp: new Date(),
-      },
-    ])
-  }
+  };
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -261,15 +241,12 @@ export default function ChatPage() {
           Limpar
         </Button>
       </div>
-
       <div className="flex-1 overflow-hidden">
         <MessageList messages={messages} />
       </div>
-
       <div className="border-t bg-background">
         <ChatInput onSendMessage={handleSendMessage} />
       </div>
-
       <ConfirmationModal
         open={showClearModal}
         onOpenChange={setShowClearModal}
@@ -283,13 +260,14 @@ export default function ChatPage() {
           setMessages([
             {
               id: "1",
-              content: "Olá! Sou seu assistente de finanças com IA. Como posso ajudá-lo hoje?",
+              content:
+                "Olá! Sou seu assistente de finanças com IA. Como posso ajudá-lo hoje?",
               sender: "agent",
               timestamp: new Date(),
             },
-          ])
+          ]);
         }}
       />
     </div>
-  )
+  );
 }

@@ -9,7 +9,7 @@ import { FileUploadModal } from "@/components/ui/file-upload-modal";
 import { Send, Mic, Paperclip } from "lucide-react";
 
 interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string) => Promise<void>;
 }
 
 function VoiceWaveAnimation() {

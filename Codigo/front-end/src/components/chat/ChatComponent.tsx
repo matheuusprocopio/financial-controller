@@ -7,9 +7,7 @@ import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmationModal } from "@/components/ui/confirmation-modal";
-
-import MessagesContainer from "@/components/chat/MessagesContainer";
-import ChatInput from "@/components/chat/ChatInput";
+import ChatWrapper from "./ChatWrapper";
 
 interface IChatComponent {
   messages: MessageType[];
@@ -17,8 +15,6 @@ interface IChatComponent {
 
 const ChatComponent = ({ messages }: IChatComponent) => {
   const [showClearModal, setShowClearModal] = useState(false);
-
-  const handleSendMessage = (message: string) => {};
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -45,8 +41,8 @@ const ChatComponent = ({ messages }: IChatComponent) => {
           Limpar
         </Button>
       </div>
-      <MessagesContainer messages={messages} />
-      <ChatInput onSendMessage={handleSendMessage} />
+
+      <ChatWrapper />
     </div>
   );
 };

@@ -1,26 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { AlertTriangle, CheckCircle, XCircle } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-interface ConfirmationCardProps {
-  title: string
-  description: string
-  confirmLabel?: string
-  cancelLabel?: string
-  confirmVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
-  onConfirm: () => void
-  onCancel?: () => void
-  children?: React.ReactNode
-  className?: string
+interface IConfirmationCard {
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmVariant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
+  onConfirm: () => void;
+  onCancel?: () => void;
+  children?: React.ReactNode;
+  className?: string;
 }
 
-export function ConfirmationCard({
+const ConfirmationCard = ({
   title,
   description,
   confirmLabel = "Confirmar",
@@ -30,18 +43,20 @@ export function ConfirmationCard({
   onCancel,
   children,
   className,
-}: ConfirmationCardProps) {
-  const [status, setStatus] = useState<"pending" | "confirmed" | "cancelled">("pending")
+}: IConfirmationCard) => {
+  const [status, setStatus] = useState<"pending" | "confirmed" | "cancelled">(
+    "pending"
+  );
 
   const handleConfirm = () => {
-    setStatus("confirmed")
-    onConfirm()
-  }
+    setStatus("confirmed");
+    onConfirm();
+  };
 
   const handleCancel = () => {
-    setStatus("cancelled")
-    onCancel?.()
-  }
+    setStatus("cancelled");
+    onCancel?.();
+  };
 
   if (status === "confirmed") {
     return (
@@ -53,7 +68,7 @@ export function ConfirmationCard({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (status === "cancelled") {
@@ -66,7 +81,7 @@ export function ConfirmationCard({
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -76,7 +91,9 @@ export function ConfirmationCard({
           <AlertTriangle className="h-5 w-5 text-orange-600" />
           <div>
             <CardTitle className="text-base text-orange-900">{title}</CardTitle>
-            <CardDescription className="text-orange-700">{description}</CardDescription>
+            <CardDescription className="text-orange-700">
+              {description}
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -84,13 +101,25 @@ export function ConfirmationCard({
       {children && <CardContent className="py-3">{children}</CardContent>}
 
       <CardFooter className="flex gap-2 pt-3">
-        <Button variant={confirmVariant} size="sm" onClick={handleConfirm} className="flex-1">
+        <Button
+          variant={confirmVariant}
+          size="sm"
+          onClick={handleConfirm}
+          className="flex-1"
+        >
           {confirmLabel}
         </Button>
-        <Button variant="outline" size="sm" onClick={handleCancel} className="flex-1 bg-transparent">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCancel}
+          className="flex-1 bg-transparent"
+        >
           {cancelLabel}
         </Button>
       </CardFooter>
     </Card>
-  )
-}
+  );
+};
+
+export default ConfirmationCard;

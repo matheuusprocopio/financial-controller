@@ -19,7 +19,7 @@ interface ChatSidebarProps {
   onClose: () => void;
 }
 
-export function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
+const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
   const [chats] = useState<ChatType[]>([...chatMocks]);
 
   const handleNewChat = () => {
@@ -107,4 +107,6 @@ export function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
       </ScrollArea>
     </div>
   );
-}
+};
+
+export default ChatSidebar;

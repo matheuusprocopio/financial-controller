@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-interface ActionCardProps {
+interface IActionCard {
   title: string
   description?: string
   actions: {
@@ -19,7 +19,7 @@ interface ActionCardProps {
   className?: string
 }
 
-export function ActionCard({ title, description, actions, children, className }: ActionCardProps) {
+const ActionCard = ({ title, description, actions, children, className }: IActionCard) => {
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-3">
@@ -46,3 +46,5 @@ export function ActionCard({ title, description, actions, children, className }:
     </Card>
   )
 }
+
+export default ActionCard;

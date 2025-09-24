@@ -1,57 +1,75 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface FormField {
-  name: string
-  label: string
-  type: "text" | "email" | "number" | "textarea"
-  placeholder?: string
-  required?: boolean
+  name: string;
+  label: string;
+  type: "text" | "email" | "number" | "textarea";
+  placeholder?: string;
+  required?: boolean;
 }
 
-interface FormCardProps {
-  title: string
-  description?: string
-  fields: FormField[]
-  submitLabel?: string
-  onSubmit: (data: Record<string, string>) => void
-  className?: string
+interface IFormCard {
+  title: string;
+  description?: string;
+  fields: FormField[];
+  submitLabel?: string;
+  onSubmit: (data: Record<string, string>) => void;
+  className?: string;
 }
 
-export function FormCard({ title, description, fields, submitLabel = "Enviar", onSubmit, className }: FormCardProps) {
-  const [formData, setFormData] = useState<Record<string, string>>({})
-  const [isSubmitted, setIsSubmitted] = useState(false)
+const FormCard = ({
+  title,
+  description,
+  fields,
+  submitLabel = "Enviar",
+  onSubmit,
+  className,
+}: IFormCard) => {
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitted(true)
-    onSubmit(formData)
-  }
+    e.preventDefault();
+    setIsSubmitted(true);
+    onSubmit(formData);
+  };
 
   const handleChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   if (isSubmitted) {
     return (
       <Card className={cn("border-green-200 bg-green-50", className)}>
         <CardContent className="pt-6">
           <div className="text-center">
-            <div className="text-green-800 font-medium">Formulário enviado com sucesso!</div>
-            <div className="text-sm text-green-600 mt-1">Obrigado pelas informações.</div>
+            <div className="text-green-800 font-medium">
+              Formulário enviado com sucesso!
+            </div>
+            <div className="text-sm text-green-600 mt-1">
+              Obrigado pelas informações.
+            </div>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -99,5 +117,7 @@ export function FormCard({ title, description, fields, submitLabel = "Enviar", o
         </CardFooter>
       </form>
     </Card>
-  )
-}
+  );
+};
+
+export default FormCard;

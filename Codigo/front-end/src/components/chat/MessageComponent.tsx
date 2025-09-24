@@ -6,12 +6,11 @@ import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MessageType } from "@/types/message.types";
 
-
-interface MessageProps {
+interface IMessageComponent {
   message: MessageType;
 }
 
-export function Message({ message }: MessageProps) {
+const MessageComponent = ({ message }: IMessageComponent) => {
   return (
     <div
       className={cn(
@@ -19,7 +18,6 @@ export function Message({ message }: MessageProps) {
         message.sender === "user" ? "flex-row-reverse" : "flex-row"
       )}
     >
-      {/* Avatar */}
       <Avatar className="w-8 h-8 flex-shrink-0">
         {message.sender === "agent" ? (
           <AvatarFallback className="bg-primary text-primary-foreground">
@@ -31,8 +29,6 @@ export function Message({ message }: MessageProps) {
           </AvatarFallback>
         )}
       </Avatar>
-
-      {/* Message Content */}
       <div
         className={cn(
           "flex-1 space-y-2",
@@ -51,12 +47,9 @@ export function Message({ message }: MessageProps) {
             {message.content}
           </p>
         </div>
-
-        {/* Render additional components for agent messages */}
         {message.sender === "agent" && message.components && (
           <div className="max-w-[80%]">{message.components}</div>
         )}
-
         <div
           className={cn(
             "text-xs text-muted-foreground",
@@ -68,4 +61,6 @@ export function Message({ message }: MessageProps) {
       </div>
     </div>
   );
-}
+};
+
+export default MessageComponent;

@@ -10,9 +10,10 @@ import MessageComponentContent from "./MessageComponentContent";
 interface IMessageComponent {
   message: UIMessage;
   timestamp: Date;
+  onSendMessage: (message: string) => Promise<void>;
 }
 
-const MessageComponent = ({ message, timestamp }: IMessageComponent) => {
+const MessageComponent = ({ message, timestamp, onSendMessage}: IMessageComponent) => {
   return (
     <div
       className={cn(
@@ -37,7 +38,7 @@ const MessageComponent = ({ message, timestamp }: IMessageComponent) => {
           message.role === "user" ? "text-right" : "text-left"
         )}
       >
-        <MessageComponentContent message={message} timestamp={timestamp} />
+        <MessageComponentContent message={message} timestamp={timestamp} onSendMessage={onSendMessage} />
       </div>
     </div>
   );

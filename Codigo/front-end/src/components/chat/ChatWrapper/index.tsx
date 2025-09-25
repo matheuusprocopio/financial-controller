@@ -13,7 +13,10 @@ export default function ChatWrapper() {
 
   return (
     <>
-      <MessagesContainer messages={messages} />
+      <MessagesContainer
+        messages={messages}
+        onSendMessage={handleSendMessage}
+      />
       <ChatInput onSendMessage={handleSendMessage} />
     </>
   );

@@ -1,15 +1,19 @@
 "use client";
 
 import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCategoryForm";
+import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
+import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
 import { cn } from "@/lib/utils";
 import { UIMessage } from "ai";
 
 interface IMessageComponentContent {
   message: UIMessage;
   timestamp: Date;
+  onSendMessage: (message: string) => Promise<void>;
 }
 
 const MessageComponentContent = ({
+  onSendMessage,
   message,
   timestamp,
 }: IMessageComponentContent) => {
@@ -32,7 +36,7 @@ const MessageComponentContent = ({
               </p>
             </div>
           );
-        case "tool-createNewCategory":
+        case "tool-createNewCategory": {
           let output = { name: "" };
 
           if (part.state == "output-available") {
@@ -40,10 +44,43 @@ const MessageComponentContent = ({
           }
 
           return (
-            <div key={`${message.id}-createNewCategory-tool-${i}`} className="max-w-[80%]">
+            <div
+              key={`${message.id}-createNewCategory-tool-${i}`}
+              className="max-w-[80%]"
+            >
               <CreateCategoryForm categoryName={output.name} />
             </div>
           );
+        }
+        case "tool-listCategoryActions": {
+          return (
+            <div
+              key={`${message.id}-listCategoryActions-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <ListCategoryActions onSendMessage={onSendMessage} />
+            </div>
+          );
+        }
+        case "tool-deleteCategory": {
+          let output = { name: "" };
+
+          if (part.state == "output-available") {
+            output = part.output as { name: string };
+          }
+
+          return (
+            <div
+              key={`${message.id}-deleteCategory-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <DeleteCategoryForm
+                categoryName={output.name}
+                categoryId="fake-id"
+              />
+            </div>
+          );
+        }
       }
     });
   };

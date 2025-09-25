@@ -7,9 +7,10 @@ import MessageComponent from "./MessageComponent";
 
 interface MessageContainerProps {
   messages: UIMessage[];
+  onSendMessage: (message: string) => Promise<void>;
 }
 
-const MessagesContainer = ({ messages }: MessageContainerProps) => {
+const MessagesContainer = ({ messages, onSendMessage }: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -25,6 +26,7 @@ const MessagesContainer = ({ messages }: MessageContainerProps) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 shadow-inner">
         {messages.map((message) => (
           <MessageComponent
+            onSendMessage={onSendMessage}
             key={message.id}
             message={message}
             timestamp={new Date()}

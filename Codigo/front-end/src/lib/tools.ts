@@ -1,4 +1,5 @@
 import { categoriesMock } from "@/data/categoriesMock";
+import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -54,9 +55,71 @@ export const listCategoriesTool = tool({
   },
 });
 
+export const createNewAccountTool = tool({
+  description: "Create or add a new account to user",
+  inputSchema: z.object({
+    nickname: z.string(),
+    financial_institution: z.string(),
+    balance: z.number(),
+  }),
+
+  execute: async ({ nickname, financial_institution, balance }) => {
+    return {
+      nickname,
+      financial_institution,
+      balance,
+    };
+  },
+});
+
+export const deleteAccountTool = tool({
+  description: "Excludes an account",
+  inputSchema: z.object({
+    nickname: z.string(),
+    financial_institution: z.string()
+  }),
+
+  execute: async ({ nickname, financial_institution }) => {
+    return {
+      nickname,
+      financial_institution
+    };
+  },
+});
+
+export const listAccountActionsTool = tool({
+  description: "List the available actions for accounts",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Accounts available list";
+  },
+});
+
+export const listAccountsTool = tool({
+  description: "List the available accounts",
+  inputSchema: z.object({
+    nickname: z.string(),
+  }),
+
+  execute: async ({ nickname }) => {
+    const accounts = accountsMock;
+
+    return {
+      nickname,
+      accounts,
+      totalOfAccounts: accounts.length,
+    };
+  },
+});
+
 export const tools = {
   createNewCategory: createNewCategoryTool,
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
   listCategories: listCategoriesTool,
+  createNewAccount: createNewAccountTool,
+  listAccountActions: listAccountActionsTool,
+  deleteAccount: deleteAccountTool,
+  listAccounts: listAccountsTool,
 };

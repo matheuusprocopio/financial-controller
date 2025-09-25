@@ -2,7 +2,9 @@
 
 import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCategoryForm";
 import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
+import CategoriesList from "@/components/ToolsComponents/Categories/ListCategories";
 import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
+import { CategorieType } from "@/data/categoriesMock";
 import { cn } from "@/lib/utils";
 import { UIMessage } from "ai";
 
@@ -77,6 +79,34 @@ const MessageComponentContent = ({
               <DeleteCategoryForm
                 categoryName={output.name}
                 categoryId="fake-id"
+              />
+            </div>
+          );
+        }
+        case "tool-listCategories": {
+          let output = {
+            name: "",
+            totalOfCategories: 0,
+            categories: [] as unknown,
+          };
+
+          if (part.state == "output-available") {
+            output = part.output as {
+              name: string;
+              categories: CategorieType[];
+              totalOfCategories: number;
+            };
+          }
+
+          return (
+            <div
+              key={`${message.id}-deleteCategory-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <CategoriesList
+                categoryName={output.name}
+                categories={output.categories as CategorieType[]}
+                totalOfCategories={output.totalOfCategories}
               />
             </div>
           );

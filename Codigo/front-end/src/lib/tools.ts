@@ -1,3 +1,4 @@
+import { categoriesMock } from "@/data/categoriesMock";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -28,7 +29,7 @@ export const deleteCategoryTool = tool({
 });
 
 export const listCategoryActionsTool = tool({
-  description: "List the avaliable actions for categories",
+  description: "List the available actions for categories",
   inputSchema: z.object({}),
 
   execute: async () => {
@@ -36,8 +37,26 @@ export const listCategoryActionsTool = tool({
   },
 });
 
+export const listCategoriesTool = tool({
+  description: "List the available categories",
+  inputSchema: z.object({
+    name: z.string(),
+  }),
+
+  execute: async ({ name }) => {
+    const categories = categoriesMock;
+
+    return {
+      name,
+      categories,
+      totalOfCategories: categories.length,
+    };
+  },
+});
+
 export const tools = {
   createNewCategory: createNewCategoryTool,
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
+  listCategories: listCategoriesTool,
 };

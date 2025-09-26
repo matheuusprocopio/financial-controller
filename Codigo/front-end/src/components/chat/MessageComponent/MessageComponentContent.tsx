@@ -4,7 +4,14 @@ import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCa
 import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
 import CategoriesList from "@/components/ToolsComponents/Categories/ListCategories";
 import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
+
+import CreateCreditCardForm from "@/components/ToolsComponents/CreditCards/CreateCreditCardForm";
+import DeleteCreditCardForm from "@/components/ToolsComponents/CreditCards/DeleteCreditCardForm";
+import CreditCardsList from "@/components/ToolsComponents/CreditCards/ListCreditCards";
+import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/ListCreditCardActions";
+
 import { CategorieType } from "@/data/categoriesMock";
+import { CreditCardType } from "@/data/creditCardsMock";
 import { cn } from "@/lib/utils";
 import { UIMessage } from "ai";
 
@@ -38,6 +45,8 @@ const MessageComponentContent = ({
               </p>
             </div>
           );
+
+          //Categorias
         case "tool-createNewCategory": {
           let output = { name: "" };
 
@@ -111,6 +120,90 @@ const MessageComponentContent = ({
             </div>
           );
         }
+
+//Cartões de crédito
+
+        case "tool-createNewCreditCard": {
+          let output = { cardName: "" , bank: "", limit: 0 };
+
+          if (part.state == "output-available") {
+            output = part.output as { cardName: string; bank: string; limit: number };
+          }
+
+          return (
+            <div
+              key={`${message.id}-createNewCreditCard-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <CreateCreditCardForm 
+                cardName={output.cardName} 
+                bank={output.bank}
+                limit={output.limit}
+              />
+            </div>
+          );
+        }
+        case "tool-listCreditCardActions": {
+          return (
+            <div
+              key={`${message.id}-listCreditCardActions-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <ListCreditCardActions onSendMessage={onSendMessage} />
+            </div>
+          );
+        }
+        case "tool-deleteCreditCard": {
+          let output = { cardName: "", cardId: "" };
+
+          if (part.state == "output-available") {
+            output = part.output as { cardName: string; cardId: string };
+          }
+
+          return (
+            <div
+              key={`${message.id}-deleteCreditCard-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <DeleteCreditCardForm
+                cardName={output.cardName}
+                cardId={output.cardId}
+              />
+            </div>
+          );
+        }
+        case "tool-listCreditCards": {
+          let output = {
+            cardName: "",
+            totalOfCreditCards: 0,
+            creditCards: [] as unknown,
+          };
+
+          if (part.state == "output-available") {
+            output = part.output as {
+              cardName: string;
+              creditCards: CreditCardType[];
+              totalOfCreditCards: number;
+            };
+          }
+
+          return (
+            <div
+              key={`${message.id}-listCreditCards-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <CreditCardsList
+                cardName={output.cardName}
+                creditCards={output.creditCards as CreditCardType[]}
+                totalOfCreditCards={output.totalOfCreditCards}
+              />
+            </div>
+          );
+        }
+        default: {
+          return null;
+        }
+        
       }
     });
   };

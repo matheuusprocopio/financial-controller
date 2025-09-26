@@ -1,14 +1,15 @@
 import { categoriesMock } from "@/data/categoriesMock";
+import { creditCardsMock } from "@/data/creditCardsMock";
 import { tool } from "ai";
 import { z } from "zod";
 
 export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
   inputSchema: z.object({
-    name: z.string(),
+    name: z.string().optional(),
   }),
 
-  execute: async ({ name }) => {
+  execute: async ({ name = "" }) => {
     return {
       name,
     };
@@ -40,10 +41,10 @@ export const listCategoryActionsTool = tool({
 export const listCategoriesTool = tool({
   description: "List the available categories",
   inputSchema: z.object({
-    name: z.string(),
+    name: z.string().optional(),
   }),
 
-  execute: async ({ name }) => {
+  execute: async ({ name = "" }) => {
     const categories = categoriesMock;
 
     return {
@@ -54,9 +55,73 @@ export const listCategoriesTool = tool({
   },
 });
 
+
+export const createNewCreditCardTool = tool({
+  description: "Create or add a new credit card to user",
+  inputSchema: z.object({
+    cardName: z.string().optional(),
+    bank: z.string().optional(),
+    limit: z.number().optional(),
+  }),
+
+  execute: async ({ cardName = "", bank = "", limit = 0 }) => {
+    return {
+      cardName,
+      bank,
+      limit,
+    };
+  },
+});
+
+export const deleteCreditCardTool = tool({
+  description: "Excludes a credit card",
+  inputSchema: z.object({
+    cardName: z.string(),
+    cardId: z.string(),
+  }),
+
+  execute: async ({ cardName, cardId }) => {
+    return {
+      cardName,
+      cardId,
+    };
+  },
+});
+
+export const listCreditCardActionsTool = tool({
+  description: "List the available actions for credit cards",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Credit cards available list";
+  },
+});
+
+export const listCreditCardsTool = tool({
+  description: "List the available credit cards",
+  inputSchema: z.object({
+    cardName: z.string().optional(),
+  }),
+
+  execute: async ({ cardName = "" }) => {
+    const creditCards = creditCardsMock;
+
+    return {
+      cardName,
+      creditCards,
+      totalOfCreditCards: creditCards.length,
+    };
+  },
+});
+
 export const tools = {
   createNewCategory: createNewCategoryTool,
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
   listCategories: listCategoriesTool,
+  
+  createNewCreditCard: createNewCreditCardTool,
+  listCreditCardActions: listCreditCardActionsTool,
+  deleteCreditCard: deleteCreditCardTool,
+  listCreditCards: listCreditCardsTool,
 };

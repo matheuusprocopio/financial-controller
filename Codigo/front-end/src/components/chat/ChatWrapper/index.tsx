@@ -4,6 +4,7 @@ import MessagesContainer from "@/components/chat/MessagesContainer";
 import ChatInput from "@/components/chat/ChatInput";
 import { useChat } from "@ai-sdk/react";
 
+
 export default function ChatWrapper() {
   const { messages, sendMessage } = useChat();
 

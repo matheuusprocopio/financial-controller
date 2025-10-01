@@ -13,12 +13,12 @@ export default function ChatWrapper() {
   };
 
   return (
-    <>
+    <div className="flex h-full flex-1 flex-col overflow-hidden min-h-0">
       <MessagesContainer
         messages={messages}
         onSendMessage={handleSendMessage}
       />
       <ChatInput onSendMessage={handleSendMessage} />
-    </>
+    </div>
   );
 }

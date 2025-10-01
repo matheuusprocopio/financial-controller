@@ -32,9 +32,9 @@ const MessageComponentContent = ({
             <div
               key={`${message.id}-text-${i}`}
               className={cn(
-                "inline-block p-3 rounded-lg max-w-[80%]",
+                "inline-block max-w-[90%] rounded-lg p-3",
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground ml-auto"
+                  ? "ml-auto bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground"
               )}
             >
@@ -53,7 +53,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-createNewCategory-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <CreateCategoryForm categoryName={output.name} />
             </div>
@@ -63,7 +63,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-listCategoryActions-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <ListCategoryActions onSendMessage={onSendMessage} />
             </div>
@@ -79,7 +79,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-deleteCategory-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <DeleteCategoryForm
                 categoryName={output.name}
@@ -106,7 +106,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-deleteCategory-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <CategoriesList
                 categoryName={output.name}
@@ -134,7 +134,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-createNewAccount-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <CreateAccountForm 
                 accountNickname={output.nickname}
@@ -148,7 +148,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-listAccountActions-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <ListAccountActions onSendMessage={onSendMessage} />
             </div>
@@ -172,7 +172,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-deleteAccount-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <DeleteAccountForm
                 accountNickname={output.nickname}
@@ -201,7 +201,7 @@ const MessageComponentContent = ({
           return (
             <div
               key={`${message.id}-listAccounts-tool-${i}`}
-              className="max-w-[80%]"
+              className="w-full max-w-[95%]"
             >
               <AccountsList
                 accountNickname={output.nickname}

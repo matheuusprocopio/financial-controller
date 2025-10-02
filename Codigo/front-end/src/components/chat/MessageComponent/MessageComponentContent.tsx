@@ -117,17 +117,17 @@ const MessageComponentContent = ({
           );
         }
         case "tool-createNewAccount": {
-          let output = { 
-            nickname: "", 
-            financial_institution: "", 
-            balance: 0 
+          let output = {
+            nickname: "",
+            financial_institution: "",
+            balance: 0,
           };
 
           if (part.state == "output-available") {
-            output = part.output as { 
-              nickname: string; 
-              financial_institution: string; 
-              balance: number; 
+            output = part.output as {
+              nickname: string;
+              financial_institution: string;
+              balance: number;
             };
           }
 
@@ -136,7 +136,7 @@ const MessageComponentContent = ({
               key={`${message.id}-createNewAccount-tool-${i}`}
               className="max-w-[80%]"
             >
-              <CreateAccountForm 
+              <CreateAccountForm
                 accountNickname={output.nickname}
                 financialInstitution={output.financial_institution}
                 initialBalance={output.balance}
@@ -155,17 +155,17 @@ const MessageComponentContent = ({
           );
         }
         case "tool-deleteAccount": {
-          let output = { 
-            nickname: "", 
-            financial_institution: "", 
-            balance: 0 
+          let output = {
+            nickname: "",
+            financial_institution: "",
+            balance: 0,
           };
 
           if (part.state == "output-available") {
-            output = part.output as { 
-              nickname: string; 
-              financial_institution: string; 
-              balance: number; 
+            output = part.output as {
+              nickname: string;
+              financial_institution: string;
+              balance: number;
             };
           }
 
@@ -190,7 +190,7 @@ const MessageComponentContent = ({
             accounts: [] as unknown,
           };
 
-          if (part.state == "output-available") {
+          if (part.state === "output-available" && part.output) {
             output = part.output as {
               nickname: string;
               accounts: AccountType[];
@@ -211,6 +211,40 @@ const MessageComponentContent = ({
             </div>
           );
         }
+        case "tool-filterAccounts": {
+          let output = {
+            nickname: "",
+            financial_institution: "",
+            totalOfAccounts: 0,
+            totalOfOriginalAccounts: 0,
+            accounts: [] as unknown,
+          };
+
+          if (part.state === "output-available" && part.output) {
+            output = part.output as {
+              nickname: string;
+              financial_institution: string;
+              accounts: AccountType[];
+              totalOfAccounts: number;
+              totalOfOriginalAccounts: number;
+            };
+          }
+
+          return (
+            <div
+              key={`${message.id}-filterAccounts-tool-${i}`}
+              className="max-w-[80%]"
+            >
+              <AccountsList
+                accountNickname={output.nickname}
+                accounts={output.accounts as AccountType[]}
+                totalOfAccounts={output.totalOfOriginalAccounts}
+              />
+            </div>
+          );
+        }
+        default:
+          return null;
       }
     });
   };

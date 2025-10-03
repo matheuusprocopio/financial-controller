@@ -12,6 +12,7 @@ import { CategorieType } from "@/data/categoriesMock";
 import { AccountType } from "@/data/accountsMock";
 import { cn } from "@/lib/utils";
 import { UIMessage } from "ai";
+import ActionWrapper from "../gen-ui/ActionWrapper";
 
 interface IMessageComponentContent {
   message: UIMessage;
@@ -51,22 +52,16 @@ const MessageComponentContent = ({
           }
 
           return (
-            <div
-              key={`${message.id}-createNewCategory-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-createNewCategory-tool-${i}`}>
               <CreateCategoryForm categoryName={output.name} />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-listCategoryActions": {
           return (
-            <div
-              key={`${message.id}-listCategoryActions-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-listCategoryActions-tool-${i}`}>
               <ListCategoryActions onSendMessage={onSendMessage} />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-deleteCategory": {
@@ -77,15 +72,12 @@ const MessageComponentContent = ({
           }
 
           return (
-            <div
-              key={`${message.id}-deleteCategory-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
               <DeleteCategoryForm
                 categoryName={output.name}
                 categoryId="fake-id"
               />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-listCategories": {
@@ -104,83 +96,71 @@ const MessageComponentContent = ({
           }
 
           return (
-            <div
-              key={`${message.id}-deleteCategory-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
               <CategoriesList
                 categoryName={output.name}
                 categories={output.categories as CategorieType[]}
                 totalOfCategories={output.totalOfCategories}
               />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-createNewAccount": {
-          let output = { 
-            nickname: "", 
-            financial_institution: "", 
-            balance: 0 
+          let output = {
+            nickname: "",
+            financial_institution: "",
+            balance: 0,
           };
 
           if (part.state == "output-available") {
-            output = part.output as { 
-              nickname: string; 
-              financial_institution: string; 
-              balance: number; 
+            output = part.output as {
+              nickname: string;
+              financial_institution: string;
+              balance: number;
             };
           }
 
           return (
-            <div
-              key={`${message.id}-createNewAccount-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
-              <CreateAccountForm 
+            <ActionWrapper key={`${message.id}-createNewAccount-tool-${i}`}>
+              <CreateAccountForm
                 accountNickname={output.nickname}
                 financialInstitution={output.financial_institution}
                 initialBalance={output.balance}
               />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-listAccountActions": {
           return (
-            <div
-              key={`${message.id}-listAccountActions-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-listAccountActions-tool-${i}`}>
               <ListAccountActions onSendMessage={onSendMessage} />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-deleteAccount": {
-          let output = { 
-            nickname: "", 
-            financial_institution: "", 
-            balance: 0 
+          let output = {
+            nickname: "",
+            financial_institution: "",
+            balance: 0,
           };
 
           if (part.state == "output-available") {
-            output = part.output as { 
-              nickname: string; 
-              financial_institution: string; 
-              balance: number; 
+            output = part.output as {
+              nickname: string;
+              financial_institution: string;
+              balance: number;
             };
           }
 
           return (
-            <div
-              key={`${message.id}-deleteAccount-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-deleteAccount-tool-${i}`}>
               <DeleteAccountForm
                 accountNickname={output.nickname}
                 accountId="fake-id"
                 financialInstitution={output.financial_institution}
                 balance={output.balance}
               />
-            </div>
+            </ActionWrapper>
           );
         }
         case "tool-listAccounts": {
@@ -199,16 +179,13 @@ const MessageComponentContent = ({
           }
 
           return (
-            <div
-              key={`${message.id}-listAccounts-tool-${i}`}
-              className="w-full max-w-[95%]"
-            >
+            <ActionWrapper key={`${message.id}-listAccounts-tool-${i}`}>
               <AccountsList
                 accountNickname={output.nickname}
                 accounts={output.accounts as AccountType[]}
                 totalOfAccounts={output.totalOfAccounts}
               />
-            </div>
+            </ActionWrapper>
           );
         }
       }

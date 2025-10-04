@@ -8,11 +8,10 @@ import CreateAccountForm from "@/components/ToolsComponents/Accounts/CreateAccou
 import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccountForm";
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
-import { CategorieType } from "@/data/categoriesMock";
-import { AccountType } from "@/data/accountsMock";
 import { cn } from "@/lib/utils";
-import { UIMessage } from "ai";
+import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
+import ReasoningState from "../gen-ui/ReasoningState";
 
 interface IMessageComponentContent {
   message: UIMessage;
@@ -20,91 +19,71 @@ interface IMessageComponentContent {
   onSendMessage: (message: string) => Promise<void>;
 }
 
+type ToolRendererType = (part: any) => React.ReactNode;
+
 const MessageComponentContent = ({
   onSendMessage,
   message,
   timestamp,
 }: IMessageComponentContent) => {
-  const renderParts = () => {
-    return message.parts.map((part, i) => {
-      switch (part.type) {
-        case "text":
-          return (
-            <div
-              key={`${message.id}-text-${i}`}
-              className={cn(
-                "inline-block max-w-[90%] rounded-lg p-3",
-                message.role === "user"
-                  ? "ml-auto bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {part.text}
-              </p>
-            </div>
-          );
-        case "tool-createNewCategory": {
-          return (
-            <ActionWrapper key={`${message.id}-createNewCategory-tool-${i}`}>
-              <CreateCategoryForm data={part.output as any} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-listCategoryActions": {
-          return (
-            <ActionWrapper key={`${message.id}-listCategoryActions-tool-${i}`}>
-              <ListCategoryActions onSendMessage={onSendMessage} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-deleteCategory": {
-          return (
-            <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
-              <DeleteCategoryForm data={part.output as any} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-listCategories": {
-          return (
-            <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
-              <CategoriesList data={part.output as any} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-createNewAccount": {
-          return (
-            <ActionWrapper key={`${message.id}-createNewAccount-tool-${i}`}>
-              <CreateAccountForm data={part.output as any} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-listAccountActions": {
-          return (
-            <ActionWrapper key={`${message.id}-listAccountActions-tool-${i}`}>
-              <ListAccountActions onSendMessage={onSendMessage} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-deleteAccount": {
-          return (
-            <ActionWrapper key={`${message.id}-deleteAccount-tool-${i}`}>
-              <DeleteAccountForm data={part.output as any} />
-            </ActionWrapper>
-          );
-        }
-        case "tool-listAccounts": {
-          return (
-            <ActionWrapper key={`${message.id}-listAccounts-tool-${i}`}>
-              <AccountsList
-              data={part.output as any}
-              />
-            </ActionWrapper>
-          );
-        }
-      }
-    });
+  const toolRenderers: Record<string, ToolRendererType> = {
+    "tool-createNewCategory": (p) => (
+      <CreateCategoryForm data={p.output as any} />
+    ),
+    "tool-listCategoryActions": () => (
+      <ListCategoryActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} />,
+    "tool-listCategories": (p) => <CategoriesList data={p.output as any} />,
+    "tool-createNewAccount": (p) => (
+      <CreateAccountForm data={p.output as any} />
+    ),
+    "tool-listAccountActions": () => (
+      <ListAccountActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} />,
+    "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
   };
+  const renderParts = () =>
+    message.parts.map((part, i) => {
+      const partKey = `${i}-${part.type}`;
+
+      if (part.type == "reasoning" && part.state == "streaming") {
+        return <ReasoningState key={partKey} />;
+      }
+
+      if (part.type === "text") {
+        return (
+          <div
+            key={partKey}
+            className={cn(
+              "inline-block max-w-[90%] rounded-lg p-3",
+              message.role === "user"
+                ? "ml-auto bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {part.text}
+            </p>
+          </div>
+        );
+      }
+
+      const renderer = toolRenderers[part.type];
+
+      if (!renderer || !part.type.includes("tool")) return null;
+
+      const content = renderer(part);
+
+      const castedPart = part as DynamicToolUIPart;
+
+      return (
+        <ActionWrapper key={partKey} state={castedPart.state}>
+          {content}
+        </ActionWrapper>
+      );
+    });
 
   return (
     <>

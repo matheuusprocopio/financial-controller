@@ -17,7 +17,7 @@ const MessageComponent = ({ message, timestamp, onSendMessage}: IMessageComponen
   return (
     <div
       className={cn(
-        "flex gap-3 max-w-4xl mx-auto",
+        "mx-auto flex w-full max-w-6xl gap-4 px-4 md:px-8",
         message.role === "user" ? "flex-row-reverse" : "flex-row"
       )}
     >

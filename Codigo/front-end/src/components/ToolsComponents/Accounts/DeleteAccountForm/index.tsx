@@ -5,17 +5,18 @@ import { Card } from "@/components/ui/card";
 import { Trash2, Building2, DollarSign } from "lucide-react";
 
 interface IDeleteAccountForm {
-  accountNickname: string;
-  accountId: string;
-  financialInstitution?: string;
-  balance?: number;
+  data: {
+    nickname?: string;
+    financial_institution?: string;
+    balance?: number;
+  };
 }
 
-const DeleteAccountForm = ({ 
-  accountNickname, 
-  financialInstitution, 
-  balance 
-}: IDeleteAccountForm) => {
+const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
+  const accountNickname = data?.nickname ?? "";
+  const financialInstitution = data?.financial_institution ?? "";
+  const balance = data?.balance ?? 0;
+
   return (
     <ConfirmationCard
       title="Confirmar Exclusão"

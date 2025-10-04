@@ -97,8 +97,8 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="border-t bg-background">
-      <div className="border-t bg-background p-4">
+    <div className="border-t bg-background shrink-0">
+      <div className="bg-background p-4">
         <div className="max-w-4xl mx-auto">
           {isRecording && (
             <div className="flex items-center justify-center gap-4 mb-3 p-2 bg-destructive/10 rounded-lg">

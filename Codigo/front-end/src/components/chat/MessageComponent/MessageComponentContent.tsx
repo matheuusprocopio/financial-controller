@@ -45,15 +45,9 @@ const MessageComponentContent = ({
             </div>
           );
         case "tool-createNewCategory": {
-          let output = { name: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { name: string };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-createNewCategory-tool-${i}`}>
-              <CreateCategoryForm categoryName={output.name} />
+              <CreateCategoryForm data={part.output as any} />
             </ActionWrapper>
           );
         }
@@ -65,68 +59,23 @@ const MessageComponentContent = ({
           );
         }
         case "tool-deleteCategory": {
-          let output = { name: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { name: string };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
-              <DeleteCategoryForm
-                categoryName={output.name}
-                categoryId="fake-id"
-              />
+              <DeleteCategoryForm data={part.output as any} />
             </ActionWrapper>
           );
         }
         case "tool-listCategories": {
-          let output = {
-            name: "",
-            totalOfCategories: 0,
-            categories: [] as unknown,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              name: string;
-              categories: CategorieType[];
-              totalOfCategories: number;
-            };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-deleteCategory-tool-${i}`}>
-              <CategoriesList
-                categoryName={output.name}
-                categories={output.categories as CategorieType[]}
-                totalOfCategories={output.totalOfCategories}
-              />
+              <CategoriesList data={part.output as any} />
             </ActionWrapper>
           );
         }
         case "tool-createNewAccount": {
-          let output = {
-            nickname: "",
-            financial_institution: "",
-            balance: 0,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              nickname: string;
-              financial_institution: string;
-              balance: number;
-            };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-createNewAccount-tool-${i}`}>
-              <CreateAccountForm
-                accountNickname={output.nickname}
-                financialInstitution={output.financial_institution}
-                initialBalance={output.balance}
-              />
+              <CreateAccountForm data={part.output as any} />
             </ActionWrapper>
           );
         }
@@ -138,52 +87,17 @@ const MessageComponentContent = ({
           );
         }
         case "tool-deleteAccount": {
-          let output = {
-            nickname: "",
-            financial_institution: "",
-            balance: 0,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              nickname: string;
-              financial_institution: string;
-              balance: number;
-            };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-deleteAccount-tool-${i}`}>
-              <DeleteAccountForm
-                accountNickname={output.nickname}
-                accountId="fake-id"
-                financialInstitution={output.financial_institution}
-                balance={output.balance}
-              />
+              <DeleteAccountForm data={part.output as any} />
             </ActionWrapper>
           );
         }
         case "tool-listAccounts": {
-          let output = {
-            nickname: "",
-            totalOfAccounts: 0,
-            accounts: [] as unknown,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              nickname: string;
-              accounts: AccountType[];
-              totalOfAccounts: number;
-            };
-          }
-
           return (
             <ActionWrapper key={`${message.id}-listAccounts-tool-${i}`}>
               <AccountsList
-                accountNickname={output.nickname}
-                accounts={output.accounts as AccountType[]}
-                totalOfAccounts={output.totalOfAccounts}
+              data={part.output as any}
               />
             </ActionWrapper>
           );

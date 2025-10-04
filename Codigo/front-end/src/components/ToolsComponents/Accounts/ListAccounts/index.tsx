@@ -13,21 +13,29 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, ArrowUpDown, Building2, DollarSign } from "lucide-react";
+import {
+  Search,
+  Filter,
+  ArrowUpDown,
+  Building2,
+  DollarSign,
+} from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { AccountType } from "@/types/account.type";
 
 interface IAccountsList {
-  accounts: AccountType[];
-  totalOfAccounts: number;
-  accountNickname?: string;
+  data: {
+    nickname: string;
+    accounts: AccountType[];
+    totalOfAccounts: number;
+  };
 }
 
-const AccountsList = ({
-  accountNickname,
-  accounts,
-  totalOfAccounts,
-}: IAccountsList) => {
+const AccountsList = ({ data }: IAccountsList) => {
+  const accountNickname = data?.nickname ?? "";
+  const accounts = data?.accounts ?? [];
+  const totalOfAccounts = data?.totalOfAccounts ?? 0;
+
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -35,9 +43,9 @@ const AccountsList = ({
   }, [accountNickname]);
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -129,8 +137,15 @@ const AccountsList = ({
                         <span className={getBalanceColor(account.balance)}>
                           {formatCurrency(account.balance)}
                         </span>
-                        <Badge variant={getBalanceBadgeVariant(account.balance)} className="text-xs">
-                          {account.balance > 0 ? "Positivo" : account.balance < 0 ? "Negativo" : "Zero"}
+                        <Badge
+                          variant={getBalanceBadgeVariant(account.balance)}
+                          className="text-xs"
+                        >
+                          {account.balance > 0
+                            ? "Positivo"
+                            : account.balance < 0
+                            ? "Negativo"
+                            : "Zero"}
                         </Badge>
                       </div>
                     </TableCell>
@@ -152,7 +167,10 @@ const AccountsList = ({
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
-                Saldo total: {formatCurrency(accounts.reduce((sum, account) => sum + account.balance, 0))}
+                Saldo total:{" "}
+                {formatCurrency(
+                  accounts.reduce((sum, account) => sum + account.balance, 0)
+                )}
               </span>
             </div>
           </div>

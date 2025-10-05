@@ -24,8 +24,9 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import { AccountType } from "@/types/account.type";
 import BaseFormCard, {
-  FormField,
+  FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
+import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
 
 interface IAccountsList {
   accounts: AccountType[];
@@ -42,9 +43,10 @@ const AccountsList = ({
   const [filteredAccounts, setFilteredAccounts] =
     useState<AccountType[]>(accounts);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>(
-    {}
-  );
+  const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
+    nickname: "",
+    financial_institution: "",
+  });
 
   useEffect(() => {
     setSearchTerm(accountNickname || "");
@@ -108,7 +110,7 @@ const AccountsList = ({
     return "secondary";
   };
 
-  const filterFields: FormField[] = [
+  const filterFields: FormFieldConfig[] = [
     {
       name: "nickname",
       label: "Nome da Conta",
@@ -125,22 +127,25 @@ const AccountsList = ({
     },
   ];
 
-  const handleAdvancedFilter = (filterData: Record<string, string>) => {
+  const handleAdvancedFilter = (filterData: AccountFilterFormData) => {
     setActiveFilters(filterData);
     setShowAdvancedFilter(false);
   };
 
   const clearAllFilters = () => {
     setSearchTerm("");
-    setActiveFilters({});
+    setActiveFilters({
+      nickname: "",
+      financial_institution: "",
+    });
     setShowAdvancedFilter(false);
   };
 
   const hasActiveFilters =
     searchTerm.trim() ||
-    Object.values(activeFilters).some(
-      (value) => value && value.toString().trim()
-    );
+    (activeFilters.nickname && activeFilters.nickname.trim()) ||
+    (activeFilters.financial_institution &&
+      activeFilters.financial_institution.trim());
 
   return (
     <Card className={cn("w-full max-w-none")}>
@@ -195,6 +200,7 @@ const AccountsList = ({
               onCancel={() => setShowAdvancedFilter(false)}
               cancelLabel="Cancelar"
               defaultFormData={activeFilters}
+              validationSchema={accountFilterSchema}
               className="border-0 shadow-none bg-transparent"
             />
           </div>
@@ -207,16 +213,18 @@ const AccountsList = ({
                 Busca: &ldquo;{searchTerm}&rdquo;
               </Badge>
             )}
-            {activeFilters.nickname && (
+            {activeFilters.nickname && activeFilters.nickname.trim() && (
               <Badge variant="secondary" className="text-xs">
                 Nome: &ldquo;{activeFilters.nickname}&rdquo;
               </Badge>
             )}
-            {activeFilters.financial_institution && (
-              <Badge variant="secondary" className="text-xs">
-                Instituição: &ldquo;{activeFilters.financial_institution}&rdquo;
-              </Badge>
-            )}
+            {activeFilters.financial_institution &&
+              activeFilters.financial_institution.trim() && (
+                <Badge variant="secondary" className="text-xs">
+                  Instituição: &ldquo;
+                  {activeFilters.financial_institution}&rdquo;
+                </Badge>
+              )}
           </div>
         )}
 

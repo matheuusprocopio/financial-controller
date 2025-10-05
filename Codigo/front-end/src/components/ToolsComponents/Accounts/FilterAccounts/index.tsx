@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import BaseFormCard, {
-  FormField,
+  FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
 import { AccountType } from "@/types/account.type";
+import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
 
 interface IFilterAccounts {
   accounts: AccountType[];
@@ -19,7 +20,7 @@ const FilterAccounts = ({
 }: IFilterAccounts) => {
   const [isFiltering, setIsFiltering] = useState(false);
 
-  const filterFields: FormField[] = [
+  const filterFields: FormFieldConfig[] = [
     {
       name: "nickname",
       label: "Nome da Conta",
@@ -36,7 +37,7 @@ const FilterAccounts = ({
     },
   ];
 
-  const handleFilter = (filterData: Record<string, any>) => {
+  const handleFilter = (filterData: AccountFilterFormData) => {
     setIsFiltering(true);
 
     let filteredAccounts = [...accounts];
@@ -95,6 +96,7 @@ Encontradas ${filteredAccounts.length} conta(s) com os filtros aplicados.`;
         nickname: "",
         financial_institution: "",
       }}
+      validationSchema={accountFilterSchema}
       className="w-full max-w-md"
     />
   );

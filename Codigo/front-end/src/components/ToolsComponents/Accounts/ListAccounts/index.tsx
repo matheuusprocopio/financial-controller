@@ -29,16 +29,18 @@ import BaseFormCard, {
 import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
 
 interface IAccountsList {
-  accounts: AccountType[];
-  totalOfAccounts: number;
-  accountNickname?: string;
+  data: {
+    nickname: string;
+    accounts: AccountType[];
+    totalOfAccounts: number;
+  };
 }
 
-const AccountsList = ({
-  accountNickname,
-  accounts,
-  totalOfAccounts,
-}: IAccountsList) => {
+const AccountsList = ({ data }: IAccountsList) => {
+  const accountNickname = data?.nickname ?? "";
+  const accounts = data?.accounts ?? [];
+  const totalOfAccounts = data?.totalOfAccounts ?? 0;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredAccounts, setFilteredAccounts] =
     useState<AccountType[]>(accounts);
@@ -302,7 +304,7 @@ const AccountsList = ({
                 Saldo total:{" "}
                 {formatCurrency(
                   filteredAccounts.reduce(
-                    (sum, account) => sum + account.balance,
+                    (sum: number, account: { balance: number; }) => sum + account.balance,
                     0
                   )
                 )}

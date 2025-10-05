@@ -3,16 +3,18 @@
 import FormCard from "@/components/chat/gen-ui/FormCard";
 
 interface ICreateAccountForm {
-  accountNickname?: string;
-  financialInstitution?: string;
-  initialBalance?: number;
+  data: {
+    nickname?: string;
+    financial_institution?: string;
+    balance?: number;
+  };
 }
 
-const CreateAccountForm = ({ 
-  accountNickname, 
-  financialInstitution, 
-  initialBalance 
-}: ICreateAccountForm) => {
+const CreateAccountForm = ({ data }: ICreateAccountForm) => {
+  const accountNickname = data?.nickname ?? "";
+  const financialInstitution = data?.financial_institution ?? "";
+  const initialBalance = data?.balance ?? 0;
+
   return (
     <FormCard
       title="Nova conta"
@@ -39,9 +41,9 @@ const CreateAccountForm = ({
       ]}
       submitLabel="Adicionar conta"
       defaultFormData={{
-        nickname: accountNickname || "",
-        financial_institution: financialInstitution || "",
-        balance: (initialBalance || 0).toString(),
+        nickname: accountNickname,
+        financial_institution: financialInstitution,
+        balance: initialBalance.toString(),
       }}
       onSubmit={(data) => {}}
     />

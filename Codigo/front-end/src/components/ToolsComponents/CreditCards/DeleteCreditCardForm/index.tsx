@@ -7,10 +7,10 @@ import { CreditCard, Trash2 } from "lucide-react";
 interface IDeleteCreditCardForm {
   cardName: string;
   cardId: string;
-  bank?: string;
+  financialInstitution?: string;
 }
 
-const DeleteCreditCardForm = ({ cardName, bank }: IDeleteCreditCardForm) => {
+const DeleteCreditCardForm = ({ cardName, financialInstitution }: IDeleteCreditCardForm) => {
   return (
     <ConfirmationCard
       title="Confirmar Exclusão"
@@ -27,7 +27,7 @@ const DeleteCreditCardForm = ({ cardName, bank }: IDeleteCreditCardForm) => {
           </div>
           <div>
             <div className="font-medium text-sm">{cardName}</div>
-            {bank && <div className="text-xs text-muted-foreground">{bank}</div>}
+            {financialInstitution && <div className="text-xs text-muted-foreground">{financialInstitution}</div>}
           </div>
         </div>
       </Card>

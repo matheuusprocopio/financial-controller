@@ -1,9 +1,9 @@
 export type CreditCardType = {
     id: string;
     name: string;
-    bank: string;
+    financialInstitution: string;
     limit: number;
     currentDebt: number;
-    dueDate: number;
+    dueDate: string;
     createdAt: string;
   };

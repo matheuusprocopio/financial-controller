@@ -41,6 +41,12 @@ const CreditCardsList = ({
     }).format(value);
   };
 
+  const formatMonthYear = (dateString: string) => {
+    if (!dateString) return "";
+    const [year, month] = dateString.split('-');
+    return `${month}/${year}`;
+  };
+
   const getUsagePercentage = (debt: number, limit: number) => {
     return Math.round((debt / limit) * 100);
   };
@@ -121,7 +127,7 @@ const CreditCardsList = ({
                         {card.name}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {card.bank}
+                        {card.financialInstitution}
                       </TableCell>
                       <TableCell>
                         {formatCurrency(card.limit)}
@@ -135,7 +141,7 @@ const CreditCardsList = ({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        Dia {card.dueDate}
+                        {formatMonthYear(card.dueDate)}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDate(card.createdAt)}

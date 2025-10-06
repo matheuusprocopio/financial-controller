@@ -56,22 +56,28 @@ export const listCategoriesTool = tool({
 });
 
 
+
+
 export const createNewCreditCardTool = tool({
-  description: "Create or add a new credit card to user",
+  description: "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
   inputSchema: z.object({
     cardName: z.string().optional(),
-    bank: z.string().optional(),
+    financialInstitution: z.string().optional(),
     limit: z.number().optional(),
+    dueDate: z.string().optional(),
   }),
 
-  execute: async ({ cardName = "", bank = "", limit = 0 }) => {
+  execute: async ({ cardName = "", financialInstitution = "", limit = 0, dueDate = "" }) => {
     return {
       cardName,
-      bank,
+      financialInstitution,
       limit,
+      dueDate,
     };
   },
 });
+
+
 
 export const deleteCreditCardTool = tool({
   description: "Excludes a credit card",

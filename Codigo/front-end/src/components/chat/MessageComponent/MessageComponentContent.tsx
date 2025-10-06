@@ -124,10 +124,10 @@ const MessageComponentContent = ({
 //Cartões de crédito
 
         case "tool-createNewCreditCard": {
-          let output = { cardName: "" , bank: "", limit: 0 };
+          let output = { cardName: "" , financialInstitution: "", limit: 0, dueDate: "" };
 
           if (part.state == "output-available") {
-            output = part.output as { cardName: string; bank: string; limit: number };
+            output = part.output as { cardName: string; financialInstitution: string; limit: number; dueDate: string };
           }
 
           return (
@@ -137,8 +137,9 @@ const MessageComponentContent = ({
             >
               <CreateCreditCardForm 
                 cardName={output.cardName} 
-                bank={output.bank}
+                financialInstitution={output.financialInstitution}
                 limit={output.limit}
+                dueDate={output.dueDate}
               />
             </div>
           );

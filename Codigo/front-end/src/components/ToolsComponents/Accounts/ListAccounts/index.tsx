@@ -19,9 +19,14 @@ import {
   ArrowUpDown,
   Building2,
   DollarSign,
+  FilterX,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { AccountType } from "@/types/account.type";
+import BaseFormCard, {
+  FormFieldConfig,
+} from "@/components/ToolsComponents/Base/BaseFormCard";
+import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
 
 interface IAccountsList {
   data: {
@@ -37,10 +42,56 @@ const AccountsList = ({ data }: IAccountsList) => {
   const totalOfAccounts = data?.totalOfAccounts ?? 0;
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filteredAccounts, setFilteredAccounts] =
+    useState<AccountType[]>(accounts);
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
+    nickname: "",
+    financial_institution: "",
+  });
 
   useEffect(() => {
     setSearchTerm(accountNickname || "");
   }, [accountNickname]);
+
+  useEffect(() => {
+    setFilteredAccounts(accounts);
+  }, [accounts]);
+
+  useEffect(() => {
+    let filtered = [...accounts];
+
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(
+        (account) =>
+          account.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.financial_institution
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (activeFilters.nickname && activeFilters.nickname.trim()) {
+      const nicknameFilter = activeFilters.nickname.toLowerCase().trim();
+      filtered = filtered.filter((account) =>
+        account.nickname.toLowerCase().includes(nicknameFilter)
+      );
+    }
+
+    if (
+      activeFilters.financial_institution &&
+      activeFilters.financial_institution.trim()
+    ) {
+      const institutionFilter = activeFilters.financial_institution
+        .toLowerCase()
+        .trim();
+      filtered = filtered.filter((account) =>
+        account.financial_institution.toLowerCase().includes(institutionFilter)
+      );
+    }
+
+    setFilteredAccounts(filtered);
+  }, [searchTerm, accounts, activeFilters]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -61,6 +112,43 @@ const AccountsList = ({ data }: IAccountsList) => {
     return "secondary";
   };
 
+  const filterFields: FormFieldConfig[] = [
+    {
+      name: "nickname",
+      label: "Nome da Conta",
+      type: "text",
+      placeholder: "Digite o nome da conta...",
+      description: "Filtre contas pelo apelido ou nome",
+    },
+    {
+      name: "financial_institution",
+      label: "Instituição Financeira",
+      type: "text",
+      placeholder: "Digite a instituição financeira...",
+      description: "Filtre contas pela instituição financeira",
+    },
+  ];
+
+  const handleAdvancedFilter = (filterData: AccountFilterFormData) => {
+    setActiveFilters(filterData);
+    setShowAdvancedFilter(false);
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setActiveFilters({
+      nickname: "",
+      financial_institution: "",
+    });
+    setShowAdvancedFilter(false);
+  };
+
+  const hasActiveFilters =
+    searchTerm.trim() ||
+    (activeFilters.nickname && activeFilters.nickname.trim()) ||
+    (activeFilters.financial_institution &&
+      activeFilters.financial_institution.trim());
+
   return (
     <Card className={cn("w-full max-w-none")}>
       <CardHeader>
@@ -71,7 +159,7 @@ const AccountsList = ({ data }: IAccountsList) => {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-[2fr_auto_auto] gap-3 items-end">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -81,21 +169,64 @@ const AccountsList = ({ data }: IAccountsList) => {
               className="pl-10 w-full"
             />
           </div>
-        </div>
-
-        {searchTerm && (
-          <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+            className="px-3"
+          >
+            <Filter className="h-4 w-4 mr-1" />
+            Filtros Avançados
+          </Button>
+          {hasActiveFilters && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setSearchTerm("");
-              }}
+              onClick={clearAllFilters}
               className="px-3"
             >
-              <Filter className="h-4 w-4 mr-1" />
-              Limpar filtros
+              <FilterX className="h-4 w-4 mr-1" />
+              Limpar
             </Button>
+          )}
+        </div>
+
+        {showAdvancedFilter && (
+          <div className="border rounded-lg p-4 bg-muted/20">
+            <BaseFormCard
+              title="Filtros Avançados"
+              description="Use os campos abaixo para filtrar as contas por critérios específicos"
+              fields={filterFields}
+              submitLabel="Aplicar Filtros"
+              onSubmit={handleAdvancedFilter}
+              onCancel={() => setShowAdvancedFilter(false)}
+              cancelLabel="Cancelar"
+              defaultFormData={activeFilters}
+              validationSchema={accountFilterSchema}
+              className="border-0 shadow-none bg-transparent"
+            />
+          </div>
+        )}
+
+        {hasActiveFilters && (
+          <div className="flex flex-wrap gap-2">
+            {searchTerm && (
+              <Badge variant="secondary" className="text-xs">
+                Busca: &ldquo;{searchTerm}&rdquo;
+              </Badge>
+            )}
+            {activeFilters.nickname && activeFilters.nickname.trim() && (
+              <Badge variant="secondary" className="text-xs">
+                Nome: &ldquo;{activeFilters.nickname}&rdquo;
+              </Badge>
+            )}
+            {activeFilters.financial_institution &&
+              activeFilters.financial_institution.trim() && (
+                <Badge variant="secondary" className="text-xs">
+                  Instituição: &ldquo;
+                  {activeFilters.financial_institution}&rdquo;
+                </Badge>
+              )}
           </div>
         )}
 
@@ -110,17 +241,19 @@ const AccountsList = ({ data }: IAccountsList) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {accounts.length === 0 ? (
+              {filteredAccounts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    Nenhuma conta encontrada
+                    {hasActiveFilters
+                      ? "Nenhuma conta encontrada com os filtros aplicados"
+                      : "Nenhuma conta encontrada"}
                   </TableCell>
                 </TableRow>
               ) : (
-                accounts.map((account) => (
+                filteredAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell className="font-medium">
                       {account.nickname}
@@ -159,17 +292,21 @@ const AccountsList = ({ data }: IAccountsList) => {
           </Table>
         </div>
 
-        {accounts.length > 0 && (
+        {filteredAccounts.length > 0 && (
           <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
             <span>
-              Mostrando {accounts.length} de {totalOfAccounts} contas
+              Mostrando {filteredAccounts.length} de {totalOfAccounts} contas
+              {hasActiveFilters && " (filtradas)"}
             </span>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <DollarSign className="h-4 w-4" />
                 Saldo total:{" "}
                 {formatCurrency(
-                  accounts.reduce((sum, account) => sum + account.balance, 0)
+                  filteredAccounts.reduce(
+                    (sum: number, account: { balance: number; }) => sum + account.balance,
+                    0
+                  )
                 )}
               </span>
             </div>

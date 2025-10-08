@@ -43,6 +43,7 @@ const MessageComponentContent = ({
     ),
     "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} />,
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
+    "tool-filterAccounts": (p) => <AccountsList data={p.output as any} />,
   };
   const renderParts = () =>
     message.parts.map((part, i) => {

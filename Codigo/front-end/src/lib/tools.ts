@@ -97,18 +97,52 @@ export const listAccountActionsTool = tool({
 });
 
 export const listAccountsTool = tool({
-  description: "List the available accounts",
+  description: "List all available accounts.",
   inputSchema: z.object({
-    nickname: z.string(),
+    nickname: z.string().optional(),
   }),
 
   execute: async ({ nickname }) => {
     const accounts = accountsMock;
 
     return {
-      nickname,
+      nickname: nickname || "",
       accounts,
       totalOfAccounts: accounts.length,
+    };
+  },
+});
+
+export const filterAccountsTool = tool({
+  description: "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
+  inputSchema: z.object({
+    nickname: z.string().optional(),
+    financial_institution: z.string().optional(),
+  }),
+
+  execute: async ({ nickname, financial_institution }) => {
+    let filteredAccounts = [...accountsMock];
+
+    if (nickname && nickname.trim()) {
+      const nicknameFilter = nickname.toLowerCase().trim();
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.nickname.toLowerCase().includes(nicknameFilter)
+      );
+    }
+
+    if (financial_institution && financial_institution.trim()) {
+      const institutionFilter = financial_institution.toLowerCase().trim();
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.financial_institution.toLowerCase().includes(institutionFilter)
+      );
+    }
+
+    return {
+      nickname: nickname || "",
+      financial_institution: financial_institution || "",
+      accounts: filteredAccounts,
+      totalOfAccounts: filteredAccounts.length,
+      totalOfOriginalAccounts: accountsMock.length,
     };
   },
 });
@@ -122,4 +156,5 @@ export const tools = {
   listAccountActions: listAccountActionsTool,
   deleteAccount: deleteAccountTool,
   listAccounts: listAccountsTool,
+  filterAccounts: filterAccountsTool,
 };

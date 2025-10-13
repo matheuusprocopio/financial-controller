@@ -47,61 +47,78 @@ const ChatSidebar = ({ isOpen, onClose }: ChatSidebarProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed left-0 top-16 bottom-0 w-80 bg-background border-r z-40 flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h2 className="font-semibold text-lg">Conversas</h2>
+    <div className="chat-sidebar fixed left-0 top-16 bottom-0 w-80 z-40 flex flex-col">
+      <div className="chat-sidebar-header flex items-center justify-between">
+        <h2 className="chat-sidebar-title">Conversas</h2>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleNewChat}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleNewChat}
+            className="chat-button border-0 p-2 h-8 w-8"
+          >
             <Plus className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onClose}
+            className="chat-button border-0 p-2 h-8 w-8"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-1">
+        <div className="p-2 space-y-2">
           {chats.map((chat) => (
-            <Card
+            <div
               key={chat.id}
-              className={`p-3 cursor-pointer transition-colors hover:bg-accent/50 ${
-                chat.isActive ? "bg-accent border-primary/20" : ""
-              }`}
+              className={`chat-card ${chat.isActive ? "chat-card-active" : ""}`}
               onClick={() => handleSelectChat(chat.id)}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div className="mt-1">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    <MessageSquare className="h-4 w-4 text-indigo-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm truncate">
+                    <h3 className="font-medium text-sm truncate text-gray-200">
                       {chat.title}
                     </h3>
-                    <p className="text-xs text-muted-foreground truncate mt-1">
+                    <p className="text-xs text-gray-400 truncate mt-1">
                       {chat.lastMessage}
                     </p>
-                    <span className="text-xs text-muted-foreground mt-1 block">
+                    <span className="text-xs text-gray-500 mt-1 block">
                       {formatTimestamp(chat.timestamp)}
                     </span>
                   </div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <MoreVertical className="h-3 w-3" />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 hover:bg-indigo-500/20"
+                    >
+                      <MoreVertical className="h-3 w-3 text-gray-400" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>Renomear</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                  <DropdownMenuContent 
+                    align="end"
+                    className="bg-gray-900 border-indigo-500/30"
+                  >
+                    <DropdownMenuItem className="text-gray-200 hover:bg-indigo-500/20">
+                      Renomear
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-400 hover:bg-red-500/20">
                       Excluir
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       </ScrollArea>

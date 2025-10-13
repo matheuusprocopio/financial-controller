@@ -184,7 +184,6 @@ export default function LandingTech() {
               </Button>
             </div>
 
-            {/* Animated Stats */}
             <div className="hero-stats">
               <div className="stat-card">
                 <div className="stat-card-glow" />

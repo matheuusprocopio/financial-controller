@@ -34,19 +34,18 @@ const MessageComponentContent = ({
             <div
               key={`${message.id}-text-${i}`}
               className={cn(
-                "inline-block p-3 rounded-lg max-w-[80%]",
+                "chat-message inline-block",
                 message.role === "user"
-                  ? "bg-primary text-primary-foreground ml-auto"
-                  : "bg-muted text-muted-foreground"
+                  ? "chat-message-user ml-auto"
+                  : "chat-message-assistant"
               )}
             >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-gray-100">
                 {part.text}
               </p>
             </div>
           );
 
-          //Categorias
         case "tool-createNewCategory": {
           let output = { name: "" };
 
@@ -120,8 +119,6 @@ const MessageComponentContent = ({
             </div>
           );
         }
-
-//Cartões de crédito
 
         case "tool-createNewCreditCard": {
           let output = { cardName: "" , financialInstitution: "", limit: 0, dueDate: "" };
@@ -214,7 +211,7 @@ const MessageComponentContent = ({
       {renderParts()}
       <div
         className={cn(
-          "text-xs text-muted-foreground",
+          "text-xs text-gray-500 mt-1",
           message.role === "user" ? "text-right" : "text-left"
         )}
       >

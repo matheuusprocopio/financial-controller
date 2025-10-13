@@ -17,8 +17,12 @@ const ChatComponent = ({ messages }: IChatComponent) => {
   const [showClearModal, setShowClearModal] = useState(false);
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="flex items-center justify-end p-2 border-b bg-muted/30">
+    <div className="chat-main-container">
+      <div className="chat-grid-overlay">
+        <div className="chat-grid-pattern" />
+      </div>
+
+      <div className="relative z-10 flex items-center justify-end p-2 border-b border-indigo-500/20 bg-black/20 backdrop-blur-sm">
         <ConfirmationModal
           open={showClearModal}
           onOpenChange={setShowClearModal}
@@ -35,10 +39,10 @@ const ChatComponent = ({ messages }: IChatComponent) => {
           size="sm"
           onClick={() => setShowClearModal(true)}
           disabled={messages.length <= 1}
-          className="text-xs"
+          className="chat-clear-button text-xs"
         >
-          <Trash2 className="h-3 w-3 mr-1" />
-          Limpar
+          <Trash2 className="h-3 w-3" />
+          <span className="hidden sm:inline ml-1">Limpar</span>
         </Button>
       </div>
 

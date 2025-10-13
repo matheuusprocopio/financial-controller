@@ -97,61 +97,63 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="border-t bg-background">
-      <div className="border-t bg-background p-4">
-        <div className="max-w-4xl mx-auto">
-          {isRecording && (
-            <div className="flex items-center justify-center gap-4 mb-3 p-2 bg-destructive/10 rounded-lg">
-              <VoiceWaveAnimation />
-              <span className="text-sm font-medium text-destructive">
-                Gravando: {formatTime(recordingTime)}
-              </span>
-            </div>
-          )}
-          <div className="flex items-end gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleFileUpload}
-              className="flex-shrink-0"
-            >
-              <Paperclip className="w-4 h-4" />
-            </Button>
-            <div className="flex-1 relative">
-              <Textarea
-                ref={textareaRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Digite sua mensagem..."
-                className="min-h-[44px] max-h-32 resize-none pr-20"
-                rows={1}
-              />
-            </div>
+    <div className="chat-input-container">
+      <div className="chat-input-wrapper">
+        {isRecording && (
+          <div className="flex items-center justify-center gap-4 mb-3 p-2 bg-red-500/10 rounded-lg border border-red-500/30">
+            <VoiceWaveAnimation />
+            <span className="text-sm font-medium text-red-400">
+              Gravando: {formatTime(recordingTime)}
+            </span>
+          </div>
+        )}
+        <div className="flex items-end gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleFileUpload}
+            className="chat-button flex-shrink-0 h-11 w-11"
+          >
+            <Paperclip className="w-5 h-5" />
+          </Button>
+          <div className="flex-1 relative">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Digite sua mensagem..."
+              className="chat-input min-h-[44px] max-h-32 resize-none"
+              rows={1}
+            />
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim()}
               size="icon"
-              className="flex-shrink-0"
+              className="chat-send-button"
             >
-              <Send className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={isRecording ? "destructive" : "ghost"}
-              size="icon"
-              onClick={toggleRecording}
-              className="flex-shrink-0"
-            >
-              <Mic className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
+          <Button
+            variant={isRecording ? "destructive" : "ghost"}
+            size="icon"
+            onClick={toggleRecording}
+            className={`flex-shrink-0 h-11 w-11 ${
+              isRecording 
+                ? "bg-red-500 hover:bg-red-600" 
+                : "chat-button"
+            }`}
+          >
+            <Mic className="w-5 h-5" />
+          </Button>
         </div>
-        <FileUploadModal
-          isOpen={isUploadModalOpen}
-          onClose={() => setIsUploadModalOpen(false)}
-          onUpload={handleFilesUploaded}
-        />
       </div>
+      <FileUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleFilesUploaded}
+      />
     </div>
   );
 };

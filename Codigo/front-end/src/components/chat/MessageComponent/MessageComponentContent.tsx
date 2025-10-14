@@ -10,10 +10,15 @@ import DeleteCreditCardForm from "@/components/ToolsComponents/CreditCards/Delet
 import CreditCardsList from "@/components/ToolsComponents/CreditCards/ListCreditCards";
 import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/ListCreditCardActions";
 
-import { CategorieType } from "@/data/categoriesMock";
-import { CreditCardType } from "@/data/creditCardsMock";
+import CreateAccountForm from "@/components/ToolsComponents/Accounts/CreateAccountForm";
+import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccountForm";
+import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
+import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
+
 import { cn } from "@/lib/utils";
-import { UIMessage } from "ai";
+import { DynamicToolUIPart, UIMessage } from "ai";
+import ActionWrapper from "../gen-ui/ActionWrapper";
+import ReasoningState from "../gen-ui/ReasoningState";
 
 interface IMessageComponentContent {
   message: UIMessage;
@@ -21,193 +26,83 @@ interface IMessageComponentContent {
   onSendMessage: (message: string) => Promise<void>;
 }
 
+type ToolRendererType = (part: any) => React.ReactNode;
+
 const MessageComponentContent = ({
   onSendMessage,
   message,
   timestamp,
 }: IMessageComponentContent) => {
-  const renderParts = () => {
-    return message.parts.map((part, i) => {
-      switch (part.type) {
-        case "text":
-          return (
-            <div
-              key={`${message.id}-text-${i}`}
-              className={cn(
-                "inline-block p-3 rounded-lg max-w-[80%]",
-                message.role === "user"
-                  ? "bg-primary text-primary-foreground ml-auto"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {part.text}
-              </p>
-            </div>
-          );
+  const toolRenderers: Record<string, ToolRendererType> = {
+    "tool-createNewCategory": (p) => (
+      <CreateCategoryForm data={p.output as any} />
+    ),
+    "tool-listCategoryActions": () => (
+      <ListCategoryActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} />,
+    "tool-listCategories": (p) => <CategoriesList data={p.output as any} />,
+    
+    "tool-createNewCreditCard": (p) => (
+      <CreateCreditCardForm data={p.output as any} />
+    ),
+    "tool-listCreditCardActions": () => (
+      <ListCreditCardActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteCreditCard": (p) => <DeleteCreditCardForm data={p.output as any} />,
+    "tool-listCreditCards": (p) => <CreditCardsList data={p.output as any} />,
 
-          //Categorias
-        case "tool-createNewCategory": {
-          let output = { name: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { name: string };
-          }
-
-          return (
-            <div
-              key={`${message.id}-createNewCategory-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <CreateCategoryForm categoryName={output.name} />
-            </div>
-          );
-        }
-        case "tool-listCategoryActions": {
-          return (
-            <div
-              key={`${message.id}-listCategoryActions-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <ListCategoryActions onSendMessage={onSendMessage} />
-            </div>
-          );
-        }
-        case "tool-deleteCategory": {
-          let output = { name: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { name: string };
-          }
-
-          return (
-            <div
-              key={`${message.id}-deleteCategory-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <DeleteCategoryForm
-                categoryName={output.name}
-                categoryId="fake-id"
-              />
-            </div>
-          );
-        }
-        case "tool-listCategories": {
-          let output = {
-            name: "",
-            totalOfCategories: 0,
-            categories: [] as unknown,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              name: string;
-              categories: CategorieType[];
-              totalOfCategories: number;
-            };
-          }
-
-          return (
-            <div
-              key={`${message.id}-deleteCategory-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <CategoriesList
-                categoryName={output.name}
-                categories={output.categories as CategorieType[]}
-                totalOfCategories={output.totalOfCategories}
-              />
-            </div>
-          );
-        }
-
-//Cartões de crédito
-
-        case "tool-createNewCreditCard": {
-          let output = { cardName: "" , financialInstitution: "", limit: 0, dueDate: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { cardName: string; financialInstitution: string; limit: number; dueDate: string };
-          }
-
-          return (
-            <div
-              key={`${message.id}-createNewCreditCard-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <CreateCreditCardForm 
-                cardName={output.cardName} 
-                financialInstitution={output.financialInstitution}
-                limit={output.limit}
-                dueDate={output.dueDate}
-              />
-            </div>
-          );
-        }
-        case "tool-listCreditCardActions": {
-          return (
-            <div
-              key={`${message.id}-listCreditCardActions-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <ListCreditCardActions onSendMessage={onSendMessage} />
-            </div>
-          );
-        }
-        case "tool-deleteCreditCard": {
-          let output = { cardName: "", cardId: "" };
-
-          if (part.state == "output-available") {
-            output = part.output as { cardName: string; cardId: string };
-          }
-
-          return (
-            <div
-              key={`${message.id}-deleteCreditCard-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <DeleteCreditCardForm
-                cardName={output.cardName}
-                cardId={output.cardId}
-              />
-            </div>
-          );
-        }
-        case "tool-listCreditCards": {
-          let output = {
-            cardName: "",
-            totalOfCreditCards: 0,
-            creditCards: [] as unknown,
-          };
-
-          if (part.state == "output-available") {
-            output = part.output as {
-              cardName: string;
-              creditCards: CreditCardType[];
-              totalOfCreditCards: number;
-            };
-          }
-
-          return (
-            <div
-              key={`${message.id}-listCreditCards-tool-${i}`}
-              className="max-w-[80%]"
-            >
-              <CreditCardsList
-                cardName={output.cardName}
-                creditCards={output.creditCards as CreditCardType[]}
-                totalOfCreditCards={output.totalOfCreditCards}
-              />
-            </div>
-          );
-        }
-        default: {
-          return null;
-        }
-        
-      }
-    });
+    "tool-createNewAccount": (p) => (
+      <CreateAccountForm data={p.output as any} />
+    ),
+    "tool-listAccountActions": () => (
+      <ListAccountActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} />,
+    "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
+    "tool-filterAccounts": (p) => <AccountsList data={p.output as any} />,
   };
+
+  const renderParts = () =>
+    message.parts.map((part, i) => {
+      const partKey = `${i}-${part.type}`;
+
+      if (part.type == "reasoning" && part.state == "streaming") {
+        return <ReasoningState key={partKey} />;
+      }
+
+      if (part.type === "text") {
+        return (
+          <div
+            key={partKey}
+            className={cn(
+              "inline-block max-w-[90%] rounded-lg p-3",
+              message.role === "user"
+                ? "ml-auto bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {part.text}
+            </p>
+          </div>
+        );
+      }
+
+      const renderer = toolRenderers[part.type];
+
+      if (!renderer || !part.type.includes("tool")) return null;
+
+      const content = renderer(part);
+
+      const castedPart = part as DynamicToolUIPart;
+
+      return (
+        <ActionWrapper key={partKey} state={castedPart.state}>
+          {content}
+        </ActionWrapper>
+      );
+    });
 
   return (
     <>

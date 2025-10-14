@@ -17,7 +17,7 @@ const ChatComponent = ({ messages }: IChatComponent) => {
   const [showClearModal, setShowClearModal] = useState(false);
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex h-full min-h-0 flex-col bg-background">
       <div className="flex items-center justify-end p-2 border-b bg-muted/30">
         <ConfirmationModal
           open={showClearModal}

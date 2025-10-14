@@ -5,11 +5,15 @@ import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 
 interface IDeleteCategoryForm {
-  categoryName: string;
-  categoryId: string;
+  data: {
+    id?: string;
+    name?: string;
+  };
 }
 
-const DeleteCategoryForm = ({ categoryName }: IDeleteCategoryForm) => {
+const DeleteCategoryForm = ({ data }: IDeleteCategoryForm) => {
+  const categoryName = data?.name ?? "Not found";
+
   return (
     <ConfirmationCard
       title="Confirmar Exclusão"

@@ -31,11 +31,7 @@ const LayoutContainer = ({ children }: { children: React.ReactNode }) => {
             <Header onToggleSidebar={handleToggleSidebar} />
             <div className="flex flex-1 overflow-hidden relative">
               <ChatSidebar isOpen={sidebarOpen} onClose={handleCloseSidebar} />
-              <main
-                className={`flex-1 overflow-hidden transition-all duration-300 ${
-                  sidebarOpen ? "ml-80" : "ml-0"
-                }`}
-              >
+              <main className="flex-1 overflow-hidden">
                 {children}
               </main>
             </div>

@@ -1,0 +1,69 @@
+# ===============================================================
+# REGRAS GLOBAIS (para todo o repositório)
+# ===============================================================
+
+# Arquivos de sistema operacional e diversos
+.DS_Store
+*.pem
+
+# ===============================================================
+# REGRAS PARA O FRONT-END (Node.js / Next.js)
+# ===============================================================
+
+# dependencies
+/front-end/node_modules
+/front-end/.pnp
+/front-end/.pnp.*
+/front-end/.yarn/*
+!/front-end/.yarn/patches
+!/front-end/.yarn/plugins
+!/front-end/.yarn/releases
+!/front-end/.yarn/versions
+
+# testing
+/front-end/coverage
+
+# next.js
+/front-end/.next/
+/front-end/out/
+
+# production
+/front-end/build
+
+# debug logs
+/front-end/npm-debug.log*
+/front-end/yarn-debug.log*
+/front-end/yarn-error.log*
+/front-end/.pnpm-debug.log*
+
+# env files
+/front-end/.env*
+
+# vercel
+/front-end/.vercel
+
+# typescript
+/front-end/*.tsbuildinfo
+/front-end/next-env.d.ts
+
+# ===============================================================
+# REGRAS PARA O BACK-END (Java / Maven)
+# ===============================================================
+
+# Pasta de build do Maven
+# Contém todos os arquivos compilados (.class) e pacotes (.jar)
+/back-end/target/
+
+# Arquivos de configuração do IntelliJ IDEA
+/back-end/.idea/
+/back-end/*.iml
+
+# Arquivos de configuração do Eclipse
+/back-end/.classpath
+/back-end/.project
+/back-end/.settings/
+
+# Arquivos de log e temporários da JVM
+/back-end/*.log
+/back-end/hs_err_pid*
+

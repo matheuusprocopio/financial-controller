@@ -1,4 +1,5 @@
 import { categoriesMock } from "@/data/categoriesMock";
+import { creditCardsMock } from "@/data/creditCardsMock";
 import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
@@ -6,10 +7,10 @@ import { z } from "zod";
 export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
   inputSchema: z.object({
-    name: z.string(),
+    name: z.string().optional(),
   }),
 
-  execute: async ({ name }) => {
+  execute: async ({ name = "" }) => {
     return {
       name,
     };
@@ -41,16 +42,38 @@ export const listCategoryActionsTool = tool({
 export const listCategoriesTool = tool({
   description: "List the available categories",
   inputSchema: z.object({
-    name: z.string(),
+    name: z.string().optional(),
   }),
 
-  execute: async ({ name }) => {
+  execute: async ({ name = "" }) => {
     const categories = categoriesMock;
 
     return {
       name,
       categories,
       totalOfCategories: categories.length,
+    };
+  },
+});
+
+
+
+
+export const createNewCreditCardTool = tool({
+  description: "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
+  inputSchema: z.object({
+    cardName: z.string().optional(),
+    financialInstitution: z.string().optional(),
+    limit: z.number().optional(),
+    dueDate: z.string().optional(),
+  }),
+
+  execute: async ({ cardName = "", financialInstitution = "", limit = 0, dueDate = "" }) => {
+    return {
+      cardName,
+      financialInstitution,
+      limit,
+      dueDate,
     };
   },
 });
@@ -72,6 +95,23 @@ export const createNewAccountTool = tool({
   },
 });
 
+
+
+export const deleteCreditCardTool = tool({
+  description: "Excludes a credit card",
+  inputSchema: z.object({
+    cardName: z.string(),
+    cardId: z.string(),
+  }),
+
+  execute: async ({ cardName, cardId }) => {
+    return {
+      cardName,
+      cardId,
+    };
+  },
+});
+
 export const deleteAccountTool = tool({
   description: "Excludes an account",
   inputSchema: z.object({
@@ -83,6 +123,32 @@ export const deleteAccountTool = tool({
     return {
       nickname,
       financial_institution
+    };
+  },
+});
+
+export const listCreditCardActionsTool = tool({
+  description: "List the available actions for credit cards",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Credit cards available list";
+  },
+});
+
+export const listCreditCardsTool = tool({
+  description: "List the available credit cards",
+  inputSchema: z.object({
+    cardName: z.string().optional(),
+  }),
+
+  execute: async ({ cardName = "" }) => {
+    const creditCards = creditCardsMock;
+
+    return {
+      cardName,
+      creditCards,
+      totalOfCreditCards: creditCards.length,
     };
   },
 });
@@ -152,6 +218,11 @@ export const tools = {
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
   listCategories: listCategoriesTool,
+  
+  createNewCreditCard: createNewCreditCardTool,
+  listCreditCardActions: listCreditCardActionsTool,
+  deleteCreditCard: deleteCreditCardTool,
+  listCreditCards: listCreditCardsTool,
   createNewAccount: createNewAccountTool,
   listAccountActions: listAccountActionsTool,
   deleteAccount: deleteAccountTool,

@@ -20,9 +20,10 @@ import { cn } from "@/lib/utils";
 interface FormField {
   name: string;
   label: string;
-  type: "text" | "email" | "number" | "textarea";
+  type: "text" | "email" | "number" | "textarea" | "date" | "month";
   placeholder?: string;
   required?: boolean;
+  min?: string;
 }
 
 interface IFormCard {
@@ -110,6 +111,8 @@ const FormCard = ({
                   required={field.required}
                   value={formData[field.name] || ""}
                   onChange={(e) => handleChange(field.name, e.target.value)}
+                  min={field.min}
+            
                 />
               )}
             </div>

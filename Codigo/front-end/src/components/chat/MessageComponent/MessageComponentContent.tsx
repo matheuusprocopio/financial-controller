@@ -4,10 +4,17 @@ import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCa
 import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
 import CategoriesList from "@/components/ToolsComponents/Categories/ListCategories";
 import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
+
+import CreateCreditCardForm from "@/components/ToolsComponents/CreditCards/CreateCreditCardForm";
+import DeleteCreditCardForm from "@/components/ToolsComponents/CreditCards/DeleteCreditCardForm";
+import CreditCardsList from "@/components/ToolsComponents/CreditCards/ListCreditCards";
+import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/ListCreditCardActions";
+
 import CreateAccountForm from "@/components/ToolsComponents/Accounts/CreateAccountForm";
 import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccountForm";
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
+
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
@@ -35,6 +42,16 @@ const MessageComponentContent = ({
     ),
     "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} />,
     "tool-listCategories": (p) => <CategoriesList data={p.output as any} />,
+    
+    "tool-createNewCreditCard": (p) => (
+      <CreateCreditCardForm data={p.output as any} />
+    ),
+    "tool-listCreditCardActions": () => (
+      <ListCreditCardActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteCreditCard": (p) => <DeleteCreditCardForm data={p.output as any} />,
+    "tool-listCreditCards": (p) => <CreditCardsList data={p.output as any} />,
+
     "tool-createNewAccount": (p) => (
       <CreateAccountForm data={p.output as any} />
     ),
@@ -45,6 +62,7 @@ const MessageComponentContent = ({
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
     "tool-filterAccounts": (p) => <AccountsList data={p.output as any} />,
   };
+
   const renderParts = () =>
     message.parts.map((part, i) => {
       const partKey = `${i}-${part.type}`;

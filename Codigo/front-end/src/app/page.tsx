@@ -4,16 +4,17 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  CreditCard,
-  Zap,
-  Lock,
-  Cpu,
+  Wallet,
+  TrendingUp,
+  MessageSquare,
+  Target,
+  Bot,
   ArrowRight,
   CheckCircle2,
   ChevronRight,
   Menu,
   X,
-  Sparkles
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 import "./landingPage.css";
@@ -42,34 +43,34 @@ export default function LandingTech() {
 
   const features = [
     {
-      icon: <Cpu className="feature-icon" />,
-      title: "AI-Powered Intelligence",
-      description: "Advanced machine learning algorithms analyze your spending patterns in real-time."
+      icon: <TrendingUp className="feature-icon" />,
+      title: "Inteligência Artificial Avançada",
+      description: "IA que analisa seus gastos, identifica padrões de consumo e oferece insights personalizados em tempo real."
     },
     {
-      icon: <Zap className="feature-icon" />,
-      title: "Lightning Fast",
-      description: "Process transactions and generate insights at unprecedented speeds with our optimized engine."
+      icon: <MessageSquare className="feature-icon" />,
+      title: "Registro Inteligente",
+      description: "Registre suas transações de forma rápida e intuitiva através de conversas naturais com nosso assistente."
     },
     {
-      icon: <Lock className="feature-icon" />,
-      title: "info 3",
-      description: "descrição 3."
+      icon: <Target className="feature-icon" />,
+      title: "Controle de Metas",
+      description: "Defina e acompanhe suas metas financeiras com ajuda da IA que te mantém no caminho certo."
     },
     {
-      icon: <Sparkles className="feature-icon" />,
-      title: "info 4",
-      description: "descrição 4."
+      icon: <Bot className="feature-icon" />,
+      title: "Interface por Chat",
+      description: "Gerencie suas finanças conversando naturalmente, sem complicações ou formulários complexos."
     } 
   ];
 
   const techFeatures = [
-    "Real-time transaction monitoring",
-    "Predictive spending analytics",
-    "Blockchain-verified security",
-    "API integration ready",
-    "Cloud-native architecture",
-    "Zero-knowledge encryption"
+    "Registro automático de transações via chat",
+    "Análise inteligente de padrões de gastos",
+    "Acompanhamento de metas financeiras",
+    "Insights personalizados com IA",
+    "Categorização automática de despesas",
+    "Relatórios e visualizações intuitivas"
   ];
 
   return (
@@ -96,9 +97,9 @@ export default function LandingTech() {
         <div className="nav-container">
           <div className="nav-content">
             <div className="nav-brand">
-              <div className="nav-logo">
-                <div className="nav-logo-glow" />
-                <CreditCard className="nav-logo-icon" />
+            <div className="nav-logo">
+              <div className="nav-logo-glow" />
+              <Wallet className="nav-logo-icon" />
               </div>
               <span className="nav-title">
                 FinancialController
@@ -107,12 +108,12 @@ export default function LandingTech() {
 
 
             <div className="nav-menu-desktop">
-              <a href="#features" className="nav-link">Features</a>
-              <a href="#tech" className="nav-link">Technology</a>
-              <a href="#security" className="nav-link">Security</a>
+              <a href="#features" className="nav-link">Recursos</a>
+              <a href="#tech" className="nav-link">Funcionalidades</a>
+              
               <Link href="/chat">
                 <Button className="nav-button">
-                  Launch App
+                  Abrir App
                 </Button>
               </Link>
             </div>
@@ -130,12 +131,12 @@ export default function LandingTech() {
         {mobileMenuOpen && (
           <div className="nav-mobile-menu">
             <div className="nav-mobile-content">
-              <a href="#features" className="nav-mobile-link">Features</a>
-              <a href="#tech" className="nav-mobile-link">Technology</a>
-              <a href="#security" className="nav-mobile-link">Security</a>
+              <a href="#features" className="nav-mobile-link">Recursos</a>
+              <a href="#tech" className="nav-mobile-link">Funcionalidades</a>
+              
               <Link href="/chat">
                 <Button className="nav-mobile-button-full">
-                  Launch App
+                  Abrir App
                 </Button>
               </Link>
             </div>
@@ -149,20 +150,19 @@ export default function LandingTech() {
           <div className="hero-content">
             <div className="hero-badge">
               <div className="hero-badge-dot" />
-              <span className="hero-badge-text">Next-Gen Financial AI • Now Live</span>
+              <span className="hero-badge-text">Controle Financeiro com IA • Disponível Agora</span>
             </div>
 
             <h1 className="hero-title">
-              The Future of{" "}
+              Controle suas{" "}
               <span className="hero-title-gradient">
-                Finance
+                Finanças
               </span>{" "}
-              is Here
+              com Inteligência
             </h1>
 
             <p className="hero-description">
-              Harness the power of artificial intelligence and cutting-edge technology to revolutionize
-              how you manage your credit cards and finances.
+              Use o poder da inteligência artificial para registrar gastos, entender seus hábitos financeiros e alcançar suas metas através de conversas simples.
             </p>
 
             <div className="hero-buttons">
@@ -170,7 +170,7 @@ export default function LandingTech() {
                 <Button size="lg" className="hero-button-primary">
                   <div className="hero-button-glow" />
                   <span className="hero-button-text">
-                    Access Platform
+                    Começar Agora
                     <ArrowRight className="hero-button-icon" />
                   </span>
                 </Button>
@@ -180,7 +180,7 @@ export default function LandingTech() {
                 variant="outline"
                 className="hero-button-secondary"
               >
-                View Documentation
+                Ver Como Funciona
               </Button>
             </div>
 
@@ -188,22 +188,22 @@ export default function LandingTech() {
               <div className="stat-card">
                 <div className="stat-card-glow" />
                 <div className="stat-card-content">
-                  <div className="stat-number">num 1</div>
-                  <div className="stat-label">info 1</div>
+                  <div className="stat-number">100%</div>
+                  <div className="stat-label">Interface por Chat</div>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-card-glow" />
                 <div className="stat-card-content">
-                  <div className="stat-number">num 2</div>
-                  <div className="stat-label">info 2</div>
+                  <div className="stat-number">IA</div>
+                  <div className="stat-label">Análise Inteligente</div>
                 </div>
               </div>
               <div className="stat-card">
                 <div className="stat-card-glow" />
                 <div className="stat-card-content">
-                  <div className="stat-number">num 3</div>
-                  <div className="stat-label">info 3</div>
+                  <div className="stat-number">24/7</div>
+                  <div className="stat-label">Controle Total</div>
                 </div>
               </div>
             </div>
@@ -216,13 +216,13 @@ export default function LandingTech() {
         <div className="features-container">
           <div className="features-header">
             <h2 className="features-title">
-              Advanced{" "}
+              Recursos{" "}
               <span className="features-title-gradient">
-                Technology
+                Inteligentes
               </span>
             </h2>
             <p className="features-subtitle">
-              Built with the latest innovations in AI, security, and cloud computing.
+              Construído com as mais recentes inovações em IA para tornar o controle financeiro simples e eficiente.
             </p>
           </div>
 
@@ -253,14 +253,13 @@ export default function LandingTech() {
           <div className="tech-content">
             <div>
               <h2 className="tech-title">
-                Built for{" "}
+                Controle Financeiro{" "}
                 <span className="tech-title-gradient">
-                  Tomorrow
+                  do Futuro
                 </span>
               </h2>
               <p className="tech-description">
-                Our platform leverages cutting-edge technology to deliver unmatched performance,
-                security, and scalability.
+                Nossa plataforma usa inteligência artificial avançada para oferecer uma experiência única de gestão financeira através de conversas naturais.
               </p>
               <div className="tech-features">
                 {techFeatures.map((feature, index) => (
@@ -277,9 +276,9 @@ export default function LandingTech() {
             <div className="tech-visual">
               <div className="tech-visual-glow" />
               <Card className="tech-card">
-                <div className="tech-card-visual">
-                  <div className="tech-card-animation" />
-                  <Cpu className="tech-card-icon" />
+            <div className="tech-card-visual">
+              <div className="tech-card-animation" />
+              <TrendingUp className="tech-card-icon" />
                 </div>
               </Card>
             </div>
@@ -296,20 +295,20 @@ export default function LandingTech() {
             <div className="cta-card-glow-2" />
             <div className="cta-content">
               <div className="cta-icon-container">
-                <Lock className="cta-icon" />
+                <Shield className="cta-icon" />
               </div>
               <h2 className="cta-title">
-                Ready to Experience the Future?
+                Pronto para Transformar suas Finanças?
               </h2>
               <p className="cta-description">
-                Join the next generation of financial management.
-                Advanced AI, maximum security, zero compromise.
+                Junte-se à nova geração de controle financeiro.
+                IA avançada, controle total, simplicidade máxima.
               </p>
               <Link href="/chat">
                 <Button size="lg" className="cta-button">
                   <div className="cta-button-glow" />
                   <span className="cta-button-text">
-                    Initialize System
+                    Iniciar Conversa
                     <ChevronRight className="cta-button-icon" />
                   </span>
                 </Button>
@@ -322,16 +321,16 @@ export default function LandingTech() {
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-brand">
-            <div className="footer-logo">
-              <div className="footer-logo-glow" />
-              <CreditCard className="footer-logo-icon" />
+          <div className="footer-logo">
+            <div className="footer-logo-glow" />
+            <Wallet className="footer-logo-icon" />
             </div>
             <span className="footer-title">
               FinancialController
             </span>
           </div>
           <p className="footer-copyright">
-            © 2025 FinancialController. Powered by advanced AI technology.
+            © 2025 FinancialController. Seu controle financeiro inteligente via chat.
           </p>
         </div>
       </footer>

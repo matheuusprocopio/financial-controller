@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { User, Menu, CreditCard } from "lucide-react";
+import { User, Menu, Wallet } from "lucide-react";
 
 interface IHeader {
   user?: {
@@ -33,7 +33,7 @@ const Header = ({
         )}
         <div className="chat-logo">
           <div className="chat-logo-glow" />
-          <CreditCard className="chat-logo-icon" />
+          <Wallet className="chat-logo-icon" />
         </div>
         <h1 className="chat-title">Assistente Financeiro</h1>
       </div>

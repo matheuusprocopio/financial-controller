@@ -1,0 +1,49 @@
+.DS_Store
+*.pem
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.env*
+
+# ===============================================================
+# REGRAS PARA O FRONT-END (Node.js / Next.js)
+# ===============================================================
+
+Codigo/front-end/node_modules
+Codigo/front-end/.pnp
+Codigo/front-end/.pnp.*
+Codigo/front-end/.yarn/*
+!Codigo/front-end/.yarn/patches
+!Codigo/front-end/.yarn/plugins
+!Codigo/front-end/.yarn/releases
+!Codigo/front-end/.yarn/versions
+
+Codigo/front-end/coverage
+
+Codigo/front-end/.next/
+Codigo/front-end/out/
+
+Codigo/front-end/build
+
+Codigo/front-end/npm-debug.log*
+Codigo/front-end/yarn-debug.log*
+Codigo/front-end/yarn-error.log*
+Codigo/front-end/.pnpm-debug.log*
+
+Codigo/front-end/.env*
+
+Codigo/front-end/.vercel
+
+Codigo/front-end/*.tsbuildinfo
+Codigo/front-end/next-env.d.ts
+
+# ===============================================================
+# REGRAS PARA O BACK-END (Java / Maven)
+# ===============================================================
+
+Codigo/back-end/target/
+
+Codigo/back-end/*.log
+Codigo/back-end/hs_err_pid*

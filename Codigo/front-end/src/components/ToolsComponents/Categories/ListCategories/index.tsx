@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -19,19 +18,21 @@ import { cn, formatDate } from "@/lib/utils";
 import { CategorieType } from "@/types/categorie.type";
 
 interface ICategoriesList {
-  categories: CategorieType[];
-  totalOfCategories: number;
-  categoryName: string;
+  data: {
+    name?: string;
+    categories?: CategorieType[];
+    totalOfCategeories?: number;
+  };
 }
 
-const CategoriesList = ({
-  categoryName,
-  categories,
-  totalOfCategories,
-}: ICategoriesList) => {
+const CategoriesList = ({ data }: ICategoriesList) => {
+  const categories = data?.categories ?? [];
+  const categoryName = data?.name ?? "";
+  const totalOfCategeories = data?.name ?? 0
+
   const [searchTerm, setSearchTerm] = useState("");
 
-categories.forEach((c) => console.log(typeof c.createdAt));
+  categories.forEach((c) => console.log(typeof c.createdAt));
 
   useEffect(() => {
     setSearchTerm(categoryName);
@@ -112,7 +113,7 @@ categories.forEach((c) => console.log(typeof c.createdAt));
         {categories.length > 0 && (
           <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
             <span>
-              Mostrando {categories.length} de {totalOfCategories} categorias
+              Mostrando {categories.length} de {totalOfCategeories} categorias
             </span>
           </div>
         )}

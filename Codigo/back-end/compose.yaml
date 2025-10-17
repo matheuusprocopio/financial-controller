@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16
+    container_name: financial-controller-db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - financial_controller_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: financial-controller-service
+    depends_on:
+      - db
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    command: ["java", "-cp", "app.jar", "com.ti2cc.api.Api"]
+
+volumes:
+  financial_controller_data:

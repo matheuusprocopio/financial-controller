@@ -3,10 +3,12 @@
 import FormCard from "@/components/chat/gen-ui/FormCard";
 
 interface ICreateCategoryForm {
-  categoryName: string;
+  data: {
+    name?: string;
+  };
 }
 
-const CreateCategoryForm = ({ categoryName }: ICreateCategoryForm) => {
+const CreateCategoryForm = ({ data }: ICreateCategoryForm) => {
   return (
     <FormCard
       title="Nova categoria"
@@ -21,7 +23,7 @@ const CreateCategoryForm = ({ categoryName }: ICreateCategoryForm) => {
       ]}
       submitLabel="Adicionar categoria"
       defaultFormData={{
-        category: categoryName,
+        category: data?.name ?? "",
       }}
       onSubmit={(data) => {}}
     />

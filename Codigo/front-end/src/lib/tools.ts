@@ -1,5 +1,6 @@
 import { categoriesMock } from "@/data/categoriesMock";
 import { creditCardsMock } from "@/data/creditCardsMock";
+import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -77,6 +78,23 @@ export const createNewCreditCardTool = tool({
   },
 });
 
+export const createNewAccountTool = tool({
+  description: "Create or add a new account to user",
+  inputSchema: z.object({
+    nickname: z.string(),
+    financial_institution: z.string(),
+    balance: z.number(),
+  }),
+
+  execute: async ({ nickname, financial_institution, balance }) => {
+    return {
+      nickname,
+      financial_institution,
+      balance,
+    };
+  },
+});
+
 
 
 export const deleteCreditCardTool = tool({
@@ -90,6 +108,21 @@ export const deleteCreditCardTool = tool({
     return {
       cardName,
       cardId,
+    };
+  },
+});
+
+export const deleteAccountTool = tool({
+  description: "Excludes an account",
+  inputSchema: z.object({
+    nickname: z.string(),
+    financial_institution: z.string()
+  }),
+
+  execute: async ({ nickname, financial_institution }) => {
+    return {
+      nickname,
+      financial_institution
     };
   },
 });
@@ -120,6 +153,66 @@ export const listCreditCardsTool = tool({
   },
 });
 
+export const listAccountActionsTool = tool({
+  description: "List the available actions for accounts",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Accounts available list";
+  },
+});
+
+export const listAccountsTool = tool({
+  description: "List all available accounts.",
+  inputSchema: z.object({
+    nickname: z.string().optional(),
+  }),
+
+  execute: async ({ nickname }) => {
+    const accounts = accountsMock;
+
+    return {
+      nickname: nickname || "",
+      accounts,
+      totalOfAccounts: accounts.length,
+    };
+  },
+});
+
+export const filterAccountsTool = tool({
+  description: "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
+  inputSchema: z.object({
+    nickname: z.string().optional(),
+    financial_institution: z.string().optional(),
+  }),
+
+  execute: async ({ nickname, financial_institution }) => {
+    let filteredAccounts = [...accountsMock];
+
+    if (nickname && nickname.trim()) {
+      const nicknameFilter = nickname.toLowerCase().trim();
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.nickname.toLowerCase().includes(nicknameFilter)
+      );
+    }
+
+    if (financial_institution && financial_institution.trim()) {
+      const institutionFilter = financial_institution.toLowerCase().trim();
+      filteredAccounts = filteredAccounts.filter(account =>
+        account.financial_institution.toLowerCase().includes(institutionFilter)
+      );
+    }
+
+    return {
+      nickname: nickname || "",
+      financial_institution: financial_institution || "",
+      accounts: filteredAccounts,
+      totalOfAccounts: filteredAccounts.length,
+      totalOfOriginalAccounts: accountsMock.length,
+    };
+  },
+});
+
 export const tools = {
   createNewCategory: createNewCategoryTool,
   listCategoryActions: listCategoryActionsTool,
@@ -130,4 +223,9 @@ export const tools = {
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,
   listCreditCards: listCreditCardsTool,
+  createNewAccount: createNewAccountTool,
+  listAccountActions: listAccountActionsTool,
+  deleteAccount: deleteAccountTool,
+  listAccounts: listAccountsTool,
+  filterAccounts: filterAccountsTool,
 };

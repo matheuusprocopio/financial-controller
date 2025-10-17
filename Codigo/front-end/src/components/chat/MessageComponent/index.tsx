@@ -17,18 +17,18 @@ const MessageComponent = ({ message, timestamp, onSendMessage}: IMessageComponen
   return (
     <div
       className={cn(
-        "mx-auto flex w-full max-w-6xl gap-4 px-4 md:px-8",
+        "flex gap-3 max-w-4xl mx-auto mb-4",
         message.role === "user" ? "flex-row-reverse" : "flex-row"
       )}
     >
-      <Avatar className="w-8 h-8 flex-shrink-0">
+      <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-indigo-500/30">
         {message.role == "assistant" || message.role == "system" ? (
-          <AvatarFallback className="bg-primary text-primary-foreground">
-            <Bot className="w-4 h-4" />
+          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
+            <Bot className="w-5 h-5" />
           </AvatarFallback>
         ) : (
-          <AvatarFallback className="bg-secondary text-secondary-foreground">
-            <User className="w-4 h-4" />
+          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
+            <User className="w-5 h-5" />
           </AvatarFallback>
         )}
       </Avatar>

@@ -109,7 +109,7 @@ const MessageComponentContent = ({
       {renderParts()}
       <div
         className={cn(
-          "text-xs text-muted-foreground",
+          "text-xs text-gray-500 mt-1",
           message.role === "user" ? "text-right" : "text-left"
         )}
       >

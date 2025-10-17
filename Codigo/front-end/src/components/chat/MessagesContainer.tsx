@@ -22,8 +22,8 @@ const MessagesContainer = ({ messages, onSendMessage }: MessageContainerProps) =
   }, [messages]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-hidden">
-      <div className="flex h-full flex-col gap-4 overflow-y-auto p-4">
+    <div className="flex-1 overflow-hidden relative z-10">
+      <div className="chat-messages-area h-full">
         {messages.map((message) => (
           <MessageComponent
             onSendMessage={onSendMessage}

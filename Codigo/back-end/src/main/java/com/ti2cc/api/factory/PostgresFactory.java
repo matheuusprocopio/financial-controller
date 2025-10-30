@@ -8,7 +8,7 @@ public class PostgresFactory {
     public static Connection getConnection() {
         try {
 
-            String url = "jdbc:postgresql://db:5432/financial_controller";
+            String url = "jdbc:postgresql://localhost:5432/financial_controller";
             String user = "admin";
             String password = "admin123";
 

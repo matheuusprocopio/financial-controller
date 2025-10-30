@@ -33,7 +33,7 @@ public class Container {
         CategoryService categoryService = new CategoryService(categoryDAO);
         AccountService accountService = new AccountService(accountDAO);
         UserService userService = new UserService(userDAO);
-        var itemService = new ItemService(itemDAO);
+        ItemService itemService = new ItemService(itemDAO);
 
 
         CategoryController categoryController = new CategoryController(categoryService);

@@ -3,8 +3,8 @@ package com.ti2cc.api.service;
 import com.ti2cc.api.dao.CategoryDAO;
 import com.ti2cc.api.model.Category;
 
-import java.sql.Connection;
 import java.util.List;
+import java.util.UUID;
 
 public class CategoryService {
     private final CategoryDAO categoryDAO;
@@ -23,7 +23,7 @@ public class CategoryService {
     }
 
     public boolean updateCategory(Category category) {
-        if (category.getId() <= 0) {
+        if (category.getId() == null) {
             System.err.println("Invalid category ID.");
             return false;
         }
@@ -38,8 +38,8 @@ public class CategoryService {
         return categoryDAO.update(category);
     }
 
-    public boolean deleteCategory(int id) {
-        if (id <= 0) {
+    public boolean deleteCategory(UUID id) {
+        if (id == null) {
             System.err.println("Invalid category ID for deletion.");
             return false;
         }
@@ -47,8 +47,8 @@ public class CategoryService {
         return categoryDAO.delete(id);
     }
 
-    public Category findCategoryById(int id) {
-        if (id <= 0) {
+    public Category findCategoryById(UUID id) {
+        if (id == null) {
             System.err.println("Invalid category ID.");
             return null;
         }

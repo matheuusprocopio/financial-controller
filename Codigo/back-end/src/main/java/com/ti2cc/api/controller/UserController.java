@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.UserService;
 
+import java.util.UUID;
+
 public class UserController {
 
     private final UserService userService;
@@ -30,7 +32,7 @@ public class UserController {
 
     public String getById(String idStr) {
         try {
-            int id = Integer.parseInt(idStr);
+            UUID id = UUID.fromString(idStr);
             User user = userService.findUserById(id);
 
             if (user != null) {
@@ -38,14 +40,14 @@ public class UserController {
             } else {
                 return gson.toJson("User not found.");
             }
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
             return gson.toJson("Invalid ID format.");
         }
     }
 
     public String update(String idStr, String body) {
         try {
-            int id = Integer.parseInt(idStr);
+            UUID id = UUID.fromString(idStr);
             User user = gson.fromJson(body, User.class);
             user.setId(id);
 
@@ -55,14 +57,14 @@ public class UserController {
             } else {
                 return gson.toJson("Failed to update user.");
             }
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
             return gson.toJson("Invalid ID format.");
         }
     }
 
     public String delete(String idStr) {
         try {
-            int id = Integer.parseInt(idStr);
+            UUID id = UUID.fromString(idStr);
             boolean deleted = userService.deleteUser(id);
 
             if (deleted) {
@@ -70,7 +72,7 @@ public class UserController {
             } else {
                 return gson.toJson("User not found.");
             }
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
             return gson.toJson("Invalid ID format.");
         }
     }

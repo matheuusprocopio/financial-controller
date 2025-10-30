@@ -3,8 +3,8 @@ package com.ti2cc.api.service;
 import com.ti2cc.api.dao.UserDAO;
 import com.ti2cc.api.model.User;
 
-import java.sql.Connection;
 import java.util.List;
+import java.util.UUID;
 
 public class UserService {
 
@@ -37,8 +37,8 @@ public class UserService {
         return userDAO.getAll();
     }
 
-    public User findUserById(int id) {
-        if (id <= 0) {
+    public User findUserById(UUID id) {
+        if (id == null) {
             System.err.println("Invalid user ID.");
             return null;
         }
@@ -47,7 +47,7 @@ public class UserService {
     }
 
     public boolean updateUser(User user) {
-        if (user == null || user.getId() <= 0) {
+        if (user == null || user.getId() == null) {
             System.err.println("Invalid user data for update.");
             return false;
         }
@@ -60,8 +60,8 @@ public class UserService {
         return userDAO.update(user);
     }
 
-    public boolean deleteUser(int id) {
-        if (id <= 0) {
+    public boolean deleteUser(UUID id) {
+        if (id == null) {
             System.err.println("Invalid user ID for deletion.");
             return false;
         }

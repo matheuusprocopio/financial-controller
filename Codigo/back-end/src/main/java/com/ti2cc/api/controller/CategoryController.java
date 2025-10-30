@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.ti2cc.api.model.Category;
 import com.ti2cc.api.service.CategoryService;
 
+import java.util.UUID;
+
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -29,37 +31,49 @@ public class CategoryController {
     }
 
     public String getById(String idStr) {
-        int id = Integer.parseInt(idStr);
-        Category category = categoryService.findCategoryById(id);
+        try {
+            UUID id = UUID.fromString(idStr);
+            Category category = categoryService.findCategoryById(id);
 
-        if (category != null) {
-            return gson.toJson(category);
-        } else {
-            return gson.toJson("Category not found.");
+            if (category != null) {
+                return gson.toJson(category);
+            } else {
+                return gson.toJson("Category not found.");
+            }
+        } catch (IllegalArgumentException e) {
+            return gson.toJson("Invalid ID format.");
         }
     }
 
     public String update(String idStr, String body) {
-        int id = Integer.parseInt(idStr);
-        Category category = gson.fromJson(body, Category.class);
-        category.setId(id);
+        try {
+            UUID id = UUID.fromString(idStr);
+            Category category = gson.fromJson(body, Category.class);
+            category.setId(id);
 
-        boolean updated = categoryService.updateCategory(category);
-        if (updated) {
-            return gson.toJson("Category updated successfully.");
-        } else {
-            return gson.toJson("Failed to update category.");
+            boolean updated = categoryService.updateCategory(category);
+            if (updated) {
+                return gson.toJson("Category updated successfully.");
+            } else {
+                return gson.toJson("Failed to update category.");
+            }
+        } catch (IllegalArgumentException e) {
+            return gson.toJson("Invalid ID format.");
         }
     }
 
     public String delete(String idStr) {
-        int id = Integer.parseInt(idStr);
-        boolean deleted = categoryService.deleteCategory(id);
+        try {
+            UUID id = UUID.fromString(idStr);
+            boolean deleted = categoryService.deleteCategory(id);
 
-        if (deleted) {
-            return gson.toJson("Category deleted successfully.");
-        } else {
-            return gson.toJson("Category not found.");
+            if (deleted) {
+                return gson.toJson("Category deleted successfully.");
+            } else {
+                return gson.toJson("Category not found.");
+            }
+        } catch (IllegalArgumentException e) {
+            return gson.toJson("Invalid ID format.");
         }
     }
 }

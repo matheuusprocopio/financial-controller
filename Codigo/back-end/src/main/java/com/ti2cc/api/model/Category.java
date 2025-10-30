@@ -1,17 +1,19 @@
 package com.ti2cc.api.model;
 
+import java.util.UUID;
+
 public class Category {
-    private int id;
-    private int userId;
+    private UUID id;
+    private UUID userId;
     private String name;
     private String imagePath;
-    private Integer mainCategoryId;
+    private UUID mainCategoryId;
 
     public Category() {
-        this(0, 0, null, null, null);
+        this(null, null, null, null, null);
     }
 
-    public Category(int id, int userId,String name, String imagePath, Integer mainCategoryId) {
+    public Category(UUID id, UUID userId, String name, String imagePath, UUID mainCategoryId) {
         this.id = id;
         this.userId = userId;
         this.name = name;
@@ -19,12 +21,11 @@ public class Category {
         this.mainCategoryId = mainCategoryId;
     }
 
-
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public int getUserId() {
+    public UUID getUserId() {
         return userId;
     }
 
@@ -36,11 +37,11 @@ public class Category {
         return imagePath;
     }
 
-    public Integer getMainCategoryId() {
+    public UUID getMainCategoryId() {
         return mainCategoryId;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -52,11 +53,11 @@ public class Category {
         this.imagePath = imagePath;
     }
 
-    public void setMainCategoryId(Integer mainCategoryId) {
+    public void setMainCategoryId(UUID mainCategoryId) {
         this.mainCategoryId = mainCategoryId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
 }

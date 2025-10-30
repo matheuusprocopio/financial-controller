@@ -2,9 +2,13 @@ package com.ti2cc.api.dao;
 
 import com.ti2cc.api.model.User;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class UserDAO {
     private Connection connection;
@@ -14,21 +18,18 @@ public class UserDAO {
     }
 
     public boolean create(User user) {
-        String query = "INSERT INTO users (name, email) VALUES (?, ?)";
+        if (user.getId() == null) {
+            user.setId(UUID.randomUUID());
+        }
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, user.getName());
-            pstmt.setString(2, user.getEmail());
+        String query = "INSERT INTO users (id, name, email) VALUES (?, ?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, user.getId());
+            pstmt.setString(2, user.getName());
+            pstmt.setString(3, user.getEmail());
 
             int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        user.setId(generatedKeys.getInt(1));
-                    }
-                }
-            }
 
             return rowsAffected > 0;
         } catch (SQLException e) {
@@ -46,7 +47,7 @@ public class UserDAO {
 
             while (rs.next()) {
                 users.add(new User(
-                        rs.getInt("id"),
+                        (UUID) rs.getObject("id"),
                         rs.getString("name"),
                         rs.getString("email")
                 ));
@@ -58,15 +59,15 @@ public class UserDAO {
         return users;
     }
 
-    public User getById(int id) {
+    public User getById(UUID id) {
         String query = "SELECT * FROM users WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setInt(1, id);
+            pstmt.setObject(1, id);
 
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return new User(
-                        rs.getInt("id"),
+                        (UUID) rs.getObject("id"),
                         rs.getString("name"),
                         rs.getString("email")
                 );
@@ -103,7 +104,7 @@ public class UserDAO {
             if (user.getEmail() != null)
                 pstmt.setString(paramIndex++, user.getEmail());
 
-            pstmt.setInt(paramIndex, user.getId());
+            pstmt.setObject(paramIndex, user.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -114,10 +115,10 @@ public class UserDAO {
         }
     }
 
-    public boolean delete(int id) {
+    public boolean delete(UUID id) {
         String query = "DELETE FROM users WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setInt(1, id);
+            pstmt.setObject(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {

@@ -14,31 +14,11 @@ public class CategoryRoutes {
 
     public void register() {
         path("/categories", () -> {
-            post("", (req, res) -> {
-                res.type("application/json");
-                res.status(201);
-                return controller.create(req.body());
-            });
-
-            get("", (req, res) -> {
-                res.type("application/json");
-                return controller.getAll();
-            });
-
-            get("/:id", (req, res) -> {
-                res.type("application/json");
-                return controller.getById(req.params(":id"));
-            });
-
-            put("/:id", (req, res) -> {
-                res.type("application/json");
-                return controller.update(req.params(":id"), req.body());
-            });
-
-            delete("/:id", (req, res) -> {
-                res.type("application/json");
-                return controller.delete(req.params(":id"));
-            });
+            post("", controller::create);
+            get("", controller::listByUser);
+            get("/:category_id", controller::getById);
+            put("/:category_id", controller::update);
+            delete("/:category_id", controller::delete);
         });
     }
 }

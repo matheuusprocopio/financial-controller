@@ -1,10 +1,15 @@
 package com.ti2cc.api.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.model.Category;
 import com.ti2cc.api.service.CategoryService;
 
+import java.util.List;
 import java.util.UUID;
+
+import spark.Request;
+import spark.Response;
 
 public class CategoryController {
 
@@ -15,64 +20,102 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    public String create(String body) {
-        Category category = gson.fromJson(body, Category.class);
-        boolean created = categoryService.createCategory(category);
+    public Object create(Request req, Response res) {
+        res.type("application/json");
+        try {
+            Category category = gson.fromJson(req.body(), Category.class);
+            boolean created = categoryService.createCategory(category);
 
-        if (created) {
-            return gson.toJson(category);
-        } else {
-            return gson.toJson("Failed to create category.");
+            if (created) {
+                res.status(201);
+                return gson.toJson(category);
+            } else {
+                res.status(400);
+                return gson.toJson("Failed to create category.");
+            }
+        } catch (JsonSyntaxException e) {
+            res.status(400);
+            return gson.toJson("Invalid JSON format: " + e.getMessage());
         }
     }
 
-    public String getAll() {
-        return gson.toJson(categoryService.listAllCategories());
+    public Object listByUser(Request req, Response res) {
+        res.type("application/json");
+        String userIdParam = req.queryParams("user_id");
+        if (userIdParam == null) {
+            res.status(400);
+            return gson.toJson("Query parameter 'user_id' is required.");
+        }
+
+        try {
+            UUID userId = UUID.fromString(userIdParam);
+            List<Category> categories = categoryService.listCategoriesByUserId(userId);
+            res.status(200);
+            return gson.toJson(categories);
+        } catch (IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson("Invalid user ID format.");
+        }
     }
 
-    public String getById(String idStr) {
+    public Object getById(Request req, Response res) {
+        res.type("application/json");
         try {
-            UUID id = UUID.fromString(idStr);
+            UUID id = UUID.fromString(req.params(":category_id"));
             Category category = categoryService.findCategoryById(id);
 
             if (category != null) {
+                res.status(200);
                 return gson.toJson(category);
             } else {
+                res.status(404);
                 return gson.toJson("Category not found.");
             }
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid ID format.");
         }
     }
 
-    public String update(String idStr, String body) {
+    public Object update(Request req, Response res) {
+        res.type("application/json");
         try {
-            UUID id = UUID.fromString(idStr);
-            Category category = gson.fromJson(body, Category.class);
+            UUID id = UUID.fromString(req.params(":category_id"));
+            Category category = gson.fromJson(req.body(), Category.class);
             category.setId(id);
 
             boolean updated = categoryService.updateCategory(category);
             if (updated) {
+                res.status(200);
                 return gson.toJson("Category updated successfully.");
             } else {
+                res.status(400);
                 return gson.toJson("Failed to update category.");
             }
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid ID format.");
+        } catch (JsonSyntaxException e) {
+            res.status(400);
+            return gson.toJson("Invalid JSON format: " + e.getMessage());
         }
     }
 
-    public String delete(String idStr) {
+    public Object delete(Request req, Response res) {
+        res.type("application/json");
         try {
-            UUID id = UUID.fromString(idStr);
+            UUID id = UUID.fromString(req.params(":category_id"));
             boolean deleted = categoryService.deleteCategory(id);
 
             if (deleted) {
+                res.status(200);
                 return gson.toJson("Category deleted successfully.");
             } else {
+                res.status(404);
                 return gson.toJson("Category not found.");
             }
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid ID format.");
         }
     }

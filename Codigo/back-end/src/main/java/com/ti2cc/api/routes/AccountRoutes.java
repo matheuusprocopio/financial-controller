@@ -14,29 +14,10 @@ public class AccountRoutes {
 
     public void register() {
         path("/accounts", () -> {
-            post("", (req, res) -> {
-                res.type("application/json");
-                res.status(201);
-                return controller.create(req.body());
-            });
-
-            get("/:id", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getById(req.params(":id"));
-            });
-
-            get("/user/:userId", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getByUserId(req.params(":userId"));
-            });
-
-            delete("/:id", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.delete(req.params(":id"));
-            });
+            post("", controller::create);
+            get("", controller::listByUser);
+            get("/:account_id", controller::getById);
+            delete("/:account_id", controller::delete);
         });
     }
 }

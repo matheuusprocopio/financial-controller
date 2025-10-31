@@ -19,13 +19,13 @@ public class AccountDAO {
     }
 
     public boolean create(Account account) {
-        if (account.getId() == null) {
-            account.setId(UUID.randomUUID());
-        }
-
         String query = "INSERT INTO accounts (id, name, user_id, financial_institution, balance) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            if (account.getId() == null) {
+                account.setId(UUID.randomUUID());
+            }
+
             pstmt.setObject(1, account.getId());
             pstmt.setString(2, account.getName());
             pstmt.setObject(3, account.getUserId());

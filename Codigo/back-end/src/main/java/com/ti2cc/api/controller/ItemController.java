@@ -77,15 +77,16 @@ public class ItemController {
         try {
             UUID userId = UUID.fromString(userIdParam);
             String categoryIdParam = req.queryParams("category_id");
+            String nameFilter = req.queryParams("name");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
             PaginatedResponseDTO<Item> items;
 
             if (categoryIdParam != null && !categoryIdParam.isBlank()) {
                 UUID categoryId = UUID.fromString(categoryIdParam);
-                items = itemService.listItemsByCategoryId(categoryId, userId, dateRange, pagination);
+                items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, dateRange, pagination);
             } else {
-                items = itemService.listItemsByUserId(userId, dateRange, pagination);
+                items = itemService.listItemsByUserId(userId, nameFilter, dateRange, pagination);
             }
 
             res.status(200);
@@ -119,9 +120,10 @@ public class ItemController {
         res.type("application/json");
         try {
             UUID userId = UUID.fromString(req.params(":userId"));
+            String nameFilter = req.queryParams("name");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, nameFilter, dateRange, pagination);
             res.status(200);
             return gson.toJson(items);
         } catch (IllegalArgumentException e) {
@@ -141,9 +143,10 @@ public class ItemController {
         try {
             UUID categoryId = UUID.fromString(req.params(":categoryId"));
             UUID userId = UUID.fromString(userIdParam);
+            String nameFilter = req.queryParams("name");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, dateRange, pagination);
             res.status(200);
             return gson.toJson(items);
         } catch (IllegalArgumentException e) {

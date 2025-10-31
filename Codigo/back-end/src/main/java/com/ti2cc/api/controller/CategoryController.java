@@ -42,19 +42,28 @@ public class CategoryController {
     public Object listByUser(Request req, Response res) {
         res.type("application/json");
         String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null) {
+        if (userIdParam == null || userIdParam.isBlank()) {
             res.status(400);
             return gson.toJson("Query parameter 'user_id' is required.");
         }
 
         try {
             UUID userId = UUID.fromString(userIdParam);
-            List<Category> categories = categoryService.listCategoriesByUserId(userId);
+            String nameParam = req.queryParams("name");
+            String name = (nameParam == null || nameParam.isBlank()) ? null : nameParam;
+            String mainCategoryIdParam = req.queryParams("main_category_id");
+
+            UUID mainCategoryId = null;
+            if (mainCategoryIdParam != null && !mainCategoryIdParam.isBlank()) {
+                mainCategoryId = UUID.fromString(mainCategoryIdParam);
+            }
+
+            List<Category> categories = categoryService.listCategories(userId, name, mainCategoryId);
             res.status(200);
             return gson.toJson(categories);
         } catch (IllegalArgumentException e) {
             res.status(400);
-            return gson.toJson("Invalid user ID format.");
+            return gson.toJson("Invalid UUID format: " + e.getMessage());
         }
     }
 

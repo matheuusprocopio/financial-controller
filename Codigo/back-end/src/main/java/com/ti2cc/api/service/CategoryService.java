@@ -60,12 +60,12 @@ public class CategoryService {
         return categoryDAO.getById(id);
     }
 
-    public List<Category> listCategoriesByUserId(UUID userId) {
+    public List<Category> listCategories(UUID userId, String name, UUID mainCategoryId) {
         if (userId == null) {
             System.err.println("Invalid user ID.");
             return List.of();
         }
 
-        return categoryDAO.getByUserId(userId);
+        return categoryDAO.getByFilters(userId, name, mainCategoryId);
     }
 }

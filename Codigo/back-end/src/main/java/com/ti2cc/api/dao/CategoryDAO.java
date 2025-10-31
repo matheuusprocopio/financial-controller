@@ -154,12 +154,32 @@ public class CategoryDAO {
         return null;
     }
 
-    public List<Category> getByUserId(UUID userId) {
+    public List<Category> getByFilters(UUID userId, String name, UUID mainCategoryId) {
         List<Category> list = new ArrayList<>();
-        String query = "SELECT * FROM categories WHERE user_id = ?";
+        StringBuilder query = new StringBuilder("SELECT * FROM categories WHERE user_id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setObject(1, userId);
+        boolean hasNameFilter = name != null && !name.trim().isEmpty();
+
+        if (hasNameFilter) {
+            query.append(" AND name ILIKE ?");
+        }
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setObject(paramIndex++, userId);
+
+            if (hasNameFilter) {
+                pstmt.setString(paramIndex++, "%" + name.trim() + "%");
+            }
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex, mainCategoryId);
+            }
+
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Category c = new Category(
@@ -171,7 +191,7 @@ public class CategoryDAO {
                 list.add(c);
             }
         } catch (SQLException e) {
-            System.err.println("Fail to list categories by user: " + e.getMessage());
+            System.err.println("Fail to list categories by filters: " + e.getMessage());
         }
 
         return list;

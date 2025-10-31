@@ -108,16 +108,17 @@ public class ItemService {
         return itemDAO.getById(id);
     }
 
-    public PaginatedResponseDTO<Item> listItemsByUserId(UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> listItemsByUserId(UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         if (userId == null) {
             System.err.println("Invalid user ID.");
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        return itemDAO.getByUserId(userId, dateRange, pagination);
+        String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
+        return itemDAO.getByUserId(userId, sanitizedFilter, dateRange, pagination);
     }
 
-    public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         if (categoryId == null) {
             System.err.println("Invalid category ID.");
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
@@ -128,6 +129,7 @@ public class ItemService {
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        return itemDAO.getByCategoryId(categoryId, userId, dateRange, pagination);
+        String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
+        return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter, dateRange, pagination);
     }
 }

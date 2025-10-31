@@ -185,16 +185,32 @@ public class ItemDAO {
         return null;
     }
 
-    public PaginatedResponseDTO<Item> getByUserId(UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> getByUserId(UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         List<Item> list = new ArrayList<>();
         long totalItems = 0;
-        String countQuery = "SELECT COUNT(*) FROM items WHERE user_id = ? AND date BETWEEN ? AND ?";
-        String dataQuery = "SELECT * FROM items WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC LIMIT ? OFFSET ?";
+        boolean hasNameFilter = nameFilter != null && !nameFilter.isBlank();
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery)) {
-            countStmt.setObject(1, userId);
-            countStmt.setDate(2, Date.valueOf(dateRange.getStartDate()));
-            countStmt.setDate(3, Date.valueOf(dateRange.getEndDate()));
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            countQuery.append(" AND LOWER(name) LIKE LOWER(?)");
+        }
+
+        StringBuilder dataQuery = new StringBuilder("SELECT * FROM items WHERE user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            dataQuery.append(" AND LOWER(name) LIKE LOWER(?)");
+        }
+        dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                countStmt.setString(index, "%" + nameFilter + "%");
+            }
+
             ResultSet rs = countStmt.executeQuery();
             if (rs.next()) {
                 totalItems = rs.getLong(1);
@@ -203,12 +219,18 @@ public class ItemDAO {
             System.err.println("Fail to count items by user: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
-            dataStmt.setObject(1, userId);
-            dataStmt.setDate(2, Date.valueOf(dateRange.getStartDate()));
-            dataStmt.setDate(3, Date.valueOf(dateRange.getEndDate()));
-            dataStmt.setInt(4, pagination.getPageLimit());
-            dataStmt.setInt(5, pagination.getOffset());
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                dataStmt.setString(index++, "%" + nameFilter + "%");
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
 
             ResultSet rs = dataStmt.executeQuery();
 
@@ -233,17 +255,32 @@ public class ItemDAO {
         return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
     }
 
-    public PaginatedResponseDTO<Item> getByCategoryId(UUID categoryId, UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> getByCategoryId(UUID categoryId, UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         List<Item> list = new ArrayList<>();
         long totalItems = 0;
-        String countQuery = "SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?";
-        String dataQuery = "SELECT * FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC LIMIT ? OFFSET ?";
+        boolean hasNameFilter = nameFilter != null && !nameFilter.isBlank();
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery)) {
-            countStmt.setObject(1, categoryId);
-            countStmt.setObject(2, userId);
-            countStmt.setDate(3, Date.valueOf(dateRange.getStartDate()));
-            countStmt.setDate(4, Date.valueOf(dateRange.getEndDate()));
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            countQuery.append(" AND LOWER(name) LIKE LOWER(?)");
+        }
+
+        StringBuilder dataQuery = new StringBuilder("SELECT * FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            dataQuery.append(" AND LOWER(name) LIKE LOWER(?)");
+        }
+        dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, categoryId);
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                countStmt.setString(index, "%" + nameFilter + "%");
+            }
 
             ResultSet rs = countStmt.executeQuery();
             if (rs.next()) {
@@ -253,13 +290,19 @@ public class ItemDAO {
             System.err.println("Fail to count items by category: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
-            dataStmt.setObject(1, categoryId);
-            dataStmt.setObject(2, userId);
-            dataStmt.setDate(3, Date.valueOf(dateRange.getStartDate()));
-            dataStmt.setDate(4, Date.valueOf(dateRange.getEndDate()));
-            dataStmt.setInt(5, pagination.getPageLimit());
-            dataStmt.setInt(6, pagination.getOffset());
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setObject(index++, categoryId);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                dataStmt.setString(index++, "%" + nameFilter + "%");
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
 
             ResultSet rs = dataStmt.executeQuery();
 

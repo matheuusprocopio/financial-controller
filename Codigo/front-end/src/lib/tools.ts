@@ -1,8 +1,26 @@
-import { categoriesMock } from "@/data/categoriesMock";
 import { creditCardsMock } from "@/data/creditCardsMock";
 import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
+import { listCategories } from "@/utils/services/categories";
+
+const ensureErrorMessage = (rawMessage?: string) => {
+  if (!rawMessage) return "Unknown error";
+
+  try {
+    const parsed = JSON.parse(rawMessage);
+
+    if (parsed && typeof parsed === "object" && "message" in parsed) {
+      const extracted = (parsed as { message?: unknown }).message;
+
+      if (typeof extracted === "string" && extracted.trim()) return extracted;
+    }
+  } catch (err) {
+    // ignore parse failures and use raw message
+  }
+
+  return rawMessage;
+};
 
 export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
@@ -46,13 +64,39 @@ export const listCategoriesTool = tool({
   }),
 
   execute: async ({ name = "" }) => {
-    const categories = categoriesMock;
+    try {
+      const resp = await listCategories("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e", name);
 
-    return {
-      name,
-      categories,
-      totalOfCategories: categories.length,
-    };
+      if (Array.isArray(resp)) {
+        const categories = resp;
+
+        return {
+          name,
+          categories,
+          totalOfCategories: categories.length,
+        };
+      }
+
+      const { error } = resp;
+
+      return {
+        name,
+        categories: [],
+        totalOfCategories: 0,
+        error: ensureErrorMessage(error.message),
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      return {
+        name,
+        categories: [],
+        totalOfCategories: 0,
+        error: errorMessage,
+        status: null,
+        resource: null,
+      };
+    }
   },
 });
 

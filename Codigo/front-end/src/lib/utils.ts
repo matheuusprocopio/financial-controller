@@ -8,3 +8,4 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDate = (d: string) => {
   return new Date(d).toLocaleDateString("pt-BR");
 };
+

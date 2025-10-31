@@ -13,22 +13,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, ArrowUpDown, CreditCard } from "lucide-react";
+import { Search, Filter, CreditCard } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { CreditCardType } from "@/types/creditcard.types";
 
 interface ICreditCardsList {
-  creditCards: CreditCardType[];
-  totalOfCreditCards: number;
-  cardName: string;
+  data?: {
+    cardName?: string;
+    creditCards?: CreditCardType[];
+    totalOfCreditCards?: number;
+    error?: string;
+    status?: number | null;
+    resource?: string | null;
+  };
 }
 
-const CreditCardsList = ({
-  cardName,
-  creditCards,
-  totalOfCreditCards,
-}: ICreditCardsList) => {
+const CreditCardsList = ({ data }: ICreditCardsList) => {
   const [searchTerm, setSearchTerm] = useState("");
+
+  const creditCardsData = data?.creditCards;
+  const creditCards = Array.isArray(creditCardsData) ? creditCardsData : [];
+  const cardName = data?.cardName ?? "";
+  const totalOfCreditCards =
+    typeof data?.totalOfCreditCards === "number"
+      ? data.totalOfCreditCards
+      : creditCards.length;
+  const errorMessage = data?.error;
+  const statusCode = data?.status;
+  const resource = data?.resource;
 
   useEffect(() => {
     setSearchTerm(cardName);
@@ -67,6 +79,19 @@ const CreditCardsList = ({
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {errorMessage && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 text-destructive text-sm p-3">
+            {errorMessage}
+            {statusCode && (
+              <>
+                {" "}
+                (código {statusCode}
+                {resource ? ` - ${resource}` : ""})
+              </>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3 items-end">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

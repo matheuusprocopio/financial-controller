@@ -2,15 +2,20 @@
 
 import ConfirmationCard from "@/components/chat/gen-ui/ConfirmationCard";
 import { Card } from "@/components/ui/card";
-import { CreditCard, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface IDeleteCreditCardForm {
-  cardName: string;
-  cardId: string;
-  financialInstitution?: string;
+  data?: {
+    cardName?: string;
+    cardId?: string;
+    financialInstitution?: string;
+  };
 }
 
-const DeleteCreditCardForm = ({ cardName, financialInstitution }: IDeleteCreditCardForm) => {
+const DeleteCreditCardForm = ({ data }: IDeleteCreditCardForm) => {
+  const cardName = data?.cardName ?? "Cartão não encontrado";
+  const financialInstitution = data?.financialInstitution;
+
   return (
     <ConfirmationCard
       title="Confirmar Exclusão"

@@ -3,17 +3,15 @@
 import FormCard from "@/components/chat/gen-ui/FormCard";
 
 interface ICreateCreditCardForm {
-  cardName: string;
-  financialInstitution: string;
-  limit: number;
-  dueDate: string;
+  data?: {
+    cardName?: string;
+    financialInstitution?: string;
+    limit?: number;
+    dueDate?: string;
+  };
 }
 
-
-
-
-const CreateCreditCardForm = ({ cardName, financialInstitution, limit, dueDate }: ICreateCreditCardForm) => {
-  
+const CreateCreditCardForm = ({ data }: ICreateCreditCardForm) => {
   const getCurrentMonth = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -54,10 +52,10 @@ const CreateCreditCardForm = ({ cardName, financialInstitution, limit, dueDate }
       ]}
       submitLabel="Adicionar cartão"
       defaultFormData={{
-        cardName: cardName || "",
-        financialInstitution: financialInstitution || "",
-        limit: limit?.toString() || "0",
-        dueDate: dueDate || "",
+        cardName: data?.cardName ?? "",
+        financialInstitution: data?.financialInstitution ?? "",
+        limit: data?.limit !== undefined ? String(data.limit) : "",
+        dueDate: data?.dueDate ?? "",
       }}
       onSubmit={(data) => {}}
     />

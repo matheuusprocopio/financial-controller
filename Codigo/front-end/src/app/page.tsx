@@ -14,14 +14,21 @@ import {
   ChevronRight,
   Menu,
   X,
-  Shield
+  Shield,
+  LogIn,
+  User
 } from "lucide-react";
 import Link from "next/link";
+import { auth } from "@/lib/firebase";
+import { User as FirebaseUser } from "firebase/auth";
+import LoginModal from "@/components/auth/LoginModal";
 import "./landingPage.css";
 
 export default function LandingTech() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
     let lastUpdate = 0;
@@ -39,6 +46,14 @@ export default function LandingTech() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const features = [
@@ -111,11 +126,39 @@ export default function LandingTech() {
               <a href="#features" className="nav-link">Recursos</a>
               <a href="#tech" className="nav-link">Funcionalidades</a>
               
-              <Link href="/chat">
-                <Button className="nav-button">
-                  Abrir App
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <Button
+                    onClick={() => setLoginModalOpen(true)}
+                    variant="ghost"
+                    className="nav-link gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    {user.email?.split('@')[0]}
+                  </Button>
+                  <Link href="/chat">
+                    <Button className="nav-button">
+                      Abrir App
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => setLoginModalOpen(true)}
+                    variant="ghost"
+                    className="nav-link gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Entrar
+                  </Button>
+                  <Link href="/chat">
+                    <Button className="nav-button">
+                      Abrir App
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
 
@@ -134,11 +177,45 @@ export default function LandingTech() {
               <a href="#features" className="nav-mobile-link">Recursos</a>
               <a href="#tech" className="nav-mobile-link">Funcionalidades</a>
               
-              <Link href="/chat">
-                <Button className="nav-mobile-button-full">
-                  Abrir App
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <Button
+                    onClick={() => {
+                      setLoginModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    {user.email?.split('@')[0]}
+                  </Button>
+                  <Link href="/chat">
+                    <Button className="nav-mobile-button-full">
+                      Abrir App
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => {
+                      setLoginModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    variant="outline"
+                    className="w-full gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Entrar
+                  </Button>
+                  <Link href="/chat">
+                    <Button className="nav-mobile-button-full">
+                      Abrir App
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -334,6 +411,8 @@ export default function LandingTech() {
           </p>
         </div>
       </footer>
+
+      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
     </div>
   );
 }

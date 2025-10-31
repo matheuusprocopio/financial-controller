@@ -52,6 +52,5 @@ public class Container {
         accountRoutes.register();
         userRoutes.register();
         itemRoutes.register();
-
     }
 }

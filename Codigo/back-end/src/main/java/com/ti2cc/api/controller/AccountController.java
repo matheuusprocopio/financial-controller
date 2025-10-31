@@ -1,11 +1,15 @@
 package com.ti2cc.api.controller;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.model.Account;
 import com.ti2cc.api.service.AccountService;
 
 import java.util.List;
 import java.util.UUID;
+
+import spark.Request;
+import spark.Response;
 
 public class AccountController {
     private final AccountService accountService;
@@ -15,53 +19,78 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    public String create(String body) {
-        Account account = gson.fromJson(body, Account.class);
-        boolean created = accountService.createAccount(account);
+    public Object create(Request req, Response res) {
+        res.type("application/json");
+        try {
+            Account account = gson.fromJson(req.body(), Account.class);
+            boolean created = accountService.createAccount(account);
 
-        if (created) {
-            return gson.toJson(account);
+            if (created) {
+                res.status(201);
+                return gson.toJson(account);
+            }
+
+            res.status(400);
+            return gson.toJson("Failed to create account.");
+        } catch (JsonSyntaxException e) {
+            res.status(400);
+            return gson.toJson("Invalid JSON format: " + e.getMessage());
         }
-
-        return gson.toJson("Failed to create account.");
     }
 
-    public String getById(String accountId) {
+    public Object getById(Request req, Response res) {
+        res.type("application/json");
         try {
-            UUID id = UUID.fromString(accountId);
+            UUID id = UUID.fromString(req.params(":accountId"));
             Account account = accountService.findById(id);
 
             if (account == null) {
+                res.status(404);
                 return gson.toJson("Account not found.");
             }
 
+            res.status(200);
             return gson.toJson(account);
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid ID format.");
         }
     }
 
-    public String getByUserId(String userId) {
+    public Object listByUser(Request req, Response res) {
+        res.type("application/json");
+        String userIdParam = req.queryParams("user_id");
+        if (userIdParam == null) {
+            res.status(400);
+            return gson.toJson("Query parameter 'user_id' is required.");
+        }
+
         try {
-            UUID id = UUID.fromString(userId);
+            UUID id = UUID.fromString(userIdParam);
             List<Account> accounts = accountService.findByUserId(id);
+            res.status(200);
             return gson.toJson(accounts);
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid user ID format.");
         }
     }
 
-    public String delete(String accountId) {
+    public Object delete(Request req, Response res) {
+        res.type("application/json");
         try {
-            UUID id = UUID.fromString(accountId);
+            UUID id = UUID.fromString(req.params(":accountId"));
             boolean deleted = accountService.deleteAccount(id);
 
             if (deleted) {
+                res.status(200);
                 return gson.toJson("Account deleted successfully.");
             }
 
+            res.status(404);
             return gson.toJson("Account not found.");
         } catch (IllegalArgumentException e) {
+            res.status(400);
             return gson.toJson("Invalid ID format.");
         }
     }

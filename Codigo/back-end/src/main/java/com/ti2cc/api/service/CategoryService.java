@@ -19,6 +19,10 @@ public class CategoryService {
             return false;
         }
 
+        if (category.getId() == null) {
+            category.setId(UUID.randomUUID());
+        }
+
         return categoryDAO.create(category);
     }
 
@@ -56,7 +60,12 @@ public class CategoryService {
         return categoryDAO.getById(id);
     }
 
-    public List<Category> listAllCategories() {
-        return categoryDAO.getAll();
+    public List<Category> listCategoriesByUserId(UUID userId) {
+        if (userId == null) {
+            System.err.println("Invalid user ID.");
+            return List.of();
+        }
+
+        return categoryDAO.getByUserId(userId);
     }
 }

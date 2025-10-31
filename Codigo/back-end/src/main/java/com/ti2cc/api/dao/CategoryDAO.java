@@ -18,10 +18,6 @@ public class CategoryDAO {
     }
 
     public boolean create(Category category) {
-        if (category.getId() == null) {
-            category.setId(UUID.randomUUID());
-        }
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("INSERT INTO categories (");
@@ -53,6 +49,10 @@ public class CategoryDAO {
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             int paramIndex = 1;
 
+            if (category.getId() == null) {
+                category.setId(UUID.randomUUID());
+            }
+
             // parâmetros fixos
             pstmt.setObject(paramIndex++, category.getId());
             pstmt.setString(paramIndex++, category.getName());
@@ -68,7 +68,6 @@ public class CategoryDAO {
             }
 
             int rowsAffected = pstmt.executeUpdate();
-
             return rowsAffected > 0;
         } catch (SQLException e) {
             System.err.println("Fail to insert a new category: " + e.getMessage());
@@ -155,11 +154,12 @@ public class CategoryDAO {
         return null;
     }
 
-    public List<Category> getAll() {
+    public List<Category> getByUserId(UUID userId) {
         List<Category> list = new ArrayList<>();
-        String query = "SELECT * FROM categories";
+        String query = "SELECT * FROM categories WHERE user_id = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, userId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 Category c = new Category(
@@ -171,7 +171,7 @@ public class CategoryDAO {
                 list.add(c);
             }
         } catch (SQLException e) {
-            System.err.println("Fail to list categories: " + e.getMessage());
+            System.err.println("Fail to list categories by user: " + e.getMessage());
         }
 
         return list;

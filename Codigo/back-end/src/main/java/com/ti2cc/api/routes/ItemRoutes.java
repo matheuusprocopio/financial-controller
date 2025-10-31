@@ -18,47 +18,13 @@ public class ItemRoutes {
 
     public void register() {
         path("/items", () -> {
-            post("", (req, res) -> {
-                res.type("application/json");
-                res.status(201);
-                return controller.create(req.body());
-            });
-
-            get("", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getAll();
-            });
-
-            get("/:id", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getById(req.params(":id"));
-            });
-
-            get("/owner/:ownerId", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getByOwnerId(req.params(":ownerId"));
-            });
-
-            get("/category/:categoryId", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.getByCategoryId(req.params(":categoryId"));
-            });
-
-            put("/:id", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.update(req.params(":id"), req.body());
-            });
-
-            delete("/:id", (req, res) -> {
-                res.type("application/json");
-                res.status(200);
-                return controller.delete(req.params(":id"));
-            });
+            post("", controller::create);
+            get("", controller::list);
+            get("/:itemId", controller::getById);
+            get("/user/:userId", controller::listByUserPath);
+            get("/category/:categoryId", controller::getByCategoryId);
+            put("/:itemId", controller::update);
+            delete("/:itemId", controller::delete);
         });
     }
 }

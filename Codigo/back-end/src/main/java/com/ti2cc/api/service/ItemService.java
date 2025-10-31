@@ -3,6 +3,9 @@ package com.ti2cc.api.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.ti2cc.api.dto.DateRangeDTO;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.model.Item;
 
@@ -24,8 +27,8 @@ public class ItemService {
             return false;
         }
 
-        if (item.getOwnerId() == null) {
-            System.err.println("Owner ID cannot be null.");
+        if (item.getUserId() == null) {
+            System.err.println("User ID cannot be null.");
             return false;
         }
 
@@ -36,6 +39,11 @@ public class ItemService {
 
         if (item.getName() == null || item.getName().trim().isEmpty()) {
             System.err.println("Item name cannot be empty.");
+            return false;
+        }
+
+        if (item.getDescription() == null || item.getDescription().trim().isEmpty()) {
+            System.err.println("Item description cannot be empty.");
             return false;
         }
 
@@ -54,6 +62,10 @@ public class ItemService {
             return false;
         }
 
+        if (item.getId() == null) {
+            item.setId(UUID.randomUUID());
+        }
+
         return itemDAO.create(item);
     }
 
@@ -64,6 +76,7 @@ public class ItemService {
         }
 
         if (item.getCategoryId() == null && 
+            item.getUserId() == null &&
             item.getAccountId() == null &&
             item.getName() == null &&
             item.getDescription() == null &&
@@ -95,25 +108,26 @@ public class ItemService {
         return itemDAO.getById(id);
     }
 
-    public List<Item> listAllItems() {
-        return itemDAO.getAll();
-    }
-
-    public List<Item> listItemsByOwnerId(UUID ownerId) {
-        if (ownerId == null) {
-            System.err.println("Invalid owner ID.");
-            return List.of();
+    public PaginatedResponseDTO<Item> listItemsByUserId(UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        if (userId == null) {
+            System.err.println("Invalid user ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        return itemDAO.getByOwnerId(ownerId);
+        return itemDAO.getByUserId(userId, dateRange, pagination);
     }
 
-    public List<Item> listItemsByCategoryId(UUID categoryId) {
+    public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         if (categoryId == null) {
             System.err.println("Invalid category ID.");
-            return List.of();
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        return itemDAO.getByCategoryId(categoryId);
+        if (userId == null) {
+            System.err.println("Invalid user ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        return itemDAO.getByCategoryId(categoryId, userId, dateRange, pagination);
     }
 }

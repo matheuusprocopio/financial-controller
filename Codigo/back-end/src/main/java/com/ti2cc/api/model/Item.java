@@ -6,7 +6,7 @@ import java.util.UUID;
 public class Item {
     private UUID id;
     private UUID categoryId;
-    private UUID ownerId;
+    private UUID userId;
     private UUID accountId;
     private String name;
     private String description;
@@ -18,11 +18,11 @@ public class Item {
         this(null, null, null, null, null, null, null, null, null);
     }
 
-    public Item(UUID id, UUID categoryId, UUID ownerId, UUID accountId, String name, 
+    public Item(UUID id, UUID categoryId, UUID userId, UUID accountId, String name, 
                 String description, Double amount, LocalDate date, ItemType type) {
         this.id = id;
         this.categoryId = categoryId;
-        this.ownerId = ownerId;
+        this.userId = userId;
         this.accountId = accountId;
         this.name = name;
         this.description = description;
@@ -47,12 +47,12 @@ public class Item {
         this.categoryId = categoryId;
     }
 
-    public UUID getOwnerId() {
-        return ownerId;
+    public UUID getUserId() {
+        return userId;
     }
 
-    public void setOwnerId(UUID ownerId) {
-        this.ownerId = ownerId;
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public UUID getAccountId() {

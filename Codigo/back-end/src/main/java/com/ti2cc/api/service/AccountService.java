@@ -23,6 +23,10 @@ public class AccountService {
             return false;
         }
 
+        if (account.getId() == null) {
+            account.setId(UUID.randomUUID());
+        }
+
         return accountDAO.create(account);
     }
 

@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.ti2cc.api.dto.DateRangeDTO;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.model.Item.ItemType;
 
@@ -23,43 +26,28 @@ public class ItemDAO {
         StringBuilder sb = new StringBuilder();
 
         sb.append("INSERT INTO items (");
-        sb.append("id, category_id, owner_id, account_id, name, amount, date, type");
-
-        if (item.getDescription() != null) {
-            sb.append(", description");
-        }
-
+        sb.append("id, category_id, user_id, account_id, name, description, amount, date, type");
         sb.append(") VALUES (");
-        sb.append("?, ?, ?, ?, ?, ?, ?, ?::item_type");
-
-        if (item.getDescription() != null) {
-            sb.append(", ?");
-        }
-
-        sb.append(")");
+        sb.append("?, ?, ?, ?, ?, ?, ?, ?, ?::item_type)");
 
         String query = sb.toString();
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             int paramIndex = 1;
 
-            // Generate UUID if not provided
             if (item.getId() == null) {
                 item.setId(UUID.randomUUID());
             }
 
             pstmt.setObject(paramIndex++, item.getId());
             pstmt.setObject(paramIndex++, item.getCategoryId());
-            pstmt.setObject(paramIndex++, item.getOwnerId());
+            pstmt.setObject(paramIndex++, item.getUserId());
             pstmt.setObject(paramIndex++, item.getAccountId());
             pstmt.setString(paramIndex++, item.getName());
+            pstmt.setString(paramIndex++, item.getDescription());
             pstmt.setDouble(paramIndex++, item.getAmount());
             pstmt.setDate(paramIndex++, Date.valueOf(item.getDate()));
             pstmt.setString(paramIndex++, item.getType().name());
-
-            if (item.getDescription() != null) {
-                pstmt.setString(paramIndex++, item.getDescription());
-            }
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -76,6 +64,12 @@ public class ItemDAO {
 
         if (item.getCategoryId() != null) {
             query.append("category_id = ?");
+            hasPrev = true;
+        }
+
+        if (item.getUserId() != null) {
+            if (hasPrev) query.append(", ");
+            query.append("user_id = ?");
             hasPrev = true;
         }
 
@@ -121,6 +115,9 @@ public class ItemDAO {
 
             if (item.getCategoryId() != null)
                 pstmt.setObject(paramIndex++, item.getCategoryId());
+
+            if (item.getUserId() != null)
+                pstmt.setObject(paramIndex++, item.getUserId());
 
             if (item.getAccountId() != null)
                 pstmt.setObject(paramIndex++, item.getAccountId());
@@ -173,7 +170,7 @@ public class ItemDAO {
                 return new Item(
                         (UUID) rs.getObject("id"),
                         (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("owner_id"),
+                        (UUID) rs.getObject("user_id"),
                         (UUID) rs.getObject("account_id"),
                         rs.getString("name"),
                         rs.getString("description"),
@@ -188,17 +185,38 @@ public class ItemDAO {
         return null;
     }
 
-    public List<Item> getAll() {
+    public PaginatedResponseDTO<Item> getByUserId(UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         List<Item> list = new ArrayList<>();
-        String query = "SELECT * FROM items ORDER BY date DESC";
+        long totalItems = 0;
+        String countQuery = "SELECT COUNT(*) FROM items WHERE user_id = ? AND date BETWEEN ? AND ?";
+        String dataQuery = "SELECT * FROM items WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC LIMIT ? OFFSET ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            ResultSet rs = pstmt.executeQuery();
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery)) {
+            countStmt.setObject(1, userId);
+            countStmt.setDate(2, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(3, Date.valueOf(dateRange.getEndDate()));
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by user: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
+            dataStmt.setObject(1, userId);
+            dataStmt.setDate(2, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(3, Date.valueOf(dateRange.getEndDate()));
+            dataStmt.setInt(4, pagination.getPageLimit());
+            dataStmt.setInt(5, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
             while (rs.next()) {
                 Item item = new Item(
                         (UUID) rs.getObject("id"),
                         (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("owner_id"),
+                        (UUID) rs.getObject("user_id"),
                         (UUID) rs.getObject("account_id"),
                         rs.getString("name"),
                         rs.getString("description"),
@@ -209,54 +227,47 @@ public class ItemDAO {
                 list.add(item);
             }
         } catch (SQLException e) {
-            System.err.println("Fail to list items: " + e.getMessage());
+            System.err.println("Fail to list items by user: " + e.getMessage());
         }
 
-        return list;
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
     }
 
-    public List<Item> getByOwnerId(UUID ownerId) {
+    public PaginatedResponseDTO<Item> getByCategoryId(UUID categoryId, UUID userId, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         List<Item> list = new ArrayList<>();
-        String query = "SELECT * FROM items WHERE owner_id = ? ORDER BY date DESC";
+        long totalItems = 0;
+        String countQuery = "SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?";
+        String dataQuery = "SELECT * FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC LIMIT ? OFFSET ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setObject(1, ownerId);
-            ResultSet rs = pstmt.executeQuery();
-            
-            while (rs.next()) {
-                Item item = new Item(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("owner_id"),
-                        (UUID) rs.getObject("account_id"),
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        ItemType.valueOf(rs.getString("type"))
-                );
-                list.add(item);
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery)) {
+            countStmt.setObject(1, categoryId);
+            countStmt.setObject(2, userId);
+            countStmt.setDate(3, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(4, Date.valueOf(dateRange.getEndDate()));
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
             }
         } catch (SQLException e) {
-            System.err.println("Fail to list items by owner: " + e.getMessage());
+            System.err.println("Fail to count items by category: " + e.getMessage());
         }
 
-        return list;
-    }
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
+            dataStmt.setObject(1, categoryId);
+            dataStmt.setObject(2, userId);
+            dataStmt.setDate(3, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(4, Date.valueOf(dateRange.getEndDate()));
+            dataStmt.setInt(5, pagination.getPageLimit());
+            dataStmt.setInt(6, pagination.getOffset());
 
-    public List<Item> getByCategoryId(UUID categoryId) {
-        List<Item> list = new ArrayList<>();
-        String query = "SELECT * FROM items WHERE category_id = ? ORDER BY date DESC";
+            ResultSet rs = dataStmt.executeQuery();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setObject(1, categoryId);
-            ResultSet rs = pstmt.executeQuery();
-            
             while (rs.next()) {
                 Item item = new Item(
                         (UUID) rs.getObject("id"),
                         (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("owner_id"),
+                        (UUID) rs.getObject("user_id"),
                         (UUID) rs.getObject("account_id"),
                         rs.getString("name"),
                         rs.getString("description"),
@@ -270,6 +281,6 @@ public class ItemDAO {
             System.err.println("Fail to list items by category: " + e.getMessage());
         }
 
-        return list;
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
     }
 }

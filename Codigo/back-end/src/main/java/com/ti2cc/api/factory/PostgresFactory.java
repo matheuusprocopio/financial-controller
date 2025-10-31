@@ -4,13 +4,23 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class PostgresFactory {
+    private static final Dotenv dotenv = Dotenv.configure()
+            .directory("./")
+            .ignoreIfMissing()
+            .load();
+
     public static Connection getConnection() {
         try {
+            String url = dotenv.get("DB_URL");
+            String user = dotenv.get("DB_USER");
+            String password = dotenv.get("DB_PASSWORD");
 
-            String url = "jdbc:postgresql://db.ewyqqxoqofphrhjwehim.supabase.co:5432/postgres";
-            String user = "postgres";
-            String password = "n64n5o4n5lj4n6ij4";
+            if (url == null || user == null || password == null) {
+                throw new RuntimeException("Database credentials not found in environment variables");
+            }
 
             return DriverManager.getConnection(url, user, password);
         } catch (SQLException e) {

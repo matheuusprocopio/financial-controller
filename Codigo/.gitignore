@@ -67,3 +67,4 @@
 /back-end/*.log
 /back-end/hs_err_pid*
 
+/.metadata/

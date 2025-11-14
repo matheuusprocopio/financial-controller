@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,12 +38,12 @@ interface IAccountsList {
 
 const AccountsList = ({ data }: IAccountsList) => {
   const accountNickname = data?.nickname ?? "";
-  const accounts = data?.accounts ?? [];
+  const accounts = useMemo(() => data?.accounts ?? [], [data?.accounts]);
   const totalOfAccounts = data?.totalOfAccounts ?? 0;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredAccounts, setFilteredAccounts] =
-    useState<AccountType[]>(accounts);
+    useState<AccountType[]>([]);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
     nickname: "",

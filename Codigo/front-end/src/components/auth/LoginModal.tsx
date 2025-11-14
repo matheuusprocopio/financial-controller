@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,16 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  User,
-  signOut,
-} from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
 import { CheckCircle2, XCircle, Loader2, LogIn, LogOut, Mail, AlignCenter } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from "@/hooks/use-auth";
 
 interface LoginModalProps {
   open: boolean;
@@ -31,8 +24,7 @@ interface LoginModalProps {
 
 export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { user, loading, loginWithEmail, loginWithGoogle, signupWithEmail, logout } = useAuth();
   const [status, setStatus] = useState<{
     type: "success" | "error" | "info";
     message: string;
@@ -41,14 +33,6 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
@@ -59,11 +43,10 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
       return;
     }
 
-    setLoading(true);
     setStatus(null);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await loginWithEmail(email, password);
       setStatus({ type: "success", message: "Login realizado com sucesso!" });
 
       setTimeout(() => {
@@ -73,10 +56,8 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
     } catch (error: any) {
       setStatus({
         type: "error",
-        message: "Email ou senha inválidos",
+        message: error.message || "Email ou senha inválidos",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -89,27 +70,10 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
       return;
     }
 
-    if (password !== confirmPassword) {
-      setStatus({
-        type: "error",
-        message: "As senhas não coincidem",
-      });
-      return;
-    }
-
-    if (password.length < 6) {
-      setStatus({
-        type: "error",
-        message: "A senha deve ter pelo menos 6 caracteres",
-      });
-      return;
-    }
-
-    setLoading(true);
     setStatus(null);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await signupWithEmail(email, password, confirmPassword);
       setStatus({
         type: "success",
         message: "Conta criada com sucesso!",
@@ -120,33 +84,18 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
         router.push("/chat");
       }, 1000);
     } catch (error: any) {
-      if (error.code === "auth/email-already-in-use") {
-        setStatus({
-          type: "error",
-          message: "Este email já está cadastrado",
-        });
-      } else if (error.code === "auth/invalid-email") {
-        setStatus({
-          type: "error",
-          message: "Email inválido",
-        });
-      } else {
-        setStatus({
-          type: "error",
-          message: "Erro ao criar conta",
-        });
-      }
-    } finally {
-      setLoading(false);
+      setStatus({
+        type: "error",
+        message: error.message || "Erro ao criar conta",
+      });
     }
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
     setStatus(null);
 
     try {
-      await signInWithPopup(auth, googleProvider);
+      await loginWithGoogle();
       setStatus({
         type: "success",
         message: "Login com Google realizado com sucesso!",
@@ -159,22 +108,17 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
     } catch (error: any) {
       setStatus({
         type: "error",
-        message: "Erro ao fazer login com Google",
+        message: error.message || "Erro ao fazer login com Google",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    setLoading(true);
     try {
-      await signOut(auth);
+      await logout();
       setStatus({ type: "info", message: "Logout realizado com sucesso!" });
     } catch (error: any) {
-      setStatus({ type: "error", message: "Erro ao fazer logout" });
-    } finally {
-      setLoading(false);
+      setStatus({ type: "error", message: error.message || "Erro ao fazer logout" });
     }
   };
 

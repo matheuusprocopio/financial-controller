@@ -20,29 +20,27 @@ import {
   User
 } from "lucide-react";
 import Link from "next/link";
-import { auth } from "@/lib/firebase";
-import { User as FirebaseUser } from "firebase/auth";
 import LoginModal from "@/components/auth/LoginModal";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 import "./landingPage.css";
 
 function LandingTechContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userChecked, setUserChecked] = useState(false);
+  const { user, loading: userLoading } = useAuth();
+  const userChecked = !userLoading;
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     let lastUpdate = 0;
-    const throttleDelay = 1; // ~60fps (1000ms / 60fps = 16.67ms)
+    const throttleDelay = 1;
 
     const handleMouseMove = (e: MouseEvent) => {
       const now = Date.now();
 
-      // Só atualiza se passou tempo suficiente
       if (now - lastUpdate >= throttleDelay) {
         setMousePosition({ x: e.clientX, y: e.clientY });
         lastUpdate = now;
@@ -51,15 +49,6 @@ function LandingTechContent() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setUserChecked(true);
-    });
-
-    return () => unsubscribe();
   }, []);
 
   useEffect(() => {

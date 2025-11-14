@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { User as FirebaseUser } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -16,27 +15,15 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const { user, loading, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (loading) return;
-
-   
     const isPublicRoute = pathname === "/" || publicRoutes.includes(pathname);
-    if (!user && !isPublicRoute) {
+    if (!isAuthenticated && !isPublicRoute) {
       router.push("/?login=true");
     }
-  }, [user, loading, pathname, router, publicRoutes]);
+  }, [isAuthenticated, loading, pathname, router, publicRoutes]);
 
   if (loading) {
     return (
@@ -47,7 +34,7 @@ export default function ProtectedRoute({
   }
 
   const isPublicRoute = pathname === "/" || publicRoutes.includes(pathname);
-  if (!user && !isPublicRoute) {
+  if (!isAuthenticated && !isPublicRoute) {
     return null;
   }
 

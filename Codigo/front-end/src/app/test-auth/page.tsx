@@ -1,47 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { signInWithEmailAndPassword, signInWithPopup, User, signOut } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
 import { CheckCircle2, XCircle, Loader2, LogIn, LogOut, Shield } from "lucide-react";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function TestAuthPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string>("");
-  const [sessionId, setSessionId] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const { 
+    user, 
+    token, 
+    sessionId, 
+    loading, 
+    loginWithEmail, 
+    loginWithGoogle, 
+    logout, 
+    loginBackend, 
+    validateSession, 
+    logoutBackend 
+  } = useAuth();
   const [status, setStatus] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Verifica se há usuário logado ao carregar
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const idToken = await currentUser.getIdToken();
-          setToken(idToken);
-        } catch (error) {
-          console.error("Erro ao obter token:", error);
-        }
-      } else {
-        setToken("");
-        setSessionId("");
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
@@ -49,55 +34,33 @@ export default function TestAuthPage() {
       return;
     }
 
-    setLoading(true);
     setStatus(null);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const idToken = await userCredential.user.getIdToken();
-      setToken(idToken);
+      await loginWithEmail(email, password);
       setStatus({ type: "success", message: "Login realizado com sucesso!" });
     } catch (error: any) {
       setStatus({ type: "error", message: error.message || "Erro ao fazer login" });
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
     setStatus(null);
 
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
-      const idToken = await userCredential.user.getIdToken();
-      setToken(idToken);
+      await loginWithGoogle();
       setStatus({ type: "success", message: "Login com Google realizado com sucesso!" });
     } catch (error: any) {
       setStatus({ type: "error", message: error.message || "Erro ao fazer login com Google" });
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    setLoading(true);
     try {
-      await signOut(auth);
+      await logout();
       setStatus({ type: "info", message: "Logout realizado com sucesso!" });
-      
-      // Se houver sessão, faz logout no backend também
-      if (sessionId) {
-        await fetch(`${API_BASE}/auth/logout`, {
-          method: "POST",
-          headers: { "X-Session-Id": sessionId },
-        });
-        setSessionId("");
-      }
     } catch (error: any) {
       setStatus({ type: "error", message: error.message || "Erro ao fazer logout" });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -107,87 +70,35 @@ export default function TestAuthPage() {
       return;
     }
 
-    setLoading(true);
     setStatus(null);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: token }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setSessionId(data.sessionId);
-        setStatus({ type: "success", message: "Login no backend realizado com sucesso!" });
-      } else {
-        setStatus({ type: "error", message: data.message || "Erro ao fazer login no backend" });
-      }
+      await loginBackend();
+      setStatus({ type: "success", message: "Login no backend realizado com sucesso!" });
     } catch (error: any) {
-      setStatus({ type: "error", message: error.message || "Erro ao conectar com o backend" });
-    } finally {
-      setLoading(false);
+      setStatus({ type: "error", message: error.message || "Erro ao fazer login no backend" });
     }
   };
 
   const handleValidateSession = async () => {
-    if (!sessionId) {
-      setStatus({ type: "error", message: "Por favor, faça login no backend primeiro" });
-      return;
-    }
-
-    setLoading(true);
     setStatus(null);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/validate`, {
-        method: "GET",
-        headers: { "X-Session-Id": sessionId },
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setStatus({ type: "success", message: "Sessão válida!" });
-      } else {
-        setStatus({ type: "error", message: data.message || "Sessão inválida" });
-      }
+      await validateSession();
+      setStatus({ type: "success", message: "Sessão válida!" });
     } catch (error: any) {
-      setStatus({ type: "error", message: error.message || "Erro ao validar sessão" });
-    } finally {
-      setLoading(false);
+      setStatus({ type: "error", message: error.message || "Sessão inválida" });
     }
   };
 
   const handleBackendLogout = async () => {
-    if (!sessionId) {
-      setStatus({ type: "error", message: "Nenhuma sessão para encerrar" });
-      return;
-    }
-
-    setLoading(true);
     setStatus(null);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/logout`, {
-        method: "POST",
-        headers: { "X-Session-Id": sessionId },
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        setSessionId("");
-        setStatus({ type: "success", message: "Logout do backend realizado com sucesso!" });
-      } else {
-        setStatus({ type: "error", message: data.message || "Erro ao fazer logout" });
-      }
+      await logoutBackend();
+      setStatus({ type: "success", message: "Logout do backend realizado com sucesso!" });
     } catch (error: any) {
-      setStatus({ type: "error", message: error.message || "Erro ao conectar com o backend" });
-    } finally {
-      setLoading(false);
+      setStatus({ type: "error", message: error.message || "Erro ao fazer logout" });
     }
   };
 

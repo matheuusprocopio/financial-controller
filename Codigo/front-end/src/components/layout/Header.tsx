@@ -12,9 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { User, Menu, Wallet, LogOut, Settings } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 interface IHeader {
   user?: {
@@ -29,15 +28,20 @@ const Header = ({
   onToggleSidebar,
 }: IHeader) => {
   const router = useRouter();
+  const { logout, loading, user: firebaseUser } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       router.push("/");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
     }
   };
+
+  // Usa o nome do Firebase se disponível, caso contrário usa a prop
+  const displayName = firebaseUser?.displayName || firebaseUser?.email?.split("@")[0] || user.name;
+  const displayEmail = firebaseUser?.email || "";
 
   return (
     <header className="chat-header flex items-center justify-between p-4">
@@ -74,23 +78,27 @@ const Header = ({
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm font-medium hidden sm:block text-gray-200">
-                {user.name}
+                {displayName}
               </span>
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-sm font-medium leading-none">{displayName}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  Minha Conta
+                  {displayEmail || "Minha Conta"}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+            <DropdownMenuItem 
+              onClick={handleLogout} 
+              className="cursor-pointer"
+              disabled={loading}
+            >
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
+              <span>{loading ? "Saindo..." : "Sair"}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

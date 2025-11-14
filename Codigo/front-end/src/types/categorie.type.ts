@@ -13,3 +13,9 @@ export type CreateCategoryType = {
   userId: string;
   mainCategoryId?: string;
 };
+
+export type UpdateCategoryType = {
+  name?: string;
+  imagePath?: string;
+  mainCategoryId?: string;
+};

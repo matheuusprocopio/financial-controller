@@ -17,6 +17,7 @@ public class AccountRoutes {
             post("", controller::create);
             get("", controller::listByUser);
             get("/:account_id", controller::getById);
+            put("/:accountId", controller::update);
             delete("/:account_id", controller::delete);
         });
     }

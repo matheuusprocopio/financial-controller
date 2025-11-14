@@ -1,17 +1,19 @@
 package com.ti2cc.api.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.ti2cc.api.model.Account;
-import com.ti2cc.api.service.AccountService;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.ti2cc.api.dto.AccountUpdateDTO;
+import com.ti2cc.api.model.Account;
+import com.ti2cc.api.service.AccountService;
 
 import spark.Request;
 import spark.Response;
 
 public class AccountController {
+
     private final AccountService accountService;
     private final Gson gson = new Gson();
 
@@ -73,6 +75,35 @@ public class AccountController {
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid user ID format.");
+        }
+    }
+
+    public Object update(Request request, Response response) {
+        response.type("application/json");
+        try {
+            UUID id = UUID.fromString(request.params(":accountId"));
+            AccountUpdateDTO dto = gson.fromJson(request.body(), AccountUpdateDTO.class);
+
+            Account account = new Account();
+            account.setId(id);
+            account.setName(dto.getName());
+            account.setFinancialInstitution(dto.getFinancialInstitution());
+            account.setBalance(dto.getBalance());
+
+            boolean updated = accountService.updateAccount(account);
+            if (updated) {
+                response.status(200);
+                return gson.toJson("Account updated successfully.");
+            } else {
+                response.status(400);
+                return gson.toJson("Failed to update account.");
+            }
+        } catch (IllegalArgumentException e) {
+            response.status(400);
+            return gson.toJson("Invalid ID format.");
+        } catch (JsonSyntaxException e) {
+            response.status(400);
+            return gson.toJson("Invalid JSON format: " + e.getMessage());
         }
     }
 

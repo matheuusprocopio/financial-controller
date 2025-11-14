@@ -7,7 +7,7 @@ public class Account {
     private String name;
     private UUID userId;
     private String financialInstitution;
-    private double balance;
+    private Double balance;
 
     public Account() {
         this(null, null, null, null, 0.0);
@@ -53,11 +53,11 @@ public class Account {
         this.financialInstitution = financialInstitution;
     }
 
-    public double getBalance() {
+    public Double getBalance() {
         return balance;
     }
 
-    public void setBalance(double balance) {
+    public void setBalance(Double balance) {
         this.balance = balance;
     }
 }

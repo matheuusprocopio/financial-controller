@@ -1,12 +1,13 @@
 package com.ti2cc.api.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.ti2cc.api.model.Category;
-import com.ti2cc.api.service.CategoryService;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.ti2cc.api.dto.CategoryUpdateDTO;
+import com.ti2cc.api.model.Category;
+import com.ti2cc.api.service.CategoryService;
 
 import spark.Request;
 import spark.Response;
@@ -90,8 +91,13 @@ public class CategoryController {
         res.type("application/json");
         try {
             UUID id = UUID.fromString(req.params(":category_id"));
-            Category category = gson.fromJson(req.body(), Category.class);
+            CategoryUpdateDTO dto = gson.fromJson(req.body(), CategoryUpdateDTO.class);
+
+            Category category = new Category();
             category.setId(id);
+            category.setName(dto.getName());
+            category.setImagePath(dto.getImagePath());
+            category.setMainCategoryId(dto.getMainCategoryId());
 
             boolean updated = categoryService.updateCategory(category);
             if (updated) {

@@ -2,7 +2,11 @@ package com.ti2cc.api.routes;
 
 import com.ti2cc.api.controller.AccountController;
 
-import static spark.Spark.*;
+import static spark.Spark.delete;
+import static spark.Spark.get;
+import static spark.Spark.path;
+import static spark.Spark.post;
+import static spark.Spark.put;
 
 public class AccountRoutes {
 
@@ -16,8 +20,9 @@ public class AccountRoutes {
         path("/accounts", () -> {
             post("", controller::create);
             get("", controller::listByUser);
-            get("/:account_id", controller::getById);
-            delete("/:account_id", controller::delete);
+            get("/:accountId", controller::getById);
+            put("/:accountId", controller::update);
+            delete("/:accountId", controller::delete);
         });
     }
 }

@@ -1,12 +1,13 @@
 package com.ti2cc.api.service;
 
-import com.ti2cc.api.dao.AccountDAO;
-import com.ti2cc.api.model.Account;
-
 import java.util.List;
 import java.util.UUID;
 
+import com.ti2cc.api.dao.AccountDAO;
+import com.ti2cc.api.model.Account;
+
 public class AccountService {
+
     private final AccountDAO accountDAO;
 
     public AccountService(AccountDAO accountDAO) {
@@ -36,7 +37,7 @@ public class AccountService {
             return false;
         }
 
-        if (account.getName() == null && account.getFinancialInstitution() == null) {
+        if (account.getName() == null && account.getFinancialInstitution() == null && account.getBalance() == null) {
             System.err.println("No fields to update for account: " + account.getId());
             return false;
         }

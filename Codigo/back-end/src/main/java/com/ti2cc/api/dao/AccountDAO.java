@@ -1,7 +1,5 @@
 package com.ti2cc.api.dao;
 
-import com.ti2cc.api.model.Account;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +8,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.ti2cc.api.model.Account;
 
 public class AccountDAO {
     private final Connection connection;
@@ -43,8 +43,7 @@ public class AccountDAO {
             return false;
         }
     }
-
-    public boolean update(Account account) {
+        public boolean update(Account account) {
         StringBuilder sb = new StringBuilder("UPDATE accounts SET ");
         boolean hasPrev = false;
 
@@ -54,10 +53,14 @@ public class AccountDAO {
         }
 
         if (account.getFinancialInstitution() != null) {
-            if (hasPrev) {
-                sb.append(", ");
-            }
+            if (hasPrev) sb.append(", ");
             sb.append("financial_institution = ?");
+            hasPrev = true;
+        }
+
+        if (account.getBalance() != null) {
+            if (hasPrev) sb.append(", ");
+            sb.append("balance = ?");
             hasPrev = true;
         }
 
@@ -72,6 +75,10 @@ public class AccountDAO {
 
             if (account.getFinancialInstitution() != null) {
                 pstmt.setString(paramIndex++, account.getFinancialInstitution());
+            }
+
+            if (account.getBalance() != null) {
+                pstmt.setDouble(paramIndex++, account.getBalance());
             }
 
             pstmt.setObject(paramIndex, account.getId());

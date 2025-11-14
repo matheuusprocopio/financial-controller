@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -22,13 +23,17 @@ import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser } from "firebase/auth";
 import LoginModal from "@/components/auth/LoginModal";
+import { useRouter } from "next/navigation";
 import "./landingPage.css";
 
-export default function LandingTech() {
+function LandingTechContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userChecked, setUserChecked] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     let lastUpdate = 0;
@@ -51,10 +56,27 @@ export default function LandingTech() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
+      setUserChecked(true);
     });
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!userChecked) return;
+    
+    const shouldOpenLogin = searchParams.get("login") === "true";
+    if (shouldOpenLogin && !user) {
+      setLoginModalOpen(true);
+    }
+  }, [searchParams, user, userChecked]);
+
+  const handleLoginModalChange = (open: boolean) => {
+    setLoginModalOpen(open);
+    if (!open && searchParams.get("login") === "true") {
+      router.replace("/", { scroll: false });
+    }
+  };
 
   const features = [
     {
@@ -412,7 +434,17 @@ export default function LandingTech() {
         </div>
       </footer>
 
-      <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
+      <LoginModal open={loginModalOpen} onOpenChange={handleLoginModalChange} />
     </div>
+  );
+}
+
+export default function LandingTech() {
+  return (
+    //adicionar loading pra tela não piscar branco
+    <Suspense >
+      
+      <LandingTechContent />
+    </Suspense>
   );
 }

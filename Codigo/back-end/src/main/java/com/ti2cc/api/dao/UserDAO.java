@@ -79,26 +79,6 @@ public class UserDAO {
         return null;
     }
 
-    public User findByEmail(String email) {
-        String query = "SELECT * FROM users WHERE email = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, email);
-
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return new User(
-                        (UUID) rs.getObject("id"),
-                        rs.getString("name"),
-                        rs.getString("email")
-                );
-            }
-        } catch (SQLException e) {
-            System.err.println("Fail to retrieve user by email: " + e.getMessage());
-        }
-
-        return null;
-    }
-
     public boolean update(User user) {
         StringBuilder sb = new StringBuilder("UPDATE users SET ");
         boolean hasPrev = false;

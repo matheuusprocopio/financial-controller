@@ -13,9 +13,6 @@ WORKDIR /app
 
 COPY --from=builder /app/target/back-end-1.0-SNAPSHOT.jar app.jar
 
-# Copia arquivo de credenciais do Firebase se existir
-COPY service-account-key.json* ./
-
 EXPOSE 8080
 
 CMD ["java", "-jar", "app.jar"]

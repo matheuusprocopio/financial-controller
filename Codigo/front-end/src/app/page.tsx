@@ -145,7 +145,8 @@ function LandingTechContent() {
                     className="nav-link gap-2"
                   >
                     <User className="h-4 w-4" />
-                    {user.email?.split('@')[0]}
+                    {user.displayName}
+
                   </Button>
                   <Link href="/chat">
                     <Button className="nav-button">

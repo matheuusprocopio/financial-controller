@@ -56,7 +56,7 @@ public class MessageController {
 
             if (dto.getUserId() == null) {
                 res.status(400);
-                return gson.toJson("Field 'user_id' is required.");
+                return gson.toJson("Field 'userId' is required.");
             }
 
             if (dto.getRole() == null || dto.getRole().isBlank()) {

@@ -29,14 +29,14 @@ interface UseAuthReturn {
   isBackendAuthenticated: boolean;
 
   loginWithEmail: (email: string, password: string) => Promise<UserCredential>;
-  loginWithGoogle: () => Promise<UserCredential>;
+  loginWithGoogle: () => Promise<string>;
   signupWithEmail: (
     email: string,
     password: string,
     confirmPassword: string
   ) => Promise<UserCredential>;
   logout: () => Promise<void>;
-  loginBackend: () => Promise<AuthResponse>;
+  loginBackend: (idToken: string) => Promise<AuthResponse>;
   validateSession: () => Promise<AuthResponse>;
   logoutBackend: () => Promise<AuthResponse>;
 
@@ -115,13 +115,13 @@ export function useAuth(): UseAuthReturn {
   );
 
 
-  const loginWithGoogle = useCallback(async (): Promise<UserCredential> => {
+  const loginWithGoogle = useCallback(async (): Promise<string> => {
     setLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
       const idToken = await userCredential.user.getIdToken();
       setToken(idToken);
-      return userCredential;
+      return idToken;
     } catch (error: any) {
       throw error;
     } finally {
@@ -197,8 +197,8 @@ export function useAuth(): UseAuthReturn {
   }, [sessionId]);
 
 
-  const loginBackend = useCallback(async (): Promise<AuthResponse> => {
-    if (!token) {
+  const loginBackend = useCallback(async (idTokenp?: string): Promise<AuthResponse> => {
+    if (!idTokenp) {
       throw new Error("Por favor, faça login no Firebase primeiro");
     }
 
@@ -207,7 +207,7 @@ export function useAuth(): UseAuthReturn {
       const response = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: token }),
+        body: JSON.stringify({ idToken: idTokenp }),
       });
 
       const data: AuthResponse = await response.json();

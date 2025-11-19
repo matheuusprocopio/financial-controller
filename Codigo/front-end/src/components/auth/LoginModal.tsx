@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, XCircle, Loader2, LogIn, LogOut, Mail, AlignCenter } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
 interface LoginModalProps {
@@ -24,7 +24,7 @@ interface LoginModalProps {
 
 export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const router = useRouter();
-  const { user, loading, loginWithEmail, loginWithGoogle, signupWithEmail, logout } = useAuth();
+  const { user, loading, loginWithEmail, loginWithGoogle, loginBackend, signupWithEmail, logout } = useAuth();
   const [status, setStatus] = useState<{
     type: "success" | "error" | "info";
     message: string;
@@ -95,11 +95,12 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
     setStatus(null);
 
     try {
-      await loginWithGoogle();
+        const token = await loginWithGoogle();
       setStatus({
         type: "success",
         message: "Login com Google realizado com sucesso!",
       });
+      await loginBackend(token);
 
       setTimeout(() => {
         onOpenChange(false);

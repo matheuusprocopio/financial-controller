@@ -1,7 +1,8 @@
 "use server";
 
 import { CreateAccountType, UpdateAccountType } from "@/types/account.type";
-import { createAccount, updateAccount, deleteAccount } from "@/utils/services/accounts";
+import { PaginationParams } from "@/types/base.types";
+import { createAccount, updateAccount, deleteAccount, listAccountsPaginated } from "@/utils/services/accounts";
 
 export const createAccountAction = async (payload: CreateAccountType) => {
   const resp = await createAccount(payload);
@@ -15,5 +16,10 @@ export const updateAccountAction = async (accountId: string, payload: UpdateAcco
 
 export const deleteAccountAction = async (accountId: string) => {
   const resp = await deleteAccount(accountId);
+  return resp;
+};
+
+export const listAccountsPaginatedAction = async (userId: string, pagination: PaginationParams) => {
+  const resp = await listAccountsPaginated(userId, pagination);
   return resp;
 };

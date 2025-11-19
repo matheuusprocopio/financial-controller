@@ -6,6 +6,8 @@ import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.AccountUpdateDTO;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Account;
 import com.ti2cc.api.service.AccountService;
 
@@ -75,6 +77,31 @@ public class AccountController {
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid user ID format.");
+        }
+    }
+
+    public Object listByUserPaginated(Request req, Response res) {
+        res.type("application/json");
+        String userIdParam = req.queryParams("user_id");
+        if (userIdParam == null) {
+            res.status(400);
+            return gson.toJson("Query parameter 'user_id' is required.");
+        }
+
+        try {
+            UUID userId = UUID.fromString(userIdParam);
+            
+            int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : PaginationRequestDTO.DEFAULT_PAGE;
+            int pageLimit = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
+            
+            PaginationRequestDTO pagination = new PaginationRequestDTO(page, pageLimit);
+            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(userId, pagination);
+            
+            res.status(200);
+            return gson.toJson(paginatedAccounts);
+        } catch (IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson("Invalid parameters format.");
         }
     }
 

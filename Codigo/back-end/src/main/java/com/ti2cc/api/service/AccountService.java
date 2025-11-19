@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ti2cc.api.dao.AccountDAO;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Account;
 
 public class AccountService {
@@ -61,6 +63,18 @@ public class AccountService {
         }
 
         return accountDAO.getByUserId(userId);
+    }
+
+    public PaginatedResponseDTO<Account> findByUserIdPaginated(UUID userId, PaginationRequestDTO pagination) {
+        if (userId == null) {
+            System.err.println("User ID cannot be null.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        List<Account> accounts = accountDAO.getByUserIdPaginated(userId, pagination.getOffset(), pagination.getPageLimit());
+        long totalItems = accountDAO.countByUserId(userId);
+
+        return new PaginatedResponseDTO<>(accounts, totalItems, pagination.getPage(), pagination.getPageLimit());
     }
 
     public boolean deleteAccount(UUID accountId) {

@@ -6,22 +6,26 @@ import com.ti2cc.api.controller.AccountController;
 import com.ti2cc.api.controller.CategoryController;
 import com.ti2cc.api.controller.ChatController;
 import com.ti2cc.api.controller.ItemController;
+import com.ti2cc.api.controller.MessageController;
 import com.ti2cc.api.controller.UserController;
 import com.ti2cc.api.dao.AccountDAO;
 import com.ti2cc.api.dao.CategoryDAO;
 import com.ti2cc.api.dao.ChatDAO;
 import com.ti2cc.api.dao.ItemDAO;
+import com.ti2cc.api.dao.MessageDAO;
 import com.ti2cc.api.dao.UserDAO;
 import com.ti2cc.api.factory.PostgresFactory;
 import com.ti2cc.api.routes.AccountRoutes;
 import com.ti2cc.api.routes.CategoryRoutes;
 import com.ti2cc.api.routes.ChatRoutes;
 import com.ti2cc.api.routes.ItemRoutes;
+import com.ti2cc.api.routes.MessageRoutes;
 import com.ti2cc.api.routes.UserRoutes;
 import com.ti2cc.api.service.AccountService;
 import com.ti2cc.api.service.CategoryService;
 import com.ti2cc.api.service.ChatService;
 import com.ti2cc.api.service.ItemService;
+import com.ti2cc.api.service.MessageService;
 import com.ti2cc.api.service.UserService;
 
 public class Container {
@@ -33,6 +37,7 @@ public class Container {
         UserDAO userDAO = new UserDAO(postgresConn);
         ItemDAO itemDAO = new ItemDAO(postgresConn);
         ChatDAO chatDAO = new ChatDAO(postgresConn);
+        MessageDAO messageDAO = new MessageDAO(postgresConn);
 
 
         CategoryService categoryService = new CategoryService(categoryDAO);
@@ -40,6 +45,7 @@ public class Container {
         UserService userService = new UserService(userDAO);
         ItemService itemService = new ItemService(itemDAO);
         ChatService chatService = new ChatService(chatDAO);
+        MessageService messageService = new MessageService(messageDAO, chatDAO);
 
 
         CategoryController categoryController = new CategoryController(categoryService);
@@ -47,6 +53,7 @@ public class Container {
         UserController userController = new UserController(userService);
         ItemController itemController = new ItemController(itemService);
         ChatController chatController = new ChatController(chatService);
+        MessageController messageController = new MessageController(messageService);
 
 
         CategoryRoutes categoryRoutes = new CategoryRoutes(categoryController);
@@ -54,6 +61,7 @@ public class Container {
         UserRoutes userRoutes = new UserRoutes(userController);
         ItemRoutes itemRoutes = new ItemRoutes(itemController);
         ChatRoutes chatRoutes = new ChatRoutes(chatController);
+        MessageRoutes messageRoutes = new MessageRoutes(messageController);
 
 
         categoryRoutes.register();
@@ -61,5 +69,6 @@ public class Container {
         userRoutes.register();
         itemRoutes.register();
         chatRoutes.register();
+        messageRoutes.register();
     }
 }

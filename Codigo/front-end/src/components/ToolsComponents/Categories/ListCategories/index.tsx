@@ -5,22 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Table,
   TableBody,
   TableCell,
@@ -31,12 +15,19 @@ import {
 import { Search, Filter, ArrowUpDown } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { CategorieType } from "@/types/categorie.type";
+import { listCategoriesPaginatedAction } from "@/actions/category";
+import { usePagination } from "@/hooks/usePagination";
+import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
+import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
 
 interface ICategoriesList {
   data: {
     name?: string;
     categories?: CategorieType[];
     totalOfCategeories?: number;
+    currentPage?: number;
+    pageLimit?: number;
+    userId?: string;
   };
 }
 
@@ -44,13 +35,16 @@ const CategoriesList = ({ data }: ICategoriesList) => {
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const categoryName = data?.name ?? "";
   const totalOfCategeories = data?.totalOfCategeories ?? 0;
+  const userId = data?.userId ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCategories, setFilteredCategories] = useState<CategorieType[]>([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+  const pagination = usePagination({
+    totalItems: totalOfCategeories,
+    initialPage: data?.currentPage ?? 1,
+    initialItemsPerPage: data?.pageLimit ?? 10,
+  });
 
   useEffect(() => {
     setSearchTerm(categoryName);
@@ -70,103 +64,33 @@ const CategoriesList = ({ data }: ICategoriesList) => {
     }
 
     setFilteredCategories(filtered);
-    setCurrentPage(1); 
+    pagination.resetPage();
   }, [searchTerm, categories]);
 
-   const paginatedCategories = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredCategories.slice(startIndex, endIndex);
-  }, [filteredCategories, currentPage, itemsPerPage]);
+   const paginatedCategories = filteredCategories;
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value));
-    setCurrentPage(1);
-  };
-
-  const renderPaginationItems = () => {
-    const items = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => handlePageChange(i)}
-              isActive={currentPage === i}
-              className="cursor-pointer"
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    } else {
-      items.push(
-        <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => handlePageChange(1)}
-            isActive={currentPage === 1}
-            className="cursor-pointer"
-          >
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-
-      if (currentPage > 3) {
-        items.push(
-          <PaginationItem key="ellipsis-start">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-
-     
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-
-      for (let i = start; i <= end; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => handlePageChange(i)}
-              isActive={currentPage === i}
-              className="cursor-pointer"
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-
-      if (currentPage < totalPages - 2) {
-        items.push(
-          <PaginationItem key="ellipsis-end">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      }
-
-      items.push(
-        <PaginationItem key={totalPages}>
-          <PaginationLink
-            onClick={() => handlePageChange(totalPages)}
-            isActive={currentPage === totalPages}
-            className="cursor-pointer"
-          >
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
+  const handlePageChange = async (page: number) => {
+    pagination.setCurrentPage(page);
+    const result = await listCategoriesPaginatedAction(userId, {
+      page,
+      size: pagination.itemsPerPage,
+    }, searchTerm);
+    if (result && result.data) {
+      setFilteredCategories(result.data);
     }
+  };
 
-    return items;
+  const handleItemsPerPageChange = async (value: string) => {
+    const newItemsPerPage = Number(value);
+    pagination.setItemsPerPage(newItemsPerPage);
+    pagination.resetPage();
+    const result = await listCategoriesPaginatedAction(userId, {
+      page: 1,
+      size: newItemsPerPage,
+    }, searchTerm);
+    if (result && result.data) {
+      setFilteredCategories(result.data);
+    }
   };
 
   return (
@@ -243,69 +167,23 @@ const CategoriesList = ({ data }: ICategoriesList) => {
           </Table>
         </div>
 
-        {filteredCategories.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Mostrando {(currentPage - 1) * itemsPerPage + 1} a{" "}
-                {Math.min(currentPage * itemsPerPage, filteredCategories.length)}{" "}
-                de {filteredCategories.length} categorias
-                {searchTerm && " (filtradas)"}
-              </span>
-            </div>
+        {filteredCategories.length > 0 && pagination.totalPages > 0 && (
+          <div className="flex flex-col gap-4">
+            <PaginationControls
+              itemsPerPage={pagination.itemsPerPage}
+              onItemsPerPageChange={handleItemsPerPageChange}
+              currentPage={pagination.currentPage}
+              totalItems={totalOfCategeories}
+              showBalance={false}
+            />
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Itens por página:
-                </span>
-                <Select
-                  value={itemsPerPage.toString()}
-                  onValueChange={handleItemsPerPageChange}
-                >
-                  <SelectTrigger className="w-[70px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {totalPages > 1 && (
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() =>
-                          handlePageChange(Math.max(1, currentPage - 1))
-                        }
-                        className={cn(
-                          "cursor-pointer",
-                          currentPage === 1 && "pointer-events-none opacity-50"
-                        )}
-                      />
-                    </PaginationItem>
-                    {renderPaginationItems()}
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() =>
-                          handlePageChange(Math.min(totalPages, currentPage + 1))
-                        }
-                        className={cn(
-                          "cursor-pointer",
-                          currentPage === totalPages &&
-                            "pointer-events-none opacity-50"
-                        )}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              )}
-            </div>
+            {pagination.totalPages > 1 && (
+              <PaginationNumbers
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
           </div>
         )}
       </CardContent>

@@ -2,8 +2,8 @@ import { creditCardsMock } from "@/data/creditCardsMock";
 // import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
-import { listCategories } from "@/utils/services/categories";
-import { listAccounts, getAccountById } from "@/utils/services/accounts";
+import { listCategories, listCategoriesPaginated } from "@/utils/services/categories";
+import { listAccounts, getAccountById, listAccountsPaginated } from "@/utils/services/accounts";
 
 const ensureErrorMessage = (rawMessage?: string) => {
   if (!rawMessage) return "Unknown error";
@@ -92,15 +92,19 @@ export const listCategoriesTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const resp = await listCategories("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e", name);
+      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
+      const resp = await listCategoriesPaginated(userId, { page: 1, size: 10 }, name);
 
-      if (Array.isArray(resp)) {
-        const categories = resp;
+      if (resp && resp.data && Array.isArray(resp.data)) {
+        const categories = resp.data;
 
         return {
           name,
           categories,
-          totalOfCategories: categories.length,
+          totalOfCategeories: resp.totalItems,
+          currentPage: resp.currentPage,
+          pageLimit: resp.pageLimit,
+          userId,
         };
       }
 
@@ -109,7 +113,7 @@ export const listCategoriesTool = tool({
       return {
         name,
         categories: [],
-        totalOfCategories: 0,
+        totalOfCategeories: 0,
         error: ensureErrorMessage(error.message),
       };
     } catch (error) {
@@ -118,7 +122,7 @@ export const listCategoriesTool = tool({
       return {
         name,
         categories: [],
-        totalOfCategories: 0,
+        totalOfCategeories: 0,
         error: errorMessage,
         status: null,
         resource: null,
@@ -291,10 +295,11 @@ export const listAccountsTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const resp = await listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e");
+      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
+      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (Array.isArray(resp)) {
-        const accounts = resp;
+      if (resp && resp.data && Array.isArray(resp.data)) {
+        const accounts = resp.data;
 
         const filteredAccounts = name
           ? accounts.filter((account) =>
@@ -305,7 +310,10 @@ export const listAccountsTool = tool({
         return {
           name,
           accounts: filteredAccounts,
-          totalOfAccounts: filteredAccounts.length,
+          totalOfAccounts: resp.totalItems,
+          currentPage: resp.currentPage,
+          pageLimit: resp.pageLimit,
+          userId,
         };
       }
 
@@ -341,10 +349,11 @@ export const filterAccountsTool = tool({
 
   execute: async ({ name, financialInstitution }) => {
     try {
-      const resp = await listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e");
+      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
+      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (Array.isArray(resp)) {
-        let filteredAccounts = [...resp];
+      if (resp && resp.data && Array.isArray(resp.data)) {
+        let filteredAccounts = [...resp.data];
 
         if (name && name.trim()) {
           const nameFilter = name.toLowerCase().trim();
@@ -364,8 +373,10 @@ export const filterAccountsTool = tool({
           name: name || "",
           financialInstitution: financialInstitution || "",
           accounts: filteredAccounts,
-          totalOfAccounts: filteredAccounts.length,
-          totalOfOriginalAccounts: resp.length,
+          totalOfAccounts: resp.totalItems,
+          currentPage: resp.currentPage,
+          pageLimit: resp.pageLimit,
+          userId,
         };
       }
 
@@ -376,7 +387,6 @@ export const filterAccountsTool = tool({
         financialInstitution: financialInstitution || "",
         accounts: [],
         totalOfAccounts: 0,
-        totalOfOriginalAccounts: 0,
         error: ensureErrorMessage(error.message),
       };
     } catch (error) {
@@ -387,7 +397,6 @@ export const filterAccountsTool = tool({
         financialInstitution: financialInstitution || "",
         accounts: [],
         totalOfAccounts: 0,
-        totalOfOriginalAccounts: 0,
         error: errorMessage,
       };
     }

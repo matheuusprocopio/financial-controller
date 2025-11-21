@@ -31,6 +31,7 @@ interface IFormCard {
   description?: string;
   fields: FormField[];
   submitLabel?: string;
+  alreadySubmitted?: boolean;
   onSubmit: (data: Record<string, string>) => void;
   className?: string;
   defaultFormData: Record<string, string>;
@@ -43,6 +44,7 @@ const FormCard = ({
   submitLabel = "Enviar",
   onSubmit,
   className,
+  alreadySubmitted,
   defaultFormData,
 }: IFormCard) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
@@ -61,6 +63,12 @@ const FormCard = ({
   useEffect(() => {
     setFormData(defaultFormData);
   }, [defaultFormData]);
+
+  useEffect(() => {
+    if (alreadySubmitted) {
+      setIsSubmitted(true);
+    }
+  }, [alreadySubmitted]);
 
   if (isSubmitted) {
     return (
@@ -112,7 +120,6 @@ const FormCard = ({
                   value={formData[field.name] || ""}
                   onChange={(e) => handleChange(field.name, e.target.value)}
                   min={field.min}
-            
                 />
               )}
             </div>

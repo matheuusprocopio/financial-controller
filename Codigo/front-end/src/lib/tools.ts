@@ -1,5 +1,4 @@
 import { creditCardsMock } from "@/data/creditCardsMock";
-// import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
 import { listCategories } from "@/utils/services/categories";

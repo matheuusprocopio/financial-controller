@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,21 +14,53 @@ import {
 import { User, Menu, Wallet, LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import UserManageModal from "@/components/ToolsComponents/User/UserManageModal";
+import { 
+  updateUserService, 
+  deleteUserService,
+  getUserByIdService 
+} from "@/utils/services/users/userService";
 
 interface IHeader {
-  user?: {
-    name: string;
-    avatar?: string;
-  };
   onToggleSidebar?: () => void;
 }
 
 const Header = ({
-  user = { name: "Usuário" },
   onToggleSidebar,
 }: IHeader) => {
   const router = useRouter();
   const { logout, loading, user: firebaseUser } = useAuth();
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [dbUserName, setDbUserName] = useState<string>("");
+  const [dbUserEmail, setDbUserEmail] = useState<string>("");
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+
+  // Mostra apenas dados do banco de dados
+  const displayName = dbUserName || (isLoadingUserData ? "Carregando..." : "Usuário");
+  const displayEmail = dbUserEmail || "";
+
+  // Buscar dados do usuário do banco ao carregar
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (firebaseUser?.uid) {
+        setIsLoadingUserData(true);
+        try {
+          const userData = await getUserByIdService(firebaseUser.uid);
+          if (userData) {
+            setDbUserName(userData.name);
+            setDbUserEmail(userData.email);
+          }
+        } catch (error) {
+          console.error('[Header] Error fetching user data:', error);
+        } finally {
+          setIsLoadingUserData(false);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [firebaseUser?.uid]);
 
   const handleLogout = async () => {
     try {
@@ -39,9 +71,38 @@ const Header = ({
     }
   };
 
-  // Usa o nome do Firebase se disponível, caso contrário usa a prop
-  const displayName = firebaseUser?.displayName || firebaseUser?.email?.split("@")[0] || user.name;
-  const displayEmail = firebaseUser?.email || "";
+  const handleManageUser = async () => {
+    if (!firebaseUser?.uid) return;
+    const mockUser = {
+      id: firebaseUser.uid,
+      name: dbUserName,
+      email: dbUserEmail,
+    };
+    setUserData(mockUser);
+    setUserModalOpen(true);
+  };
+
+  const handleUpdateUser = async (user: any) => {
+    try {
+      const result = await updateUserService(user.id, { name: user.name, email: user.email });
+      setDbUserName(user.name);
+      setDbUserEmail(user.email);
+      setUserData(user);
+    } catch (error: any) {
+      throw new Error(error.message || "Erro ao atualizar usuário");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteUserService(userId);
+      setUserData(null);
+
+      await handleLogout();
+    } catch (error: any) {
+      throw new Error(error.message || "Erro ao deletar usuário");
+    }
+  };
 
   return (
     <header className="chat-header flex items-center justify-between p-4">
@@ -70,8 +131,8 @@ const Header = ({
             <button className="flex items-center gap-3 outline-none focus:outline-none cursor-pointer hover:opacity-80 transition-opacity">
               <Avatar className="h-8 w-8 ring-2 ring-indigo-500/30 hover:ring-indigo-400/50 transition-all">
                 <AvatarImage
-                  src={user.avatar || "/placeholder.svg"}
-                  alt={user.name}
+                  src={firebaseUser?.photoURL || "/placeholder.svg"}
+                  alt={displayName}
                 />
                 <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600">
                   <User className="h-4 w-4 text-white" />
@@ -93,6 +154,14 @@ const Header = ({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
+              onClick={handleManageUser}
+              className="cursor-pointer"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Gerenciar Conta</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
               onClick={handleLogout} 
               className="cursor-pointer"
               disabled={loading}
@@ -103,6 +172,14 @@ const Header = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <UserManageModal
+        open={userModalOpen}
+        onOpenChange={setUserModalOpen}
+        user={userData}
+        onUpdate={handleUpdateUser}
+        onDelete={handleDeleteUser}
+      />
     </header>
   );
 };

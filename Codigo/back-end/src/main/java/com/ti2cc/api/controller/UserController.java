@@ -3,6 +3,7 @@ package com.ti2cc.api.controller;
 import com.google.gson.Gson;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.UserService;
+import com.ti2cc.api.util.UuidUtils;
 
 import java.util.UUID;
 
@@ -32,7 +33,13 @@ public class UserController {
 
     public String getById(String idStr) {
         try {
-            UUID id = UUID.fromString(idStr);
+            UUID id;
+            try {
+                id = UUID.fromString(idStr);
+            } catch (IllegalArgumentException e) {
+                id = UuidUtils.fromFirebaseUid(idStr);
+            }
+            
             User user = userService.findUserById(id);
 
             if (user != null) {
@@ -40,31 +47,45 @@ public class UserController {
             } else {
                 return gson.toJson("User not found.");
             }
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return gson.toJson("Invalid ID format.");
         }
     }
 
     public String update(String idStr, String body) {
         try {
-            UUID id = UUID.fromString(idStr);
+            UUID id;
+            try {
+                id = UUID.fromString(idStr);
+            } catch (IllegalArgumentException e) {
+                id = UuidUtils.fromFirebaseUid(idStr);
+            }
+            
             User user = gson.fromJson(body, User.class);
             user.setId(id);
 
             boolean updated = userService.updateUser(user);
+            
             if (updated) {
-                return gson.toJson("User updated successfully.");
+                User updatedUser = userService.findUserById(id);
+                return gson.toJson(updatedUser);
             } else {
                 return gson.toJson("Failed to update user.");
             }
-        } catch (IllegalArgumentException e) {
-            return gson.toJson("Invalid ID format.");
+        } catch (Exception e) {
+            return gson.toJson("Error updating user: " + e.getMessage());
         }
     }
 
     public String delete(String idStr) {
         try {
-            UUID id = UUID.fromString(idStr);
+            UUID id;
+            try {
+                id = UUID.fromString(idStr);
+            } catch (IllegalArgumentException e) {
+                id = UuidUtils.fromFirebaseUid(idStr);
+            }
+            
             boolean deleted = userService.deleteUser(id);
 
             if (deleted) {
@@ -72,8 +93,8 @@ public class UserController {
             } else {
                 return gson.toJson("User not found.");
             }
-        } catch (IllegalArgumentException e) {
-            return gson.toJson("Invalid ID format.");
+        } catch (Exception e) {
+            return gson.toJson("Error deleting user: " + e.getMessage());
         }
     }
 }

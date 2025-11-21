@@ -9,6 +9,7 @@ import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.FirebaseAuthService;
 import com.ti2cc.api.service.SessionService;
 import com.ti2cc.api.service.UserService;
+import com.ti2cc.api.util.UuidUtils;
 
 import java.util.UUID;
 
@@ -27,7 +28,6 @@ public class AuthController {
 
     public String login(String body) {
         try {
-            // Verifica se Firebase está inicializado
             if (firebaseAuthService == null || !firebaseAuthService.isInitialized()) {
                 return gson.toJson(new AuthResponseDTO(false, "Firebase não está configurado. Configure as credenciais no .env"));
             }
@@ -38,7 +38,6 @@ public class AuthController {
                 return gson.toJson(new AuthResponseDTO(false, "Requisição inválida"));
             }
 
-            // Valida que tem token ou email/password
             if (loginRequest.getIdToken() == null || loginRequest.getIdToken().isEmpty()) {
                 return gson.toJson(new AuthResponseDTO(false, "Token ID do Firebase é obrigatório"));
             }
@@ -57,6 +56,8 @@ public class AuthController {
                 return gson.toJson(new AuthResponseDTO(false, "Email não encontrado no token"));
             }
 
+            UUID userId = UuidUtils.fromFirebaseUid(decodedToken.getUid());
+
             User user = userService.findUserByEmail(email);
             
             if (user == null) {
@@ -69,7 +70,7 @@ public class AuthController {
                     }
                 }
 
-                user = new User(UUID.randomUUID(), name, email);
+                user = new User(userId, name, email);
                 boolean created = userService.createUser(user);
                 
                 if (!created) {
@@ -88,8 +89,6 @@ public class AuthController {
             return gson.toJson(new AuthResponseDTO(true, "Login realizado com sucesso", user, sessionId));
 
         } catch (Exception e) {
-            System.err.println("Erro ao processar login: " + e.getMessage());
-            e.printStackTrace();
             return gson.toJson(new AuthResponseDTO(false, "Erro interno: " + e.getMessage()));
         }
     }

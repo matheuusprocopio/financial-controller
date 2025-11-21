@@ -54,10 +54,6 @@ const LayoutContainer = ({ children }: { children: React.ReactNode }) => {
         <div className="chat-page-container">
           <div className="flex flex-col h-screen relative z-10">
             <Header 
-              user={user ? {
-                name: user.displayName || user.email?.split('@')[0] || "Usuário",
-                avatar: user.photoURL || undefined
-              } : undefined}
               onToggleSidebar={handleToggleSidebar} 
             />
             <div className="flex flex-1 overflow-hidden relative">

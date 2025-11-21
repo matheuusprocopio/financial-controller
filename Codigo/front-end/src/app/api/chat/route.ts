@@ -1,6 +1,3 @@
-// src/app/api/chat/route.ts
-// MODIFICAÇÃO: rota de chat com suporte a "resposta em formato de gráfico"
-
 import { tools } from "@/lib/tools";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";

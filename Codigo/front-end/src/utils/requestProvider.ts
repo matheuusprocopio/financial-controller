@@ -34,6 +34,8 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
         ...DEFAULT_HEADERS,
         ...options?.headers,
       },
+      mode: 'cors',
+      credentials: 'omit',
       cache: options?.cache,
       next: options?.next,
     });
@@ -60,6 +62,8 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
         ...DEFAULT_HEADERS,
         ...options?.headers,
       },
+      mode: 'cors',
+      credentials: 'omit',
     });
     const validationResp = await respValidation(resp);
 
@@ -84,6 +88,8 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
         ...DEFAULT_HEADERS,
         ...options?.headers,
       },
+      mode: 'cors',
+      credentials: 'omit',
     });
     const validationResp = await respValidation(resp);
 
@@ -108,6 +114,8 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
         ...DEFAULT_HEADERS,
         ...options?.headers,
       },
+      mode: 'cors',
+      credentials: 'omit',
     });
     const validationResp = await respValidation(resp);
 
@@ -135,6 +143,8 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
         ...DEFAULT_HEADERS,
         ...options?.headers,
       },
+      mode: 'cors',
+      credentials: 'omit',
     });
     const validationResp = await respValidation(resp);
 

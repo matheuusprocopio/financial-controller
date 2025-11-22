@@ -27,7 +27,7 @@ import BaseFormCard, {
   FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
 import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
-import { listAccountsPaginatedAction } from "@/actions/account";
+import { listAccountsPaginated } from "@/utils/services/accounts";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
@@ -63,6 +63,8 @@ const AccountsList = ({ data }: IAccountsList) => {
     initialPage: data?.currentPage ?? 1,
     initialItemsPerPage: data?.pageLimit ?? 10,
   });
+
+  const { resetPage } = pagination;
 
   useEffect(() => {
     setSearchTerm(accountNickname || "");
@@ -105,8 +107,10 @@ const AccountsList = ({ data }: IAccountsList) => {
     }
 
     setFilteredAccounts(filtered);
-    pagination.resetPage();
-  }, [searchTerm, accounts, activeFilters]); const formatCurrency = (value: number) => {
+    resetPage();
+  }, [searchTerm, accounts, activeFilters, resetPage]);
+
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -164,27 +168,26 @@ const AccountsList = ({ data }: IAccountsList) => {
 
   const paginatedAccounts = filteredAccounts;
 
-  const handlePageChange = async (page: number) => {
-    pagination.setCurrentPage(page);
-    const result = await listAccountsPaginatedAction(userId, {
-      page,
-      size: pagination.itemsPerPage,
-    });
-    if (result && result.data) {
-      setFilteredAccounts(result.data);
-    }
-  };
+  const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
+    try {
+      const newPage = page ?? pagination.currentPage;
+      const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+      
+      if (itemsPerPage) {
+        pagination.setItemsPerPage(newItemsPerPage);
+        pagination.resetPage();
+      } else if (page) {
+        pagination.setCurrentPage(newPage);
+      }
 
-  const handleItemsPerPageChange = async (value: string) => {
-    const newItemsPerPage = Number(value);
-    pagination.setItemsPerPage(newItemsPerPage);
-    pagination.resetPage();
-    const result = await listAccountsPaginatedAction(userId, {
-      page: 1,
-      size: newItemsPerPage,
-    });
-    if (result && result.data) {
+      const result = await listAccountsPaginated(userId, {
+        page: itemsPerPage ? 1 : newPage,
+        size: newItemsPerPage,
+      });
+      
       setFilteredAccounts(result.data);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
     }
   };
 
@@ -335,7 +338,7 @@ const AccountsList = ({ data }: IAccountsList) => {
           <div className="flex flex-col gap-4">
             <PaginationControls
               itemsPerPage={pagination.itemsPerPage}
-              onItemsPerPageChange={handleItemsPerPageChange}
+              onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
               currentPage={pagination.currentPage}
               totalItems={totalOfAccounts}
               showBalance={totalOfAccounts > 0}
@@ -351,7 +354,7 @@ const AccountsList = ({ data }: IAccountsList) => {
               <PaginationNumbers
                 currentPage={pagination.currentPage}
                 totalPages={pagination.totalPages}
-                onPageChange={handlePageChange}
+                onPageChange={(page) => handlePaginationChange(page)}
               />
             )}
           </div>

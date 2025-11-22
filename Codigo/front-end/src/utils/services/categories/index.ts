@@ -1,5 +1,5 @@
 import { CategorieType, CreateCategoryType, UpdateCategoryType } from "@/types/categorie.type";
-import { PaginatedResponse, PaginationParams } from "@/types/base.types";
+import { PaginatedResponse, PaginationParams } from "@/types/pagination.type";
 import newRequestProvider from "@/utils/requestProvider";
 
 const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
@@ -12,20 +12,14 @@ export const listCategories = async (userId: string, categoryName?: string) => {
   );
 };
 
-export const listCategoriesPaginated = async (userId: string, pagination: PaginationParams, categoryName?: string) => {
+export const listCategoriesPaginated = async (userId: string, pagination: PaginationParams, categoryName?: string): Promise<PaginatedResponse<CategorieType>> => {
   const nameParam = categoryName ? `&name=${categoryName}` : "";
-  const response = await provider.get<any>(
+  const response = await provider.get<PaginatedResponse<CategorieType>>(
     `categories/paginated?user_id=${userId}&page=${pagination.page}&size=${pagination.size}${nameParam}`
   );
   
-  if (response && response.data && Array.isArray(response.data)) {
-    const paginatedResponse: PaginatedResponse<CategorieType> = {
-      data: response.data,
-      totalItems: response.totalItems,
-      currentPage: response.currentPage,
-      pageLimit: response.pageLimit,
-    };
-    return paginatedResponse;
+  if ('error' in response) {
+    throw new Error(response.error.message);
   }
   
   return response;

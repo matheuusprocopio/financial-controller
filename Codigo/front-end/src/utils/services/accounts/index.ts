@@ -1,6 +1,6 @@
 
 import { AccountType, CreateAccountType, UpdateAccountType } from "@/types/account.type";
-import { PaginatedResponse, PaginationParams } from "@/types/base.types";
+import { PaginatedResponse, PaginationParams } from "@/types/pagination.type";
 import newRequestProvider from "@/utils/requestProvider";
 
 const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
@@ -35,22 +35,19 @@ export const listAccounts = async (userId: string) => {
   return response;
 };
 
-export const listAccountsPaginated = async (userId: string, pagination: PaginationParams) => {
-  const response = await provider.get<any>(
+export const listAccountsPaginated = async (userId: string, pagination: PaginationParams): Promise<PaginatedResponse<AccountType>> => {
+  const response = await provider.get<PaginatedResponse<any>>(
     `accounts/paginated?user_id=${userId}&page=${pagination.page}&size=${pagination.size}`
   );
   
-  if (response && response.data && Array.isArray(response.data)) {
-    const paginatedResponse: PaginatedResponse<AccountType> = {
-      data: response.data.map(transformAccountFromBackend),
-      totalItems: response.totalItems,
-      currentPage: response.currentPage,
-      pageLimit: response.pageLimit,
-    };
-    return paginatedResponse;
+  if ('error' in response) {
+    throw new Error(response.error.message);
   }
   
-  return response;
+  return {
+    ...response,
+    data: response.data.map(transformAccountFromBackend),
+  };
 };
 
 export const getAccountById = async (accountId: string) => {

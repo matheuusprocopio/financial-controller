@@ -1,27 +1,9 @@
 import { creditCardsMock } from "@/data/creditCardsMock";
-// import { accountsMock } from "@/data/accountsMock";
 import { tool } from "ai";
 import { z } from "zod";
-import { listCategories, listCategoriesPaginated } from "@/utils/services/categories";
-import { listAccounts, getAccountById, listAccountsPaginated } from "@/utils/services/accounts";
-
-const ensureErrorMessage = (rawMessage?: string) => {
-  if (!rawMessage) return "Unknown error";
-
-  try {
-    const parsed = JSON.parse(rawMessage);
-
-    if (parsed && typeof parsed === "object" && "message" in parsed) {
-      const extracted = (parsed as { message?: unknown }).message;
-
-      if (typeof extracted === "string" && extracted.trim()) return extracted;
-    }
-  } catch (err) {
-    // ignore parse failures and use raw message
-  }
-
-  return rawMessage;
-};
+import { listCategoriesPaginated } from "@/utils/services/categories";
+import { getAccountById, listAccountsPaginated } from "@/utils/services/accounts";
+import { AccountType } from "@/types/account.type";
 
 // categories
 export const createNewCategoryTool = tool({
@@ -95,26 +77,13 @@ export const listCategoriesTool = tool({
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
       const resp = await listCategoriesPaginated(userId, { page: 1, size: 10 }, name);
 
-      if (resp && resp.data && Array.isArray(resp.data)) {
-        const categories = resp.data;
-
-        return {
-          name,
-          categories,
-          totalOfCategeories: resp.totalItems,
-          currentPage: resp.currentPage,
-          pageLimit: resp.pageLimit,
-          userId,
-        };
-      }
-
-      const { error } = resp;
-
       return {
         name,
-        categories: [],
-        totalOfCategeories: 0,
-        error: ensureErrorMessage(error.message),
+        categories: resp.data,
+        totalOfCategories: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -122,10 +91,8 @@ export const listCategoriesTool = tool({
       return {
         name,
         categories: [],
-        totalOfCategeories: 0,
+        totalOfCategories: 0,
         error: errorMessage,
-        status: null,
-        resource: null,
       };
     }
   },
@@ -298,43 +265,28 @@ export const listAccountsTool = tool({
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
       const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (resp && resp.data && Array.isArray(resp.data)) {
-        const accounts = resp.data;
-
-        const filteredAccounts = name
-          ? accounts.filter((account) =>
-              account.nickname.toLowerCase().includes(name.toLowerCase())
-            )
-          : accounts;
-
-        return {
-          name,
-          accounts: filteredAccounts,
-          totalOfAccounts: resp.totalItems,
-          currentPage: resp.currentPage,
-          pageLimit: resp.pageLimit,
-          userId,
-        };
-      }
-
-      const { error } = resp;
+      const filteredAccounts = name
+        ? resp.data.filter((account: AccountType) =>
+            account.nickname.toLowerCase().includes(name.toLowerCase())
+          )
+        : resp.data;
 
       return {
-        name,
-        accounts: [],
-        totalOfAccounts: 0,
-        error: ensureErrorMessage(error.message),
+        nickname: name,
+        accounts: filteredAccounts,
+        totalOfAccounts: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
       return {
-        name,
+        nickname: name,
         accounts: [],
         totalOfAccounts: 0,
         error: errorMessage,
-        status: null,
-        resource: null,
       };
     }
   },
@@ -352,49 +304,35 @@ export const filterAccountsTool = tool({
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
       const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (resp && resp.data && Array.isArray(resp.data)) {
-        let filteredAccounts = [...resp.data];
+      let filteredAccounts = [...resp.data];
 
-        if (name && name.trim()) {
-          const nameFilter = name.toLowerCase().trim();
-          filteredAccounts = filteredAccounts.filter((account) =>
-            account.nickname.toLowerCase().includes(nameFilter)
-          );
-        }
-
-        if (financialInstitution && financialInstitution.trim()) {
-          const institutionFilter = financialInstitution.toLowerCase().trim();
-          filteredAccounts = filteredAccounts.filter((account) =>
-            account.financial_institution.toLowerCase().includes(institutionFilter)
-          );
-        }
-
-        return {
-          name: name || "",
-          financialInstitution: financialInstitution || "",
-          accounts: filteredAccounts,
-          totalOfAccounts: resp.totalItems,
-          currentPage: resp.currentPage,
-          pageLimit: resp.pageLimit,
-          userId,
-        };
+      if (name && name.trim()) {
+        const nameFilter = name.toLowerCase().trim();
+        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
+          account.nickname.toLowerCase().includes(nameFilter)
+        );
       }
 
-      const { error } = resp;
+      if (financialInstitution && financialInstitution.trim()) {
+        const institutionFilter = financialInstitution.toLowerCase().trim();
+        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
+          account.financial_institution.toLowerCase().includes(institutionFilter)
+        );
+      }
 
       return {
-        name: name || "",
-        financialInstitution: financialInstitution || "",
-        accounts: [],
-        totalOfAccounts: 0,
-        error: ensureErrorMessage(error.message),
+        nickname: name || "",
+        accounts: filteredAccounts,
+        totalOfAccounts: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
       return {
-        name: name || "",
-        financialInstitution: financialInstitution || "",
+        nickname: name || "",
         accounts: [],
         totalOfAccounts: 0,
         error: errorMessage,

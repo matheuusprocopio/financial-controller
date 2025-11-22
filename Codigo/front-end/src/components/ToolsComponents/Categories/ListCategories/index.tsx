@@ -15,7 +15,7 @@ import {
 import { Search, Filter, ArrowUpDown } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { CategorieType } from "@/types/categorie.type";
-import { listCategoriesPaginatedAction } from "@/actions/category";
+import { listCategoriesPaginated } from "@/utils/services/categories";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
@@ -24,7 +24,7 @@ interface ICategoriesList {
   data: {
     name?: string;
     categories?: CategorieType[];
-    totalOfCategeories?: number;
+    totalOfCategories?: number;
     currentPage?: number;
     pageLimit?: number;
     userId?: string;
@@ -34,17 +34,19 @@ interface ICategoriesList {
 const CategoriesList = ({ data }: ICategoriesList) => {
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const categoryName = data?.name ?? "";
-  const totalOfCategeories = data?.totalOfCategeories ?? 0;
+  const totalOfCategories = data?.totalOfCategories ?? 0;
   const userId = data?.userId ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCategories, setFilteredCategories] = useState<CategorieType[]>([]);
 
   const pagination = usePagination({
-    totalItems: totalOfCategeories,
+    totalItems: totalOfCategories,
     initialPage: data?.currentPage ?? 1,
     initialItemsPerPage: data?.pageLimit ?? 10,
   });
+
+  const { resetPage } = pagination;
 
   useEffect(() => {
     setSearchTerm(categoryName);
@@ -64,32 +66,31 @@ const CategoriesList = ({ data }: ICategoriesList) => {
     }
 
     setFilteredCategories(filtered);
-    pagination.resetPage();
-  }, [searchTerm, categories]);
+    resetPage();
+  }, [searchTerm, categories, resetPage]);
 
-   const paginatedCategories = filteredCategories;
+  const paginatedCategories = filteredCategories;
 
-  const handlePageChange = async (page: number) => {
-    pagination.setCurrentPage(page);
-    const result = await listCategoriesPaginatedAction(userId, {
-      page,
-      size: pagination.itemsPerPage,
-    }, searchTerm);
-    if (result && result.data) {
+  const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
+    try {
+      const newPage = page ?? pagination.currentPage;
+      const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+      
+      if (itemsPerPage) {
+        pagination.setItemsPerPage(newItemsPerPage);
+        pagination.resetPage();
+      } else if (page) {
+        pagination.setCurrentPage(newPage);
+      }
+
+      const result = await listCategoriesPaginated(userId, {
+        page: itemsPerPage ? 1 : newPage,
+        size: newItemsPerPage,
+      }, searchTerm);
+      
       setFilteredCategories(result.data);
-    }
-  };
-
-  const handleItemsPerPageChange = async (value: string) => {
-    const newItemsPerPage = Number(value);
-    pagination.setItemsPerPage(newItemsPerPage);
-    pagination.resetPage();
-    const result = await listCategoriesPaginatedAction(userId, {
-      page: 1,
-      size: newItemsPerPage,
-    }, searchTerm);
-    if (result && result.data) {
-      setFilteredCategories(result.data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
     }
   };
 
@@ -171,9 +172,9 @@ const CategoriesList = ({ data }: ICategoriesList) => {
           <div className="flex flex-col gap-4">
             <PaginationControls
               itemsPerPage={pagination.itemsPerPage}
-              onItemsPerPageChange={handleItemsPerPageChange}
+              onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
               currentPage={pagination.currentPage}
-              totalItems={totalOfCategeories}
+              totalItems={totalOfCategories}
               showBalance={false}
             />
 
@@ -181,7 +182,7 @@ const CategoriesList = ({ data }: ICategoriesList) => {
               <PaginationNumbers
                 currentPage={pagination.currentPage}
                 totalPages={pagination.totalPages}
-                onPageChange={handlePageChange}
+                onPageChange={(page) => handlePaginationChange(page)}
               />
             )}
           </div>

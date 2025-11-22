@@ -1,7 +1,21 @@
-export type MessageType = {
+import { UIMessage } from "ai";
+
+export type ServerMessageType = {
   id: string;
-  content: string;
-  sender: "user" | "agent";
-  timestamp: Date;
-  components?: React.ReactNode;
+  chatId: string;
+  role: string;
+  parts: any[];
+  createdAt: string;
+};
+
+export type FrontMessageType = {
+  createdAt: Date;
+  message: UIMessage;
+};
+
+export type CreateMessageType = {
+  id: string;
+  userId: string;
+  role: string;
+  parts: any[];
 };

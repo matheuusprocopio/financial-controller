@@ -4,8 +4,8 @@ export type PaginatedResponse<T> = {
   currentPage: number;
   pageLimit: number;
 };
-
 export type PaginationParams = {
   page: number;
   size: number;
 };
+

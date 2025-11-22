@@ -3,28 +3,27 @@ import { ChatType } from "@/types/chat.types";
 const chatMocks: ChatType[] = [
   {
     id: "1",
-    title: "Análise de Gastos Mensais",
-    lastMessage: "Vou processar essas informações financeiras...",
-    timestamp: new Date(),
-    isActive: true,
+    name: "Análise de Gastos Mensais",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
   {
     id: "2",
-    title: "Planejamento Orçamentário",
-    lastMessage: "Configurando seu orçamento mensal...",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    name: "Planejamento Orçamentário",
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
   },
   {
     id: "3",
-    title: "Relatório de Investimentos",
-    lastMessage: "Analisando performance dos investimentos...",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    name: "Relatório de Investimentos",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
   },
   {
     id: "4",
-    title: "Controle de Despesas",
-    lastMessage: "Categorizando suas despesas...",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+    name: "Controle de Despesas",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
   },
 ];
 

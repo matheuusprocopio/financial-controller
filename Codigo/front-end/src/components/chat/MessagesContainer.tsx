@@ -4,13 +4,17 @@ import { useRef, useEffect } from "react";
 import { UIMessage } from "@ai-sdk/react";
 
 import MessageComponent from "./MessageComponent";
+import { FrontMessageType } from "@/types/message.types";
 
 interface MessageContainerProps {
-  messages: UIMessage[];
+  messages: FrontMessageType[];
   onSendMessage: (message: string) => Promise<void>;
 }
 
-const MessagesContainer = ({ messages, onSendMessage }: MessageContainerProps) => {
+const MessagesContainer = ({
+  messages,
+  onSendMessage,
+}: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -22,14 +26,14 @@ const MessagesContainer = ({ messages, onSendMessage }: MessageContainerProps) =
   }, [messages]);
 
   return (
-    <div className="flex-1 overflow-hidden relative z-10">
-      <div className="chat-messages-area h-full">
+    <div className="relative z-10 flex-1 overflow-hidden">
+      <div className="relative h-full flex-1 overflow-y-auto p-6 chat-scroll-dark">
         {messages.map((message) => (
           <MessageComponent
             onSendMessage={onSendMessage}
-            key={message.id}
-            message={message}
-            timestamp={new Date()}
+            key={message.message.id}
+            message={message.message}
+            timestamp={message.createdAt}
           />
         ))}
         <div ref={messagesEndRef} />

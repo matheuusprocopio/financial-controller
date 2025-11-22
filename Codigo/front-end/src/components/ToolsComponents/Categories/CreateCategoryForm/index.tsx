@@ -6,6 +6,7 @@ import FormCard from "@/components/chat/gen-ui/FormCard";
 interface ICreateCategoryForm {
   data: {
     name?: string;
+    alreadySubmitted?: boolean;
   };
 }
 
@@ -26,14 +27,13 @@ const CreateCategoryForm = ({ data }: ICreateCategoryForm) => {
       defaultFormData={{
         category: data?.name ?? "",
       }}
+      alreadySubmitted={data?.alreadySubmitted}
       onSubmit={async (data) => {
-        await createCategoryAction(
-          {
-            name: data["category"] ?? "",
-            userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
-            imagePath: ""
-          }
-        )
+        await createCategoryAction({
+          name: data["category"] ?? "",
+          userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
+          imagePath: "",
+        });
       }}
     />
   );

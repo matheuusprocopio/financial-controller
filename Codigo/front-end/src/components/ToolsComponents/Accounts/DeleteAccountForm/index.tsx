@@ -1,20 +1,23 @@
 "use client";
 
+import { deleteAccountAction } from "@/actions/account";
 import ConfirmationCard from "@/components/chat/gen-ui/ConfirmationCard";
 import { Card } from "@/components/ui/card";
 import { Trash2, Building2, DollarSign } from "lucide-react";
 
 interface IDeleteAccountForm {
   data: {
-    nickname?: string;
-    financial_institution?: string;
+    accountId?: string;
+    name?: string;
+    financialInstitution?: string;
     balance?: number;
   };
 }
 
 const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
-  const accountNickname = data?.nickname ?? "";
-  const financialInstitution = data?.financial_institution ?? "";
+  const accountId = data?.accountId ?? "";
+  const accountName = data?.name ?? "";
+  const financialInstitution = data?.financialInstitution ?? "";
   const balance = data?.balance ?? 0;
 
   return (
@@ -24,7 +27,11 @@ const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
-      onConfirm={() => {}}
+      onConfirm={async () => {
+        if (accountId) {
+          await deleteAccountAction(accountId);
+        }
+      }}
     >
       <Card className="p-3 border-destructive/20 bg-destructive/5">
         <div className="flex items-center gap-3">
@@ -32,7 +39,7 @@ const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
             <Trash2 className="h-4 w-4 text-destructive" />
           </div>
           <div className="flex-1">
-            <div className="font-medium text-sm">{accountNickname}</div>
+            <div className="font-medium text-sm">{accountName}</div>
             {financialInstitution && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                 <Building2 className="h-3 w-3" />

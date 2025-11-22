@@ -1,17 +1,19 @@
 "use client";
 
+import { deleteCategoryAction } from "@/actions/category";
 import ConfirmationCard from "@/components/chat/gen-ui/ConfirmationCard";
 import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 
 interface IDeleteCategoryForm {
   data: {
-    id?: string;
+    categoryId?: string;
     name?: string;
   };
 }
 
 const DeleteCategoryForm = ({ data }: IDeleteCategoryForm) => {
+  const categoryId = data?.categoryId ?? "";
   const categoryName = data?.name ?? "Not found";
 
   return (
@@ -21,7 +23,11 @@ const DeleteCategoryForm = ({ data }: IDeleteCategoryForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
-      onConfirm={() => {}}
+      onConfirm={async () => {
+        if (categoryId) {
+          await deleteCategoryAction(categoryId);
+        }
+      }}
     >
       <Card className="p-3 border-destructive/20 bg-destructive/5">
         <div className="flex items-center gap-3">

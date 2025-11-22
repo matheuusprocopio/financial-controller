@@ -2,6 +2,7 @@
 
 import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCategoryForm";
 import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
+import EditCategoryForm from "@/components/ToolsComponents/Categories/EditCategoryForm";
 import CategoriesList from "@/components/ToolsComponents/Categories/ListCategories";
 import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
 
@@ -12,6 +13,7 @@ import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/List
 
 import CreateAccountForm from "@/components/ToolsComponents/Accounts/CreateAccountForm";
 import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccountForm";
+import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountForm";
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
 
@@ -37,6 +39,9 @@ const MessageComponentContent = ({
     "tool-createNewCategory": (p) => (
       <CreateCategoryForm data={p.output as any} />
     ),
+    "tool-editCategory": (p) => (
+      <EditCategoryForm data={p.output as any} />
+    ),
     "tool-listCategoryActions": () => (
       <ListCategoryActions onSendMessage={onSendMessage} />
     ),
@@ -54,6 +59,9 @@ const MessageComponentContent = ({
 
     "tool-createNewAccount": (p) => (
       <CreateAccountForm data={p.output as any} />
+    ),
+    "tool-editAccount": (p) => (
+      <EditAccountForm data={p.output as any} />
     ),
     "tool-listAccountActions": () => (
       <ListAccountActions onSendMessage={onSendMessage} />
@@ -113,7 +121,12 @@ const MessageComponentContent = ({
           message.role === "user" ? "text-right" : "text-left"
         )}
       >
-        {timestamp.toLocaleTimeString()}
+        {timestamp.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
       </div>
     </>
   );

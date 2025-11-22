@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,52 +15,27 @@ import { User, Menu, Wallet, LogOut, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import UserManageModal from "@/components/ToolsComponents/User/UserManageModal";
-import { 
-  updateUserService, 
-  deleteUserService,
-  getUserByIdService 
-} from "@/utils/services/users/userService";
+import type { UserType } from "@/types/user.type";
+import type { RequestError } from "@/utils/requestProvider";
+import { deleteUser, updateUser } from "@/utils/services/users";
 
 interface IHeader {
   onToggleSidebar?: () => void;
 }
 
+const isRequestError = (response: unknown): response is RequestError => {
+  return !!response && typeof response === "object" && "error" in response;
+};
+
 const Header = ({
   onToggleSidebar,
 }: IHeader) => {
   const router = useRouter();
-  const { logout, loading, user: firebaseUser } = useAuth();
+  const { logout, loading, user: firebaseUser, backendUser, loadBackendUser } = useAuth();
   const [userModalOpen, setUserModalOpen] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  const [dbUserName, setDbUserName] = useState<string>("");
-  const [dbUserEmail, setDbUserEmail] = useState<string>("");
-  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
-
-  // Mostra apenas dados do banco de dados
-  const displayName = dbUserName || (isLoadingUserData ? "Carregando..." : "Usuário");
-  const displayEmail = dbUserEmail || "";
-
-  // Buscar dados do usuário do banco ao carregar
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (firebaseUser?.uid) {
-        setIsLoadingUserData(true);
-        try {
-          const userData = await getUserByIdService(firebaseUser.uid);
-          if (userData) {
-            setDbUserName(userData.name);
-            setDbUserEmail(userData.email);
-          }
-        } catch (error) {
-          console.error('[Header] Error fetching user data:', error);
-        } finally {
-          setIsLoadingUserData(false);
-        }
-      }
-    };
-
-    fetchUserData();
-  }, [firebaseUser?.uid]);
+  const [userData, setUserData] = useState<UserType | null>(null);
+  const displayName = backendUser?.name || (loading ? "Carregando..." : "Usuário");
+  const displayEmail = backendUser?.email || "";
 
   const handleLogout = async () => {
     try {
@@ -72,22 +47,22 @@ const Header = ({
   };
 
   const handleManageUser = async () => {
-    if (!firebaseUser?.uid) return;
-    const mockUser = {
-      id: firebaseUser.uid,
-      name: dbUserName,
-      email: dbUserEmail,
-    };
-    setUserData(mockUser);
+    if (!backendUser) return;
+    setUserData(backendUser);
     setUserModalOpen(true);
   };
 
-  const handleUpdateUser = async (user: any) => {
+  const handleUpdateUser = async (user: UserType) => {
     try {
-      const result = await updateUserService(user.id, { name: user.name, email: user.email });
-      setDbUserName(user.name);
-      setDbUserEmail(user.email);
-      setUserData(user);
+      const response = await updateUser(user.id, { name: user.name, email: user.email });
+      if (!response) {
+        throw new Error("Resposta inválida ao atualizar usuário");
+      }
+      if (isRequestError(response)) {
+        throw new Error(response.error.message || "Erro ao atualizar usuário");
+      }
+      setUserData(response);
+      await loadBackendUser(response.id);
     } catch (error: any) {
       throw new Error(error.message || "Erro ao atualizar usuário");
     }
@@ -95,7 +70,10 @@ const Header = ({
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await deleteUserService(userId);
+      const response = await deleteUser(userId);
+      if (response && isRequestError(response)) {
+        throw new Error(response.error.message || "Erro ao deletar usuário");
+      }
       setUserData(null);
 
       await handleLogout();

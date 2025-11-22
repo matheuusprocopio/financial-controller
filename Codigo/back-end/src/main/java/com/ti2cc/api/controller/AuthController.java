@@ -58,7 +58,10 @@ public class AuthController {
 
             UUID userId = UuidUtils.fromFirebaseUid(decodedToken.getUid());
 
-            User user = userService.findUserByEmail(email);
+            User user = userService.findUserById(userId);
+            if (user == null) {
+                user = userService.findUserByEmail(email);
+            }
             
             if (user == null) {
                 String name = decodedToken.getName();

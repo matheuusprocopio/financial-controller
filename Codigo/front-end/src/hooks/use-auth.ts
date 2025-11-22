@@ -10,8 +10,13 @@ import {
   UserCredential,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
+import type { UserType } from "@/types/user.type";
+import type { RequestError } from "@/utils/requestProvider";
+import { getUserById } from "@/utils/services/users";
+import { deleteCookie, getCookie, setCookie } from "@/utils/cookies";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const USER_ID_COOKIE = "financialcontroller_user_id";
 
 interface AuthResponse {
   success: boolean;
@@ -24,6 +29,7 @@ interface UseAuthReturn {
   user: FirebaseUser | null;
   token: string | null;
   sessionId: string | null;
+  backendUser: UserType | null;
   loading: boolean;
   isAuthenticated: boolean;
   isBackendAuthenticated: boolean;
@@ -39,6 +45,7 @@ interface UseAuthReturn {
   loginBackend: (idToken: string) => Promise<AuthResponse>;
   validateSession: () => Promise<AuthResponse>;
   logoutBackend: () => Promise<AuthResponse>;
+  loadBackendUser: (userId?: string) => Promise<UserType | null>;
 
   refreshToken: () => Promise<string | null>;
   getIdToken: () => Promise<string | null>;
@@ -48,8 +55,14 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [backendUser, setBackendUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
+  const [loadingBackendUser, setLoadingBackendUser] = useState<boolean>(false);
+
+  const isRequestError = (response: unknown): response is RequestError => {
+    return !!response && typeof response === "object" && "error" in response;
+  };
  // se mudar ele vai la e faz
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -81,11 +94,43 @@ export function useAuth(): UseAuthReturn {
     }
   }, []);
 
+  const loadBackendUser = useCallback(async (forcedUserId?: string): Promise<UserType | null> => {
+    const storedId = forcedUserId || getCookie(USER_ID_COOKIE);
+    if (!storedId) {
+      setBackendUser(null);
+      return null;
+    }
+
+    setLoadingBackendUser(true);
+    try {
+      const response = await getUserById(storedId);
+      if (!response || isRequestError(response)) {
+        setBackendUser(null);
+        return null;
+      }
+
+      setBackendUser(response);
+      return response;
+    } catch (error) {
+      console.error("Erro ao carregar usuário do backend:", error);
+      setBackendUser(null);
+      return null;
+    } finally {
+      setLoadingBackendUser(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBackendUser();
+  }, [loadBackendUser]);
+
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem("sessionId", sessionId);
     } else {
       localStorage.removeItem("sessionId");
+      deleteCookie(USER_ID_COOKIE);
+      setBackendUser(null);
     }
   }, [sessionId]);
 
@@ -189,6 +234,8 @@ export function useAuth(): UseAuthReturn {
       }
 
       await signOut(auth);
+      deleteCookie(USER_ID_COOKIE);
+      setBackendUser(null);
     } catch (error: any) {
       throw error;
     } finally {
@@ -214,6 +261,10 @@ export function useAuth(): UseAuthReturn {
 
       if (response.ok && data.success && data.sessionId) {
         setSessionId(data.sessionId);
+        if (data.user?.id) {
+          setCookie(USER_ID_COOKIE, data.user.id);
+          setBackendUser(data.user);
+        }
         return data;
       } else {
         throw new Error(data.message || "Erro ao fazer login no backend");
@@ -223,7 +274,7 @@ export function useAuth(): UseAuthReturn {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
 
   const validateSession = useCallback(async (): Promise<AuthResponse> => {
@@ -241,6 +292,10 @@ export function useAuth(): UseAuthReturn {
       const data: AuthResponse = await response.json();
 
       if (response.ok && data.success) {
+        if (data.user?.id) {
+          setCookie(USER_ID_COOKIE, data.user.id);
+          setBackendUser(data.user);
+        }
         return data;
       } else {
         setSessionId(null);
@@ -252,6 +307,22 @@ export function useAuth(): UseAuthReturn {
       setLoading(false);
     }
   }, [sessionId]);
+
+  useEffect(() => {
+    if (!sessionId || backendUser) {
+      return;
+    }
+
+    const ensureValidSession = async () => {
+      try {
+        await validateSession();
+      } catch (error) {
+        console.warn("Sessão do backend inválida ou expirada:", error);
+      }
+    };
+
+    ensureValidSession();
+  }, [sessionId, backendUser, validateSession]);
 
 
   const logoutBackend = useCallback(async (): Promise<AuthResponse> => {
@@ -270,6 +341,8 @@ export function useAuth(): UseAuthReturn {
 
       if (response.ok) {
         setSessionId(null);
+        deleteCookie(USER_ID_COOKIE);
+        setBackendUser(null);
         return data;
       } else {
         throw new Error(data.message || "Erro ao fazer logout");
@@ -313,11 +386,12 @@ export function useAuth(): UseAuthReturn {
   }, [user]);
 
   return {
-
+    
     user,
     token,
     sessionId,
-    loading: loading || initialLoading,
+    backendUser,
+    loading: loading || initialLoading || loadingBackendUser,
     isAuthenticated: !!user,
     isBackendAuthenticated: !!sessionId,
 
@@ -329,6 +403,7 @@ export function useAuth(): UseAuthReturn {
     loginBackend,
     validateSession,
     logoutBackend,
+    loadBackendUser,
     refreshToken,
     getIdToken,
   };

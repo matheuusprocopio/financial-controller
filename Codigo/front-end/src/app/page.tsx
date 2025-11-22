@@ -1,38 +1,40 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Wallet,
-  TrendingUp,
-  MessageSquare,
-  Target,
-  Bot,
   ArrowRight,
+  Bot,
   CheckCircle2,
   ChevronRight,
-  Menu,
-  X,
-  Shield,
   LogIn,
-  User
+  Menu,
+  MessageSquare,
+  Shield,
+  Target,
+  TrendingUp,
+  User as UserIcon,
+  Wallet,
+  X,
 } from "lucide-react";
-import Link from "next/link";
 import LoginModal from "@/components/auth/LoginModal";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
-
-function LandingTechContent() {
+export default function LandingTech() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const { user, loading: userLoading } = useAuth();
-  const userChecked = !userLoading;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const {
+    backendUser,
+    isBackendAuthenticated,
+    loading: authLoading,
+  } = useAuth();
+  const authChecked = !authLoading;
 
   useEffect(() => {
     let lastUpdate = 0;
@@ -40,25 +42,24 @@ function LandingTechContent() {
 
     const handleMouseMove = (e: MouseEvent) => {
       const now = Date.now();
-
       if (now - lastUpdate >= throttleDelay) {
         setMousePosition({ x: e.clientX, y: e.clientY });
         lastUpdate = now;
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   useEffect(() => {
-    if (!userChecked) return;
-    
+    if (!authChecked) return;
+
     const shouldOpenLogin = searchParams.get("login") === "true";
-    if (shouldOpenLogin && !user) {
+    if (shouldOpenLogin && !isBackendAuthenticated) {
       setLoginModalOpen(true);
     }
-  }, [searchParams, user, userChecked]);
+  }, [searchParams, isBackendAuthenticated, authChecked]);
 
   const handleLoginModalChange = (open: boolean) => {
     setLoginModalOpen(open);
@@ -71,23 +72,27 @@ function LandingTechContent() {
     {
       icon: <TrendingUp className="feature-icon" />,
       title: "Inteligência Artificial Avançada",
-      description: "IA que analisa seus gastos, identifica padrões de consumo e oferece insights personalizados em tempo real."
+      description:
+        "IA que analisa seus gastos, identifica padrões de consumo e oferece insights personalizados em tempo real.",
     },
     {
       icon: <MessageSquare className="feature-icon" />,
       title: "Registro Inteligente",
-      description: "Registre suas transações de forma rápida e intuitiva através de conversas naturais com nosso assistente."
+      description:
+        "Registre suas transações de forma rápida e intuitiva através de conversas naturais com nosso assistente.",
     },
     {
       icon: <Target className="feature-icon" />,
       title: "Controle de Metas",
-      description: "Defina e acompanhe suas metas financeiras com ajuda da IA que te mantém no caminho certo."
+      description:
+        "Defina e acompanhe suas metas financeiras com ajuda da IA que te mantém no caminho certo.",
     },
     {
       icon: <Bot className="feature-icon" />,
       title: "Interface por Chat",
-      description: "Gerencie suas finanças conversando naturalmente, sem complicações ou formulários complexos."
-    } 
+      description:
+        "Gerencie suas finanças conversando naturalmente, sem complicações ou formulários complexos.",
+    },
   ];
 
   const techFeatures = [
@@ -96,8 +101,46 @@ function LandingTechContent() {
     "Acompanhamento de metas financeiras",
     "Insights personalizados com IA",
     "Categorização automática de despesas",
-    "Relatórios e visualizações intuitivas"
+    "Relatórios e visualizações intuitivas",
   ];
+
+  const displayName = backendUser?.name || (isBackendAuthenticated ? "Carregando..." : "Minha Conta");
+  const isLoggedIn = isBackendAuthenticated;
+  const accountLabel = isLoggedIn ? "Minha Conta" : "Entrar";
+
+  const desktopAuthControls = isLoggedIn ? (
+    <>
+      <Button
+        onClick={() => setLoginModalOpen(true)}
+        variant="ghost"
+        className="flex items-center gap-2 text-gray-200 transition hover:text-cyan-200"
+      >
+        <UserIcon className="h-4 w-4" />
+        {accountLabel}
+      </Button>
+      <Link href="/chat">
+        <Button className="bg-gradient-to-r from-purple-600 to-cyan-600 font-semibold text-white shadow-[0_10px_30px_-12px_rgba(147,51,234,0.7)] transition hover:scale-[1.02]">
+          Abrir App
+        </Button>
+      </Link>
+    </>
+  ) : (
+    <>
+      <Button
+        onClick={() => setLoginModalOpen(true)}
+        variant="ghost"
+        className="flex items-center gap-2 text-gray-200 transition hover:text-cyan-200"
+      >
+        <LogIn className="h-4 w-4" />
+        Entrar
+      </Button>
+      <Link href="/chat">
+        <Button className="bg-gradient-to-r from-purple-600 to-cyan-600 font-semibold text-white shadow-[0_10px_30px_-12px_rgba(147,51,234,0.7)] transition hover:scale-[1.02]">
+          Abrir App
+        </Button>
+      </Link>
+    </>
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-white">
@@ -136,51 +179,19 @@ function LandingTechContent() {
             </span>
           </div>
 
-
-            <div className="nav-menu-desktop">
-              <a href="#features" className="nav-link">Recursos</a>
-              <a href="#tech" className="nav-link">Funcionalidades</a>
-              
-              {user ? (
-                <>
-                  <Button
-                    onClick={() => setLoginModalOpen(true)}
-                    variant="ghost"
-                    className="nav-link gap-2"
-                  >
-                    <User className="h-4 w-4" />
-                    {user.displayName}
-
-                  </Button>
-                  <Link href="/chat">
-                    <Button className="nav-button">
-                      Abrir App
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={() => setLoginModalOpen(true)}
-                    variant="ghost"
-                    className="nav-link gap-2"
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Entrar
-                  </Button>
-                  <Link href="/chat">
-                    <Button className="nav-button">
-                      Abrir App
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-
+          <div className="hidden items-center gap-8 md:flex">
+            <a href="#features" className="text-gray-300 transition hover:text-cyan-300">
+              Recursos
+            </a>
+            <a href="#tech" className="text-gray-300 transition hover:text-cyan-300">
+              Funcionalidades
+            </a>
+            {desktopAuthControls}
+          </div>
 
           <button
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-white transition hover:border-cyan-300 hover:text-cyan-300 md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
           >
             {mobileMenuOpen ? <X /> : <Menu />}
           </button>
@@ -195,6 +206,16 @@ function LandingTechContent() {
               <a href="#tech" className="text-gray-200 transition hover:text-cyan-300">
                 Funcionalidades
               </a>
+              <Button
+                onClick={() => setLoginModalOpen(true)}
+                variant="outline"
+                className="w-full border-white/20 text-white hover:border-cyan-300 hover:text-cyan-100"
+              >
+                <span className="flex items-center justify-center gap-2">
+                  {isLoggedIn ? <UserIcon className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
+                  {accountLabel}
+                </span>
+              </Button>
               <Link href="/chat">
                 <Button className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 font-semibold text-white shadow-[0_10px_30px_-12px_rgba(147,51,234,0.7)]">
                   Abrir App
@@ -216,7 +237,7 @@ function LandingTechContent() {
             </div>
 
             <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              Controle suas{" "}
+              Controle suas {" "}
               <span className="bg-gradient-to-r from-purple-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent">
                 Finanças
               </span>{" "}
@@ -280,7 +301,7 @@ function LandingTechContent() {
         <div className="mx-auto max-w-6xl space-y-10">
           <div className="max-w-2xl space-y-4">
             <h2 className="text-3xl font-semibold sm:text-4xl">
-              Recursos{" "}
+              Recursos {" "}
               <span className="bg-gradient-to-r from-purple-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent">
                 Inteligentes
               </span>
@@ -293,7 +314,7 @@ function LandingTechContent() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {features.map((feature, index) => (
               <Card
-                key={index}
+                key={`${feature.title}-${index}`}
                 className="relative overflow-hidden border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur transition hover:-translate-y-1 hover:border-cyan-300/40 hover:shadow-[0_20px_60px_-40px_rgba(8,145,178,0.8)]"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-400/10" />
@@ -317,7 +338,7 @@ function LandingTechContent() {
         <div className="mx-auto flex max-w-6xl flex-col gap-12 lg:flex-row lg:items-center">
           <div className="flex-1 space-y-6">
             <h2 className="text-3xl font-semibold sm:text-4xl">
-              Controle Financeiro{" "}
+              Controle Financeiro {" "}
               <span className="bg-gradient-to-r from-purple-400 via-cyan-300 to-purple-400 bg-clip-text text-transparent">
                 do Futuro
               </span>
@@ -326,9 +347,9 @@ function LandingTechContent() {
               Nossa plataforma usa inteligência artificial avançada para oferecer uma experiência única de gestão financeira através de conversas naturais.
             </p>
             <div className="space-y-3">
-              {techFeatures.map((feature, index) => (
+              {techFeatures.map((feature) => (
                 <div
-                  key={index}
+                  key={feature}
                   className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-gray-200 backdrop-blur"
                 >
                   <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-r from-purple-500 to-cyan-400">
@@ -406,15 +427,5 @@ function LandingTechContent() {
 
       <LoginModal open={loginModalOpen} onOpenChange={handleLoginModalChange} />
     </div>
-  );
-}
-
-export default function LandingTech() {
-  return (
-    //adicionar loading pra tela não piscar branco
-    <Suspense >
-      
-      <LandingTechContent />
-    </Suspense>
   );
 }

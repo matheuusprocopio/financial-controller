@@ -145,11 +145,29 @@ public class ChatController {
         res.type("application/json");
         try {
             UUID chatId = UUID.fromString(req.params(":chatId"));
+            Chat chat = chatService.findChatById(chatId);
+            if (chat == null) {
+                res.status(404);
+                return gson.toJson("Chat not found.");
+            }
+
             boolean deleted = chatService.deleteChat(chatId);
 
             if (deleted) {
+                UUID userId = chat.getUserId();
+                Chat mostRecentChat = chatService.findMostRecentChatByUser(userId);
+
+                UUID nextChatId = mostRecentChat != null
+                        ? mostRecentChat.getId()
+                        : chatService.createChat(userId, OffsetDateTime.now().toString());
+
+                if (nextChatId == null) {
+                    res.status(500);
+                    return gson.toJson("Chat deleted, but failed to create fallback chat.");
+                }
+
                 res.status(200);
-                return gson.toJson("Chat deleted successfully.");
+                return gson.toJson(new ChatIdResponseDTO(nextChatId));
             }
 
             res.status(404);

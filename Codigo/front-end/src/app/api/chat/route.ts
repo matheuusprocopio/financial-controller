@@ -1,11 +1,15 @@
 import { tools } from "@/lib/tools";
+import { convertUIMessageToServerMessage } from "@/utils/convertServerMessageToUiMessage";
+import { createMessages } from "@/utils/services/messages";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
+import { revalidateTag } from "next/cache";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  const { messages, chatId }: { messages: UIMessage[]; chatId: string } =
+    await req.json();
 
   const result = streamText({
     model: openai("o3-mini"),
@@ -92,5 +96,29 @@ Sometimes the user will want to SEE the information as a chart/graph.
     `,
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages,
+    async onFinish({ messages }) {
+      const serverMessages = messages.map((m) =>
+        convertUIMessageToServerMessage(m)
+      );
+
+      if (serverMessages.length < 2) return;
+
+      const lastUserMessage = serverMessages[serverMessages.length - 2];
+      const lastAIMessage = serverMessages[serverMessages.length - 1];
+
+      await createMessages(chatId, {
+        ...lastUserMessage,
+        userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
+      });
+
+      await createMessages(chatId, {
+        ...lastAIMessage,
+        userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
+      });
+
+      revalidateTag(`messages-${chatId}`);
+    },
+  });
 }

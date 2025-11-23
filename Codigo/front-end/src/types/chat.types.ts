@@ -1,7 +1,14 @@
+import { PaginationResponse } from "./pagination.type";
+
 export type ChatType = {
   id: string;
-  title: string;
-  lastMessage: string;
-  timestamp: Date;
-  isActive?: boolean;
+  name: string;
+  createdAt: string; // iso string date
+  updatedAt: string; // iso string date
+};
+
+export type ChatListResponseType = PaginationResponse<ChatType>;
+
+export type CreateChatReponseType = {
+  id: string;
 };

@@ -268,7 +268,12 @@ const MessageComponentContent = ({
           message.role === "user" ? "text-right" : "text-left"
         )}
       >
-        {timestamp.toLocaleTimeString()}
+        {timestamp.toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
       </div>
     </>
   );

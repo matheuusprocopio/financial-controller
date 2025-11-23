@@ -169,7 +169,7 @@ public class ChatController {
             page = Integer.parseInt(pageParam);
         }
 
-        String limitParam = req.queryParams("page_limit");
+        String limitParam = req.queryParams("size");
         if (limitParam != null && !limitParam.isBlank()) {
             limit = Integer.parseInt(limitParam);
         }

@@ -90,9 +90,9 @@ public class CategoryController {
             }
 
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : PaginationRequestDTO.DEFAULT_PAGE;
-            int pageLimit = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
+            int size = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
             
-            PaginationRequestDTO pagination = new PaginationRequestDTO(page, pageLimit);
+            PaginationRequestDTO pagination = new PaginationRequestDTO(page, size);
             PaginatedResponseDTO<Category> paginatedCategories = categoryService.listCategoriesPaginated(userId, name, mainCategoryId, pagination);
             
             res.status(200);

@@ -6,6 +6,10 @@
 .project
 .settings/
 .env*
+Codigo/.metadata/
+
+# Credenciais e chaves de serviço
+Codigo/back-end/service-account-key.json
 
 # ===============================================================
 # REGRAS PARA O FRONT-END (Node.js / Next.js)

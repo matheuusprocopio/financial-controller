@@ -46,6 +46,15 @@ public class UserService {
         return userDAO.getById(id);
     }
 
+    public User findUserByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            System.err.println("Invalid user email.");
+            return null;
+        }
+
+        return userDAO.findByEmail(email);
+    }
+
     public boolean updateUser(User user) {
         if (user == null || user.getId() == null) {
             System.err.println("Invalid user data for update.");

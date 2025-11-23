@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,9 @@ import UserManageModal from "@/components/ToolsComponents/User/UserManageModal";
 import type { UserType } from "@/types/user.type";
 import type { RequestError } from "@/utils/requestProvider";
 import { deleteUser, updateUser } from "@/utils/services/users";
+import { getCookie } from "@/utils/cookies";
+
+const USER_ID_COOKIE = "financialcontroller_user_id";
 
 interface IHeader {
   onToggleSidebar?: () => void;
@@ -34,8 +37,25 @@ const Header = ({
   const { logout, loading, user: firebaseUser, backendUser, loadBackendUser } = useAuth();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [userData, setUserData] = useState<UserType | null>(null);
+  const [cookieChecked, setCookieChecked] = useState(false);
   const displayName = backendUser?.name || (loading ? "Carregando..." : "Usuário");
   const displayEmail = backendUser?.email || "";
+  const isLoggedIn = !!backendUser;
+
+  useEffect(() => {
+    if (backendUser) {
+      setCookieChecked(true);
+      return;
+    }
+
+    const cookieUserId = getCookie(USER_ID_COOKIE);
+    if (!cookieUserId) {
+      setCookieChecked(true);
+      return;
+    }
+
+    loadBackendUser(cookieUserId).finally(() => setCookieChecked(true));
+  }, [backendUser, loadBackendUser]);
 
   const handleLogout = async () => {
     try {
@@ -106,51 +126,62 @@ const Header = ({
       </div>
 
       <div className="flex items-center gap-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 outline-none focus:outline-none cursor-pointer hover:opacity-80 transition-opacity">
-              <Avatar className="h-8 w-8 ring-2 ring-indigo-500/30 hover:ring-indigo-400/50 transition-all">
-                <AvatarImage
-                  src={firebaseUser?.photoURL || "/placeholder.svg"}
-                  alt={displayName}
-                />
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600">
-                  <User className="h-4 w-4 text-white" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium hidden sm:block text-gray-200">
-                {displayName}
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{displayName}</p>
-                <p className="text-xs leading-none text-muted-foreground">
-                  {displayEmail || "Minha Conta"}
-                </p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleManageUser}
-              className="cursor-pointer"
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Gerenciar Conta</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={handleLogout} 
-              className="cursor-pointer"
-              disabled={loading}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{loading ? "Saindo..." : "Sair"}</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isLoggedIn ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 outline-none focus:outline-none cursor-pointer hover:opacity-80 transition-opacity">
+                <Avatar className="h-8 w-8 ring-2 ring-indigo-500/30 hover:ring-indigo-400/50 transition-all">
+                  <AvatarImage
+                    src={firebaseUser?.photoURL || "/placeholder.svg"}
+                    alt={displayName}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600">
+                    <User className="h-4 w-4 text-white" />
+                  </AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium hidden sm:block text-gray-200">
+                  {displayName}
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {displayEmail || "Minha Conta"}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleManageUser}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Gerenciar Conta</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout} 
+                className="cursor-pointer"
+                disabled={loading}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{loading ? "Saindo..." : "Sair"}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={() => router.push("/?login=true")}
+            disabled={loading || !cookieChecked}
+            className="rounded-lg border border-purple-400/40 bg-purple-500/10 text-white hover:border-purple-400/60 hover:bg-purple-500/20"
+          >
+            Entrar
+          </Button>
+        )}
       </div>
 
       <UserManageModal

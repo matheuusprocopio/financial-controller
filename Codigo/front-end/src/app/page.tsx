@@ -107,7 +107,7 @@ export default function LandingTech() {
   const displayName = backendUser?.name || (isBackendAuthenticated ? "Carregando..." : "Minha Conta");
   const isLoggedIn = isBackendAuthenticated;
   const accountLabel = isLoggedIn ? "Minha Conta" : "Entrar";
-
+  //console.log(isLoggedIn);
   const desktopAuthControls = isLoggedIn ? (
     <>
       <Button
@@ -116,7 +116,7 @@ export default function LandingTech() {
         className="flex items-center gap-2 text-gray-200 transition hover:text-cyan-200"
       >
         <UserIcon className="h-4 w-4" />
-        {accountLabel}
+        Minha conta
       </Button>
       <Link href="/chat">
         <Button className="bg-gradient-to-r from-purple-600 to-cyan-600 font-semibold text-white shadow-[0_10px_30px_-12px_rgba(147,51,234,0.7)] transition hover:scale-[1.02]">

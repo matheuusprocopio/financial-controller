@@ -59,9 +59,7 @@ public class AuthController {
             UUID userId = UuidUtils.fromFirebaseUid(decodedToken.getUid());
 
             User user = userService.findUserById(userId);
-            if (user == null) {
-                user = userService.findUserByEmail(email);
-            }
+        
             
             if (user == null) {
                 String name = decodedToken.getName();
@@ -78,12 +76,6 @@ public class AuthController {
                 
                 if (!created) {
                     return gson.toJson(new AuthResponseDTO(false, "Falha ao criar usuário no sistema"));
-                }
-            } else {
-                String name = decodedToken.getName();
-                if (name != null && !name.isEmpty() && !name.equals(user.getName())) {
-                    user.setName(name);
-                    userService.updateUser(user);
                 }
             }
 

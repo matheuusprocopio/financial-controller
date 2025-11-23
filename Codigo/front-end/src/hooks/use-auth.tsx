@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -25,7 +32,7 @@ interface AuthResponse {
   sessionId?: string;
 }
 
-interface UseAuthReturn {
+export interface UseAuthReturn {
   user: FirebaseUser | null;
   token: string | null;
   sessionId: string | null;
@@ -51,7 +58,7 @@ interface UseAuthReturn {
   getIdToken: () => Promise<string | null>;
 }
 
-export function useAuth(): UseAuthReturn {
+function useProvideAuth(): UseAuthReturn {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -386,7 +393,6 @@ export function useAuth(): UseAuthReturn {
   }, [user]);
 
   return {
-    
     user,
     token,
     sessionId,
@@ -394,8 +400,6 @@ export function useAuth(): UseAuthReturn {
     loading: loading || initialLoading || loadingBackendUser,
     isAuthenticated: !!user,
     isBackendAuthenticated: !!sessionId,
-
-
     loginWithEmail,
     loginWithGoogle,
     signupWithEmail,
@@ -407,5 +411,20 @@ export function useAuth(): UseAuthReturn {
     refreshToken,
     getIdToken,
   };
+}
+
+const AuthContext = createContext<UseAuthReturn | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const value = useProvideAuth();
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth(): UseAuthReturn {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth deve ser utilizado dentro de um AuthProvider");
+  }
+  return context;
 }
 

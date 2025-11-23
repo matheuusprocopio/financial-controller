@@ -7,12 +7,7 @@ const provider = newRequestProvider(`${BASE_URL}`);
 
 export const listMessages = async (chatId: string, userId: string) => {
   const resp = await provider.get<ServerMessageType[]>(
-    `chats/${chatId}/messages?user_id=${userId}`,
-    {
-      next: {
-        tags: [`messages-${chatId}`],
-      },
-    }
+    `chats/${chatId}/messages?user_id=${userId}`
   );
 
   return resp;

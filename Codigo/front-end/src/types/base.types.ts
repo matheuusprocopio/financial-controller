@@ -3,3 +3,5 @@ export type ActionItemType = {
   description: string;
   onClick?: () => void;
 };
+
+export type { PaginatedResponse, PaginationParams } from './pagination.type';

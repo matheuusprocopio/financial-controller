@@ -1,8 +1,8 @@
 export type AccountType = {
   id: string;
-  nickname: string;
-  ownerId: string;
-  financial_institution: string;
+  name: string;
+  userId: string;
+  financialInstitution: string;
   balance: number;
   createdAt: string;
 };

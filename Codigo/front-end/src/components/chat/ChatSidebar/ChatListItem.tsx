@@ -25,7 +25,6 @@ const ChatListItem = ({
   onDelete,
   isActive = true,
 }: ChatListItemProps) => {
-
   return (
     <div
       className={`relative cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 p-3 sm:p-3.5 ${
@@ -58,6 +57,7 @@ const ChatListItem = ({
                 variant="ghost"
                 size="sm"
                 className="h-6 w-6 p-0 hover:bg-purple-500/20 transition-colors"
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical className="h-3 w-3 text-gray-400 hover:text-purple-400 transition-colors" />
               </Button>
@@ -67,7 +67,10 @@ const ChatListItem = ({
               className="bg-black/95 border-purple-500/30 backdrop-blur-xl"
             >
               <DropdownMenuItem
-                onClick={onDelete}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  await onDelete();
+                }}
                 className="text-red-400 hover:bg-red-500/20 focus:bg-red-500/20 cursor-pointer"
               >
                 Excluir

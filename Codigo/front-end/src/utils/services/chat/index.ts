@@ -1,6 +1,7 @@
 import {
   ChatListResponseType,
   CreateChatReponseType,
+  ListChatParamsType,
 } from "@/types/chat.types";
 import newRequestProvider from "@/utils/requestProvider";
 
@@ -8,12 +9,15 @@ const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
-export const listChats = async (userId: string) => {
-  return await provider.get<ChatListResponseType>(`chats?user_id=${userId}`, {
-    next: {
-      tags: ["list-chat"],
+export const listChats = async (params: ListChatParamsType) => {
+  return await provider.get<ChatListResponseType>(
+    `chats?user_id=${params.userId}&page=${params.page}&size=${params.size}`,
+    {
+      next: {
+        tags: ["list-chat"],
+      },
     }
-  });
+  );
 };
 
 export const createChat = async (userId: string, name: string) => {
@@ -28,7 +32,5 @@ export const createChat = async (userId: string, name: string) => {
 };
 
 export const deleteChat = async (chatId: string) => {
-  return await provider.delete<any>(
-    `chats/${chatId}`
-  );
+  return await provider.delete<any>(`chats/${chatId}`);
 };

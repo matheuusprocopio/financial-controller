@@ -15,13 +15,9 @@ export const createChatAction = async (payload: {
 };
 
 export const deleteChatAction = async (userId: string, chatId: string) => {
-  let resp = await deleteChat(chatId);
+  const resp = await deleteChat(chatId);
 
-  if (typeof resp != "string" && "error" in resp) return resp;
-
-  const now = new Date();
-
-  resp = await createChat(userId, now.toString());
+  if (typeof resp !== "string" && "error" in resp) return resp;
 
   revalidateTag("list-chat");
 

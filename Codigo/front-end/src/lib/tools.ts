@@ -2,10 +2,17 @@ import { creditCardsMock } from "@/data/creditCardsMock";
 import { tool } from "ai";
 import { z } from "zod";
 import { listCategoriesPaginated } from "@/utils/services/categories";
-import { getAccountById, listAccountsPaginated } from "@/utils/services/accounts";
+import {
+  getAccountById,
+  listAccountsPaginated,
+} from "@/utils/services/accounts";
 import { AccountType } from "@/types/account.type";
+import { RequestError } from "@/utils/requestProvider";
 
-// categories
+const isRequestError = (resp: unknown): resp is RequestError => {
+  return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
+};
+
 export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
   inputSchema: z.object({
@@ -75,7 +82,20 @@ export const listCategoriesTool = tool({
   execute: async ({ name = "" }) => {
     try {
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
-      const resp = await listCategoriesPaginated(userId, { page: 1, size: 10 }, name);
+      const resp = await listCategoriesPaginated(
+        userId,
+        { page: 1, size: 10 },
+        name
+      );
+
+      if (isRequestError(resp)) {
+        return {
+          name,
+          categories: [],
+          totalOfCategories: 0,
+          error: resp,
+        };
+      }
 
       return {
         name,
@@ -86,25 +106,38 @@ export const listCategoriesTool = tool({
         userId,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (isRequestError(error)) {
+        return {
+          name,
+          categories: [],
+          totalOfCategories: 0,
+          error,
+        };
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       return {
         name,
         categories: [],
         totalOfCategories: 0,
-        error: errorMessage,
+        error: {
+          error: {
+            status: 500,
+            message: errorMessage,
+            resource: "categories/paginated",
+          },
+        },
       };
     }
   },
 });
 //
 
-
-
-
-// credit card
 export const createNewCreditCardTool = tool({
-  description: "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
+  description:
+    "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
   inputSchema: z.object({
     cardName: z.string().optional(),
     financialInstitution: z.string().optional(),
@@ -112,7 +145,12 @@ export const createNewCreditCardTool = tool({
     dueDate: z.string().optional(),
   }),
 
-  execute: async ({ cardName = "", financialInstitution = "", limit = 0, dueDate = "" }) => {
+  execute: async ({
+    cardName = "",
+    financialInstitution = "",
+    limit = 0,
+    dueDate = "",
+  }) => {
     return {
       cardName,
       financialInstitution,
@@ -121,10 +159,6 @@ export const createNewCreditCardTool = tool({
     };
   },
 });
-
-
-
-
 
 export const deleteCreditCardTool = tool({
   description: "Excludes a credit card",
@@ -166,10 +200,8 @@ export const listCreditCardActionsTool = tool({
     return "Credit cards available list";
   },
 });
-//
 
 
-// accounts
 export const createNewAccountTool = tool({
   description: "Create or add a new account to user",
   inputSchema: z.object({
@@ -200,12 +232,23 @@ export const editAccountTool = tool({
     try {
       const resp = await getAccountById(accountId);
 
-      if (resp && !resp.error) {
+      if (isRequestError(resp)) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error: resp,
+        };
+      }
+
+      if (resp) {
         const account = resp;
         return {
           accountId: account.id,
-          name: name ?? account.nickname,
-          financialInstitution: financialInstitution ?? account.financial_institution,
+          name: name ?? account.name,
+          financialInstitution:
+            financialInstitution ?? account.financialInstitution,
           balance: balance ?? account.balance,
         };
       }
@@ -217,12 +260,30 @@ export const editAccountTool = tool({
         balance: balance ?? 0,
       };
     } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error,
+        };
+      }
+
       return {
         accountId,
         name: name ?? "",
         financialInstitution: financialInstitution ?? "",
         balance: balance ?? 0,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: isRequestError(error)
+          ? error
+          : {
+              error: {
+                status: 500,
+                message: error instanceof Error ? error.message : "Unknown error",
+                resource: `accounts/${accountId}`,
+              },
+            },
       };
     }
   },
@@ -265,9 +326,18 @@ export const listAccountsTool = tool({
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
       const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
+      if (isRequestError(resp)) {
+        return {
+          nickname: name,
+          accounts: [],
+          totalOfAccounts: 0,
+          error: resp,
+        };
+      }
+
       const filteredAccounts = name
         ? resp.data.filter((account: AccountType) =>
-            account.nickname.toLowerCase().includes(name.toLowerCase())
+            account.name.toLowerCase().includes(name.toLowerCase())
           )
         : resp.data;
 
@@ -280,20 +350,28 @@ export const listAccountsTool = tool({
         userId,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const message =
+        isRequestError(error)
+          ? error.error.message
+          : error instanceof Error
+          ? error.message
+          : "Unknown error";
 
       return {
         nickname: name,
         accounts: [],
         totalOfAccounts: 0,
-        error: errorMessage,
+        error: isRequestError(error)
+          ? error
+          : { error: { status: 500, message, resource: "accounts/paginated" } },
       };
     }
   },
 });
 
 export const filterAccountsTool = tool({
-  description: "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
+  description:
+    "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
   inputSchema: z.object({
     name: z.string().optional(),
     financialInstitution: z.string().optional(),
@@ -304,19 +382,30 @@ export const filterAccountsTool = tool({
       const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
       const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
+      if (isRequestError(resp)) {
+        return {
+          nickname: name || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          error: resp,
+        };
+      }
+
       let filteredAccounts = [...resp.data];
 
       if (name && name.trim()) {
         const nameFilter = name.toLowerCase().trim();
         filteredAccounts = filteredAccounts.filter((account: AccountType) =>
-          account.nickname.toLowerCase().includes(nameFilter)
+          account.name.toLowerCase().includes(nameFilter)
         );
       }
 
       if (financialInstitution && financialInstitution.trim()) {
         const institutionFilter = financialInstitution.toLowerCase().trim();
         filteredAccounts = filteredAccounts.filter((account: AccountType) =>
-          account.financial_institution.toLowerCase().includes(institutionFilter)
+          account.financialInstitution
+            .toLowerCase()
+            .includes(institutionFilter)
         );
       }
 
@@ -329,18 +418,34 @@ export const filterAccountsTool = tool({
         userId,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      if (isRequestError(error)) {
+        return {
+          nickname: name || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          error,
+        };
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       return {
         nickname: name || "",
         accounts: [],
         totalOfAccounts: 0,
-        error: errorMessage,
+        error: {
+          error: {
+            status: 500,
+            message: errorMessage,
+            resource: "accounts/paginated",
+          },
+        },
       };
     }
   },
 });
-//
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,
@@ -348,14 +453,14 @@ export const tools = {
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
   listCategories: listCategoriesTool,
-  
+
   createNewAccount: createNewAccountTool,
   editAccount: editAccountTool,
   listAccountActions: listAccountActionsTool,
   deleteAccount: deleteAccountTool,
   listAccounts: listAccountsTool,
   filterAccounts: filterAccountsTool,
-  
+
   createNewCreditCard: createNewCreditCardTool,
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,

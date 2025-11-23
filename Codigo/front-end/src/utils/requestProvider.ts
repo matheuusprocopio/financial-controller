@@ -20,6 +20,26 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
   const BASE_URL = baseUrl + "/";
   const DEFAULT_HEADERS = { "Content-Type": "application/json", ...defaultHeaders };
 
+  const buildResource = (endpoint?: string) => `${BASE_URL}${endpoint ?? ""}`;
+
+  const handleRequest = async <Resp>(
+    endpoint: string | undefined,
+    fetcher: () => Promise<Response>,
+    parser: (resp: Response) => Promise<Resp>,
+  ): Promise<Resp | RequestError> => {
+    try {
+      const resp = await fetcher();
+      const validationResp = await respValidation(resp);
+
+      if (validationResp !== null) return validationResp;
+
+      return await parser(resp);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      return { error: { status: 500, message, resource: buildResource(endpoint) } };
+    }
+  };
+
   const get = async <GetResp>(
     endpoint?: string,
     options?: {
@@ -28,22 +48,20 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       headers?: RequestHeaders;
     },
   ): Promise<GetResp | RequestError> => {
-    const resp = await fetch(BASE_URL + endpoint, {
-      method: "GET",
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...options?.headers,
-      },
-      cache: options?.cache,
-      next: options?.next,
-    });
-    const validationResp = await respValidation(resp);
-
-    if (validationResp !== null) return validationResp;
-
-    const data = (await resp.json()) as GetResp;
-
-    return data;
+    return handleRequest<GetResp>(
+      endpoint,
+      () =>
+        fetch(BASE_URL + endpoint, {
+          method: "GET",
+          headers: {
+            ...DEFAULT_HEADERS,
+            ...options?.headers,
+          },
+          cache: options?.cache,
+          next: options?.next,
+        }),
+      async (resp) => (await resp.json()) as GetResp,
+    );
   };
 
   const post = async <PostResp, PostBody = undefined>(
@@ -53,21 +71,19 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       headers?: RequestHeaders;
     },
   ): Promise<PostResp | RequestError> => {
-    const resp = await fetch(BASE_URL + endpoint, {
-      method: "POST",
-      body: JSON.stringify(options?.body),
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...options?.headers,
-      },
-    });
-    const validationResp = await respValidation(resp);
-
-    if (validationResp !== null) return validationResp;
-
-    const data = (await resp.json()) as PostResp;
-
-    return data;
+    return handleRequest<PostResp>(
+      endpoint,
+      () =>
+        fetch(BASE_URL + endpoint, {
+          method: "POST",
+          body: JSON.stringify(options?.body),
+          headers: {
+            ...DEFAULT_HEADERS,
+            ...options?.headers,
+          },
+        }),
+      async (resp) => (await resp.json()) as PostResp,
+    );
   };
 
   const put = async <PutResp, PutBody = undefined>(
@@ -77,21 +93,19 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       headers?: RequestHeaders;
     },
   ): Promise<PutResp | RequestError> => {
-    const resp = await fetch(BASE_URL + endpoint, {
-      method: "PUT",
-      body: JSON.stringify(options?.body),
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...options?.headers,
-      },
-    });
-    const validationResp = await respValidation(resp);
-
-    if (validationResp !== null) return validationResp;
-
-    const data = (await resp.json()) as PutResp;
-
-    return data;
+    return handleRequest<PutResp>(
+      endpoint,
+      () =>
+        fetch(BASE_URL + endpoint, {
+          method: "PUT",
+          body: JSON.stringify(options?.body),
+          headers: {
+            ...DEFAULT_HEADERS,
+            ...options?.headers,
+          },
+        }),
+      async (resp) => (await resp.json()) as PutResp,
+    );
   };
 
   const patch = async <PatchResp, PatchBody = undefined>(
@@ -101,26 +115,26 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       headers?: RequestHeaders;
     },
   ): Promise<PatchResp | RequestError> => {
-    const resp = await fetch(BASE_URL + endpoint, {
-      method: "PATCH",
-      body: JSON.stringify(options?.body),
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...options?.headers,
+    return handleRequest<PatchResp>(
+      endpoint,
+      () =>
+        fetch(BASE_URL + endpoint, {
+          method: "PATCH",
+          body: JSON.stringify(options?.body),
+          headers: {
+            ...DEFAULT_HEADERS,
+            ...options?.headers,
+          },
+        }),
+      async (resp) => {
+        const text = await resp.text();
+        if (text.trim() === "" || text.trim() === "null") {
+          return {} as PatchResp;
+        }
+
+        return JSON.parse(text) as PatchResp;
       },
-    });
-    const validationResp = await respValidation(resp);
-
-    if (validationResp !== null) return validationResp;
-
-    const text = await resp.text();
-    if (text.trim() === "" || text.trim() === "null") {
-      return {} as PatchResp;
-    }
-
-    const data = JSON.parse(text) as PatchResp;
-
-    return data;
+    );
   };
 
   const deleteFunc = async <DeleteResp>(
@@ -129,24 +143,24 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       headers?: RequestHeaders;
     },
   ): Promise<DeleteResp | RequestError> => {
-    const resp = await fetch(BASE_URL + endpoint, {
-      method: "DELETE",
-      headers: {
-        ...DEFAULT_HEADERS,
-        ...options?.headers,
+    return handleRequest<DeleteResp>(
+      endpoint,
+      () =>
+        fetch(BASE_URL + endpoint, {
+          method: "DELETE",
+          headers: {
+            ...DEFAULT_HEADERS,
+            ...options?.headers,
+          },
+        }),
+      async (resp) => {
+        if (!resp.body || resp.status === 204) {
+          return {} as DeleteResp;
+        }
+
+        return (await resp.json()) as DeleteResp;
       },
-    });
-    const validationResp = await respValidation(resp);
-
-    if (validationResp !== null) return validationResp;
-
-    if (!resp.body || resp.status === 204) {
-      return {} as DeleteResp;
-    }
-
-    const data = (await resp.json()) as DeleteResp;
-
-    return data;
+    );
   };
 
   return {

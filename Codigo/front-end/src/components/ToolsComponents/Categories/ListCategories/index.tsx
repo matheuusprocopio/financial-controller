@@ -19,6 +19,7 @@ import { listCategoriesPaginated } from "@/utils/services/categories";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
+import type { RequestError } from "@/utils/requestProvider";
 
 interface ICategoriesList {
   data: {
@@ -28,10 +29,12 @@ interface ICategoriesList {
     currentPage?: number;
     pageLimit?: number;
     userId?: string;
+    error?: string | RequestError;
   };
+  onError?(errMsg: string): void;
 }
 
-const CategoriesList = ({ data }: ICategoriesList) => {
+const CategoriesList = ({ data, onError }: ICategoriesList) => {
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const categoryName = data?.name ?? "";
   const totalOfCategories = data?.totalOfCategories ?? 0;
@@ -90,9 +93,23 @@ const CategoriesList = ({ data }: ICategoriesList) => {
       
       setFilteredCategories(result.data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao buscar categorias. Tente novamente.";
+      onError?.(message);
     }
   };
+
+  useEffect(() => {
+    if (data?.error) {
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : data.error.error?.message || "Erro ao carregar categorias.";
+      onError?.(message);
+    }
+  }, [data?.error, onError]);
 
   return (
     <Card className={cn("w-full max-w-none")}>

@@ -31,9 +31,11 @@ import { listAccountsPaginated } from "@/utils/services/accounts";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
+import { RequestError } from "@/utils/requestProvider";
 
 interface IAccountsList {
   data: {
+    error?: RequestError;
     nickname: string;
     accounts: AccountType[];
     totalOfAccounts: number;
@@ -41,17 +43,17 @@ interface IAccountsList {
     pageLimit?: number;
     userId?: string;
   };
+  onError(errMsg: string): void;
 }
 
-const AccountsList = ({ data }: IAccountsList) => {
+const AccountsList = ({ data, onError }: IAccountsList) => {
   const accountNickname = data?.nickname ?? "";
   const accounts = useMemo(() => data?.accounts ?? [], [data?.accounts]);
   const totalOfAccounts = data?.totalOfAccounts ?? 0;
   const userId = data?.userId ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredAccounts, setFilteredAccounts] =
-    useState<AccountType[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<AccountType[]>([]);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
     nickname: "",
@@ -80,8 +82,8 @@ const AccountsList = ({ data }: IAccountsList) => {
     if (searchTerm.trim()) {
       filtered = filtered.filter(
         (account) =>
-          account.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          account.financial_institution
+          account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.financialInstitution
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
       );
@@ -90,7 +92,7 @@ const AccountsList = ({ data }: IAccountsList) => {
     if (activeFilters.nickname && activeFilters.nickname.trim()) {
       const nicknameFilter = activeFilters.nickname.toLowerCase().trim();
       filtered = filtered.filter((account) =>
-        account.nickname.toLowerCase().includes(nicknameFilter)
+        account.name.toLowerCase().includes(nicknameFilter)
       );
     }
 
@@ -102,7 +104,7 @@ const AccountsList = ({ data }: IAccountsList) => {
         .toLowerCase()
         .trim();
       filtered = filtered.filter((account) =>
-        account.financial_institution.toLowerCase().includes(institutionFilter)
+        account.financialInstitution.toLowerCase().includes(institutionFilter)
       );
     }
 
@@ -168,11 +170,14 @@ const AccountsList = ({ data }: IAccountsList) => {
 
   const paginatedAccounts = filteredAccounts;
 
-  const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
+  const handlePaginationChange = async (
+    page?: number,
+    itemsPerPage?: number
+  ) => {
     try {
       const newPage = page ?? pagination.currentPage;
       const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
-      
+
       if (itemsPerPage) {
         pagination.setItemsPerPage(newItemsPerPage);
         pagination.resetPage();
@@ -184,10 +189,15 @@ const AccountsList = ({ data }: IAccountsList) => {
         page: itemsPerPage ? 1 : newPage,
         size: newItemsPerPage,
       });
-      
+
+      if ("error" in result) {
+        onError(result.error.message || "Erro ao buscar contas.");
+        return;
+      }
+
       setFilteredAccounts(result.data);
     } catch (error) {
-      console.error('Error fetching accounts:', error);
+      onError("Erro ao buscar contas. Tente novamente.");
     }
   };
 
@@ -298,12 +308,12 @@ const AccountsList = ({ data }: IAccountsList) => {
                 paginatedAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell className="font-medium">
-                      {account.nickname}
+                      {account.name}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4" />
-                        {account.financial_institution}
+                        {account.financialInstitution}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -319,8 +329,8 @@ const AccountsList = ({ data }: IAccountsList) => {
                           {account.balance > 0
                             ? "Positivo"
                             : account.balance < 0
-                              ? "Negativo"
-                              : "Zero"}
+                            ? "Negativo"
+                            : "Zero"}
                         </Badge>
                       </div>
                     </TableCell>
@@ -338,7 +348,9 @@ const AccountsList = ({ data }: IAccountsList) => {
           <div className="flex flex-col gap-4">
             <PaginationControls
               itemsPerPage={pagination.itemsPerPage}
-              onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
+              onItemsPerPageChange={(value) =>
+                handlePaginationChange(undefined, Number(value))
+              }
               currentPage={pagination.currentPage}
               totalItems={totalOfAccounts}
               showBalance={totalOfAccounts > 0}

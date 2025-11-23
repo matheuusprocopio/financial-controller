@@ -18,9 +18,6 @@ import UserManageModal from "@/components/ToolsComponents/User/UserManageModal";
 import type { UserType } from "@/types/user.type";
 import type { RequestError } from "@/utils/requestProvider";
 import { deleteUser, updateUser } from "@/utils/services/users";
-import { getCookie } from "@/utils/cookies";
-
-const USER_ID_COOKIE = "financialcontroller_user_id";
 
 interface IHeader {
   onToggleSidebar?: () => void;
@@ -43,18 +40,30 @@ const Header = ({
   const isLoggedIn = !!backendUser;
 
   useEffect(() => {
-    if (backendUser) {
-      setCookieChecked(true);
-      return;
-    }
+    let cancelled = false;
 
-    const cookieUserId = getCookie(USER_ID_COOKIE);
-    if (!cookieUserId) {
-      setCookieChecked(true);
-      return;
-    }
+    const ensureBackendUser = async () => {
+      if (backendUser) {
+        if (!cancelled) {
+          setCookieChecked(true);
+        }
+        return;
+      }
 
-    loadBackendUser(cookieUserId).finally(() => setCookieChecked(true));
+      try {
+        await loadBackendUser();
+      } finally {
+        if (!cancelled) {
+          setCookieChecked(true);
+        }
+      }
+    };
+
+    ensureBackendUser();
+
+    return () => {
+      cancelled = true;
+    };
   }, [backendUser, loadBackendUser]);
 
   const handleLogout = async () => {

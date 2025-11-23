@@ -1,12 +1,7 @@
 package com.ti2cc.api.routes;
 
 import com.ti2cc.api.controller.UserController;
-
-import static spark.Spark.delete;
-import static spark.Spark.get;
-import static spark.Spark.path;
-import static spark.Spark.post;
-import static spark.Spark.put;
+import static spark.Spark.*;
 
 public class UserRoutes {
 

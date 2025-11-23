@@ -102,7 +102,7 @@ function useProvideAuth(): UseAuthReturn {
   }, []);
 
   const loadBackendUser = useCallback(async (forcedUserId?: string): Promise<UserType | null> => {
-    const storedId = forcedUserId || getCookie(USER_ID_COOKIE);
+    const storedId = forcedUserId ?? (await getCookie(USER_ID_COOKIE));
     if (!storedId) {
       setBackendUser(null);
       return null;
@@ -241,7 +241,7 @@ function useProvideAuth(): UseAuthReturn {
       }
 
       await signOut(auth);
-      deleteCookie(USER_ID_COOKIE);
+      await deleteCookie(USER_ID_COOKIE);
       setBackendUser(null);
     } catch (error: any) {
       throw error;
@@ -269,7 +269,7 @@ function useProvideAuth(): UseAuthReturn {
       if (response.ok && data.success && data.sessionId) {
         setSessionId(data.sessionId);
         if (data.user?.id) {
-          setCookie(USER_ID_COOKIE, data.user.id);
+          await setCookie(USER_ID_COOKIE, data.user.id);
           setBackendUser(data.user);
         }
         return data;
@@ -300,7 +300,7 @@ function useProvideAuth(): UseAuthReturn {
 
       if (response.ok && data.success) {
         if (data.user?.id) {
-          setCookie(USER_ID_COOKIE, data.user.id);
+          await setCookie(USER_ID_COOKIE, data.user.id);
           setBackendUser(data.user);
         }
         return data;
@@ -348,7 +348,7 @@ function useProvideAuth(): UseAuthReturn {
 
       if (response.ok) {
         setSessionId(null);
-        deleteCookie(USER_ID_COOKIE);
+        await deleteCookie(USER_ID_COOKIE);
         setBackendUser(null);
         return data;
       } else {

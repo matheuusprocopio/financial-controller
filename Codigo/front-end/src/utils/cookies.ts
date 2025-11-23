@@ -1,24 +1,35 @@
-export const isBrowser = typeof window !== "undefined";
+const COOKIE_ENDPOINT = "/api/auth/session";
 
-export const setCookie = (name: string, value: string, days = 365) => {
-  if (!isBrowser) return;
-  const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
+const fetchOptions: RequestInit = {
+  credentials: "include",
+  headers: { "Content-Type": "application/json" },
 };
 
-export const getCookie = (name: string): string | null => {
-  if (!isBrowser) return null;
-  const cookies = document.cookie ? document.cookie.split("; ") : [];
-  for (const cookie of cookies) {
-    const [cookieName, ...rest] = cookie.split("=");
-    if (decodeURIComponent(cookieName) === name) {
-      return decodeURIComponent(rest.join("="));
-    }
+export const setCookie = async (_name: string, value: string, days = 365) => {
+  await fetch(COOKIE_ENDPOINT, {
+    ...fetchOptions,
+    method: "POST",
+    body: JSON.stringify({ userId: value, maxAgeDays: days }),
+  });
+};
+
+export const getCookie = async (_name: string): Promise<string | null> => {
+  const response = await fetch(COOKIE_ENDPOINT, {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return null;
   }
-  return null;
+
+  const data = (await response.json()) as { userId?: string | null };
+  return data.userId ?? null;
 };
 
-export const deleteCookie = (name: string) => {
-  if (!isBrowser) return;
-  document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+export const deleteCookie = async (_name: string) => {
+  await fetch(COOKIE_ENDPOINT, {
+    method: "DELETE",
+    credentials: "include",
+  });
 };

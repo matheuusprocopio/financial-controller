@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.AccountUpdateDTO;
+import com.ti2cc.api.dto.CreateAccountDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Account;
@@ -26,8 +27,18 @@ public class AccountController {
     public Object create(Request req, Response res) {
         res.type("application/json");
         try {
-            Account account = gson.fromJson(req.body(), Account.class);
-            boolean created = accountService.createAccount(account);
+            CreateAccountDTO dto = gson.fromJson(req.body(), CreateAccountDTO.class);
+            if (dto == null) {
+                res.status(400);
+                return gson.toJson("Request body is required.");
+            }
+
+            Account account = new Account();
+            account.setName(dto.getName());
+            account.setUserId(dto.getUserId());
+            account.setFinancialInstitution(dto.getFinancialInstitution());
+            account.setBalance(dto.getBalance() != null ? dto.getBalance() : 0.0);
+            boolean created = accountService.createAccount(account);   
 
             if (created) {
                 res.status(201);

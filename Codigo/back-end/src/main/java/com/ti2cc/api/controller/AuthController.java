@@ -13,6 +13,9 @@ import com.ti2cc.api.util.UuidUtils;
 
 import java.util.UUID;
 
+import spark.Request;
+import spark.Response;
+
 public class AuthController {
 
     private final FirebaseAuthService firebaseAuthService;
@@ -26,19 +29,23 @@ public class AuthController {
         this.sessionService = sessionService;
     }
 
-    public String login(String body) {
+    public Object login(Request req, Response res) {
+        res.type("application/json");
         try {
             if (firebaseAuthService == null || !firebaseAuthService.isInitialized()) {
+                res.status(503);
                 return gson.toJson(new AuthResponseDTO(false, "Firebase não está configurado. Configure as credenciais no .env"));
             }
 
-            LoginRequestDTO loginRequest = gson.fromJson(body, LoginRequestDTO.class);
+            LoginRequestDTO loginRequest = gson.fromJson(req.body(), LoginRequestDTO.class);
 
             if (loginRequest == null) {
+                res.status(400);
                 return gson.toJson(new AuthResponseDTO(false, "Requisição inválida"));
             }
 
             if (loginRequest.getIdToken() == null || loginRequest.getIdToken().isEmpty()) {
+                res.status(400);
                 return gson.toJson(new AuthResponseDTO(false, "Token ID do Firebase é obrigatório"));
             }
 
@@ -46,21 +53,23 @@ public class AuthController {
             try {
                 decodedToken = firebaseAuthService.verifyIdToken(loginRequest.getIdToken());
             } catch (FirebaseAuthException e) {
+                res.status(401);
                 return gson.toJson(new AuthResponseDTO(false, "Token inválido ou expirado: " + e.getMessage()));
             } catch (RuntimeException e) {
+                res.status(401);
                 return gson.toJson(new AuthResponseDTO(false, e.getMessage()));
             }
 
             String email = decodedToken.getEmail();
             if (email == null || email.isEmpty()) {
+                res.status(400);
                 return gson.toJson(new AuthResponseDTO(false, "Email não encontrado no token"));
             }
 
             UUID userId = UuidUtils.fromFirebaseUid(decodedToken.getUid());
 
             User user = userService.findUserById(userId);
-        
-            
+
             if (user == null) {
                 String name = decodedToken.getName();
                 if (name == null || name.isEmpty()) {
@@ -73,33 +82,54 @@ public class AuthController {
 
                 user = new User(userId, name, email);
                 boolean created = userService.createUser(user);
-                
+
                 if (!created) {
+                    res.status(500);
                     return gson.toJson(new AuthResponseDTO(false, "Falha ao criar usuário no sistema"));
                 }
             }
 
             String sessionId = sessionService.createSession(user);
-
+            res.status(200);
             return gson.toJson(new AuthResponseDTO(true, "Login realizado com sucesso", user, sessionId));
 
         } catch (Exception e) {
+            res.status(500);
             return gson.toJson(new AuthResponseDTO(false, "Erro interno: " + e.getMessage()));
         }
     }
 
-    public String validateSession(String sessionId) {
-        User user = sessionService.getSession(sessionId);
-        
-        if (user != null) {
-            return gson.toJson(new AuthResponseDTO(true, "Sessão válida", user, sessionId));
-        } else {
-            return gson.toJson(new AuthResponseDTO(false, "Sessão inválida ou expirada"));
+    public Object validateSession(Request req, Response res) {
+        res.type("application/json");
+        String sessionId = req.headers("X-Session-Id");
+
+        if (sessionId == null || sessionId.isEmpty()) {
+            res.status(401);
+            return gson.toJson(new AuthResponseDTO(false, "Session ID não fornecido"));
         }
+
+        User user = sessionService.getSession(sessionId);
+
+        if (user != null) {
+            res.status(200);
+            return gson.toJson(new AuthResponseDTO(true, "Sessão válida", user, sessionId));
+        }
+
+        res.status(401);
+        return gson.toJson(new AuthResponseDTO(false, "Sessão inválida ou expirada"));
     }
 
-    public String logout(String sessionId) {
+    public Object logout(Request req, Response res) {
+        res.type("application/json");
+        String sessionId = req.headers("X-Session-Id");
+
+        if (sessionId == null || sessionId.isEmpty()) {
+            res.status(400);
+            return gson.toJson(new AuthResponseDTO(false, "Session ID não fornecido"));
+        }
+
         sessionService.removeSession(sessionId);
+        res.status(200);
         return gson.toJson(new AuthResponseDTO(true, "Logout realizado com sucesso"));
     }
 }

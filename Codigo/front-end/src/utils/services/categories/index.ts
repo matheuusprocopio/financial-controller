@@ -2,7 +2,7 @@ import { CategorieType, CreateCategoryType, UpdateCategoryType } from "@/types/c
 import { PaginatedResponse, PaginationParams } from "@/types/pagination.type";
 import newRequestProvider from "@/utils/requestProvider";
 
-const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
+const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 

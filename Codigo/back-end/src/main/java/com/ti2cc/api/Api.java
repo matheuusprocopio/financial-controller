@@ -6,6 +6,9 @@ import static spark.Spark.before;
 import static spark.Spark.options;
 import static spark.Spark.port;
 
+import static spark.Spark.*;
+
+
 public class Api {
     public static void main(String[] args) {
         port(8080);

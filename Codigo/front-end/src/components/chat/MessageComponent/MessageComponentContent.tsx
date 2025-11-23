@@ -108,7 +108,7 @@ const MessageComponentContent = ({
     ),
     "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} />,
     "tool-listCategories": (p) => <CategoriesList data={p.output as any} />,
-    
+
     "tool-createNewCreditCard": (p) => (
       <CreateCreditCardForm data={p.output as any} />
     ),
@@ -143,19 +143,37 @@ const MessageComponentContent = ({
       if (part.type === "text") {
         const isUser = message.role === "user";
 
-        const chartSpec =
-          !isUser && typeof part.text === "string"
-            ? parseChartSpecFromText(part.text)
-            : null;
+        let chartSpec: ChartSpec | null = null;
+        let isChartStreaming = false;
 
+        if (!isUser && typeof part.text === "string") {
+          const trimmed = part.text.trim();
+
+          const looksLikeChartJson =
+            trimmed.startsWith("{") &&
+            trimmed.includes('"kind"') &&
+            trimmed.includes('"chart"');
+
+          if (looksLikeChartJson) {
+            if (trimmed.endsWith("}")) {
+              // JSON completo -> podemos tentar parsear e renderizar o gráfico
+              chartSpec = parseChartSpecFromText(trimmed);
+            } else {
+              // Parece JSON de gráfico, mas ainda não terminou de ser streamado
+              isChartStreaming = true;
+            }
+          }
+        }
+
+        // Se já temos JSON completo de gráfico válido, renderiza o gráfico
         if (chartSpec) {
           const palette = [
-            "#6366F1", // indigo
-            "#22C55E", // green
-            "#F97316", // orange
-            "#EC4899", // pink
-            "#06B6D4", // cyan
-            "#F59E0B", // amber
+            "#6366F1",
+            "#22C55E",
+            "#F97316",
+            "#EC4899",
+            "#06B6D4",
+            "#F59E0B",
           ];
 
           const config: ChartConfig = {};
@@ -166,8 +184,7 @@ const MessageComponentContent = ({
             };
           });
 
-          const ChartImpl =
-            chartSpec.type === "bar" ? BarChart : LineChart;
+          const ChartImpl = chartSpec.type === "bar" ? BarChart : LineChart;
 
           return (
             <div
@@ -178,9 +195,7 @@ const MessageComponentContent = ({
               )}
             >
               <div className="mb-2">
-                <h3 className="text-sm font-semibold">
-                  {chartSpec.title}
-                </h3>
+                <h3 className="text-sm font-semibold">{chartSpec.title}</h3>
                 {chartSpec.description && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {chartSpec.description}
@@ -227,6 +242,26 @@ const MessageComponentContent = ({
           );
         }
 
+        // Enquanto o JSON de gráfico ainda está sendo streamado,
+        // mostramos só um placeholder, sem expor o código.
+        if (isChartStreaming) {
+          return (
+            <div
+              key={partKey}
+              className={cn(
+                "inline-block max-w-[90%] rounded-lg p-3",
+                "bg-muted text-muted-foreground"
+              )}
+            >
+              <p className="text-xs mb-2 text-muted-foreground">
+                Gerando gráfico...
+              </p>
+              <div className="h-40 w-full animate-pulse rounded-md bg-muted/60" />
+            </div>
+          );
+        }
+
+        // Caso normal: texto comum (com o mesmo estilo que você já tinha)
         return (
           <div
             key={partKey}
@@ -243,6 +278,7 @@ const MessageComponentContent = ({
           </div>
         );
       }
+
 
       const renderer = toolRenderers[part.type];
 

@@ -1,3 +1,4 @@
+
 const COOKIE_ENDPOINT = "/api/auth/session";
 
 const fetchOptions: RequestInit = {
@@ -9,7 +10,7 @@ export const setCookie = async (_name: string, value: string, days = 365) => {
   await fetch(COOKIE_ENDPOINT, {
     ...fetchOptions,
     method: "POST",
-    body: JSON.stringify({ userId: value, maxAgeDays: days }),
+    body: JSON.stringify({ sessionId: value, maxAgeDays: days }),
   });
 };
 
@@ -23,8 +24,8 @@ export const getCookie = async (_name: string): Promise<string | null> => {
     return null;
   }
 
-  const data = (await response.json()) as { userId?: string | null };
-  return data.userId ?? null;
+  const data = (await response.json()) as { sessionId?: string | null };
+  return data.sessionId ?? null;
 };
 
 export const deleteCookie = async (_name: string) => {

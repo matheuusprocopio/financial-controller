@@ -14,6 +14,7 @@ import {
 import type { UserType } from "@/types/user.type";
 import type { RequestError } from "@/utils/requestProvider";
 import { getUserById } from "@/utils/services/users";
+import { useAuth } from "@/hooks/use-auth";
 
 interface UserManageModalProps {
   open: boolean;
@@ -34,6 +35,7 @@ export default function UserManageModal({
   onUpdate,
   onDelete,
 }: UserManageModalProps) {
+  const { sessionId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [status, setStatus] = useState<{
@@ -49,7 +51,11 @@ export default function UserManageModal({
       if (open && user?.id) {
         setIsLoadingData(true);
         try {
-          const response = await getUserById(user.id);
+          if (!sessionId) {
+            throw new Error("Sessão inválida");
+          }
+
+          const response = await getUserById(user.id, sessionId);
           if (!response) {
             setName(user.name || "");
             setEmail(user.email || "");
@@ -82,7 +88,7 @@ export default function UserManageModal({
     };
 
     fetchUserData();
-  }, [user, open]);
+  }, [user, open, sessionId]);
 
   const handleUpdate = async () => {
     if (!user) return;

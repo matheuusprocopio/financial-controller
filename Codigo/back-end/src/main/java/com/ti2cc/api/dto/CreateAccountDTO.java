@@ -1,10 +1,7 @@
 package com.ti2cc.api.dto;
 
-import java.util.UUID;
-
 public class CreateAccountDTO {
     private String name;
-    private UUID userId;
     private String financialInstitution;
     private Double balance;
 
@@ -14,14 +11,6 @@ public class CreateAccountDTO {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
     }
 
     public String getFinancialInstitution() {

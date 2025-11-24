@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,6 @@ import BaseFormCard, {
   FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
 import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
-import { listAccountsPaginated } from "@/utils/services/accounts";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
@@ -41,7 +40,6 @@ interface IAccountsList {
     totalOfAccounts: number;
     currentPage?: number;
     pageLimit?: number;
-    userId?: string;
   };
   onError(errMsg: string): void;
 }
@@ -50,10 +48,10 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
   const accountNickname = data?.nickname ?? "";
   const accounts = useMemo(() => data?.accounts ?? [], [data?.accounts]);
   const totalOfAccounts = data?.totalOfAccounts ?? 0;
-  const userId = data?.userId ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredAccounts, setFilteredAccounts] = useState<AccountType[]>([]);
+  const [accountsData, setAccountsData] = useState<AccountType[]>(accounts);
+  const [totalItems, setTotalItems] = useState<number>(totalOfAccounts);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
     nickname: "",
@@ -61,7 +59,7 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
   });
 
   const pagination = usePagination({
-    totalItems: totalOfAccounts,
+    totalItems,
     initialPage: data?.currentPage ?? 1,
     initialItemsPerPage: data?.pageLimit ?? 10,
   });
@@ -73,11 +71,12 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
   }, [accountNickname]);
 
   useEffect(() => {
-    setFilteredAccounts(accounts);
-  }, [accounts]);
+    setAccountsData(accounts);
+    setTotalItems(totalOfAccounts);
+  }, [accounts, totalOfAccounts]);
 
-  useEffect(() => {
-    let filtered = [...accounts];
+  const filteredAccounts = useMemo(() => {
+    let filtered = [...accountsData];
 
     if (searchTerm.trim()) {
       filtered = filtered.filter(
@@ -108,9 +107,12 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
       );
     }
 
-    setFilteredAccounts(filtered);
+    return filtered;
+  }, [accountsData, searchTerm, activeFilters]);
+
+  useEffect(() => {
     resetPage();
-  }, [searchTerm, accounts, activeFilters, resetPage]);
+  }, [searchTerm, activeFilters, resetPage]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -174,9 +176,27 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
     page?: number,
     itemsPerPage?: number
   ) => {
+    const newPage = page ?? pagination.currentPage;
+    const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+    const targetPage = itemsPerPage ? 1 : newPage;
+
     try {
-      const newPage = page ?? pagination.currentPage;
-      const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+      const response = await fetch(
+        `/api/pagination/accounts?page=${targetPage}&size=${newItemsPerPage}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || "error" in result) {
+        const errorMessage =
+          (result as RequestError)?.error?.message ||
+          "Erro ao buscar contas.";
+        onError(errorMessage);
+        return;
+      }
+
+      setAccountsData(result.data);
+      setTotalItems((prev) => result.totalItems ?? prev);
 
       if (itemsPerPage) {
         pagination.setItemsPerPage(newItemsPerPage);
@@ -184,18 +204,6 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
       } else if (page) {
         pagination.setCurrentPage(newPage);
       }
-
-      const result = await listAccountsPaginated(userId, {
-        page: itemsPerPage ? 1 : newPage,
-        size: newItemsPerPage,
-      });
-
-      if ("error" in result) {
-        onError(result.error.message || "Erro ao buscar contas.");
-        return;
-      }
-
-      setFilteredAccounts(result.data);
     } catch (error) {
       onError("Erro ao buscar contas. Tente novamente.");
     }
@@ -352,9 +360,9 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
                 handlePaginationChange(undefined, Number(value))
               }
               currentPage={pagination.currentPage}
-              totalItems={totalOfAccounts}
-              showBalance={totalOfAccounts > 0}
-              totalBalance={accounts.reduce(
+              totalItems={totalItems}
+              showBalance={totalItems > 0}
+              totalBalance={accountsData.reduce(
                 (sum: number, account: { balance: number }) =>
                   sum + account.balance,
                 0

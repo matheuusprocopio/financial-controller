@@ -6,7 +6,11 @@ import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.AccountUpdateDTO;
+import com.ti2cc.api.dto.CreateAccountDTO;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Account;
+import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.AccountService;
 
 import spark.Request;
@@ -24,8 +28,24 @@ public class AccountController {
     public Object create(Request req, Response res) {
         res.type("application/json");
         try {
-            Account account = gson.fromJson(req.body(), Account.class);
-            boolean created = accountService.createAccount(account);
+            CreateAccountDTO dto = gson.fromJson(req.body(), CreateAccountDTO.class);
+            if (dto == null) {
+                res.status(400);
+                return gson.toJson("Request body is required.");
+            }
+
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            Account account = new Account();
+            account.setName(dto.getName());
+            account.setUserId(sessionUser.getId());
+            account.setFinancialInstitution(dto.getFinancialInstitution());
+            account.setBalance(dto.getBalance() != null ? dto.getBalance() : 0.0);
+            boolean created = accountService.createAccount(account);   
 
             if (created) {
                 res.status(201);
@@ -51,6 +71,12 @@ public class AccountController {
                 return gson.toJson("Account not found.");
             }
 
+            User sessionUser = req.attribute("user");
+            if (sessionUser != null && account.getUserId() != null && !account.getUserId().equals(sessionUser.getId())) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             res.status(200);
             return gson.toJson(account);
         } catch (IllegalArgumentException e) {
@@ -61,15 +87,14 @@ public class AccountController {
 
     public Object listByUser(Request req, Response res) {
         res.type("application/json");
-        String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null) {
-            res.status(400);
-            return gson.toJson("Query parameter 'user_id' is required.");
-        }
-
         try {
-            UUID id = UUID.fromString(userIdParam);
-            List<Account> accounts = accountService.findByUserId(id);
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            List<Account> accounts = accountService.findByUserId(sessionUser.getId());
             res.status(200);
             return gson.toJson(accounts);
         } catch (IllegalArgumentException e) {
@@ -78,10 +103,51 @@ public class AccountController {
         }
     }
 
+    public Object listByUserPaginated(Request req, Response res) {
+        res.type("application/json");
+        try {
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+            
+            int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : PaginationRequestDTO.DEFAULT_PAGE;
+            int size = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
+            
+            PaginationRequestDTO pagination = new PaginationRequestDTO(page, size);
+            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(sessionUser.getId(), pagination);
+            
+            res.status(200);
+            return gson.toJson(paginatedAccounts);
+        } catch (IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson("Invalid parameters format.");
+        }
+    }
+
     public Object update(Request request, Response response) {
         response.type("application/json");
         try {
             UUID id = UUID.fromString(request.params(":accountId"));
+            Account existing = accountService.findById(id);
+
+            User sessionUser = request.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                response.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            if (existing == null) {
+                response.status(404);
+                return gson.toJson("Account not found.");
+            }
+
+            if (existing.getUserId() == null || !existing.getUserId().equals(sessionUser.getId())) {
+                response.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             AccountUpdateDTO dto = gson.fromJson(request.body(), AccountUpdateDTO.class);
 
             Account account = new Account();
@@ -111,6 +177,24 @@ public class AccountController {
         res.type("application/json");
         try {
             UUID id = UUID.fromString(req.params(":accountId"));
+            Account account = accountService.findById(id);
+
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            if (account == null) {
+                res.status(404);
+                return gson.toJson("Account not found.");
+            }
+
+            if (account.getUserId() == null || !account.getUserId().equals(sessionUser.getId())) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             boolean deleted = accountService.deleteAccount(id);
 
             if (deleted) {

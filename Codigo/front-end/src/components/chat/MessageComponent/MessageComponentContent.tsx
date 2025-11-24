@@ -17,15 +17,12 @@ import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountFo
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
 
-import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
-import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
-import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
-import ItemsList from "@/components/ToolsComponents/Items/ListItems";
-
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
 import ReasoningState from "../gen-ui/ReasoningState";
+import { useEffect, useState } from "react";
+import { getErrorMessage } from "@/utils/errors";
 
 interface IMessageComponentContent {
   message: UIMessage;
@@ -40,49 +37,60 @@ const MessageComponentContent = ({
   message,
   timestamp,
 }: IMessageComponentContent) => {
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const handleActionErrorChange = (errMsg: string) => {
+    setActionError(errMsg);
+  };
+
+  useEffect(() => {
+    const firstToolErrorMessage =
+      message.parts
+        .map((part) => {
+          if (!part.type.includes("tool")) return null;
+
+          const outputError = (part as DynamicToolUIPart).output as unknown as { error?: unknown };
+          return getErrorMessage(outputError?.error);
+        })
+        .find(Boolean) ?? null;
+
+    if (!actionError && firstToolErrorMessage) {
+      setActionError(firstToolErrorMessage);
+    }
+  }, [message.parts, actionError]);
+
   const toolRenderers: Record<string, ToolRendererType> = {
     "tool-createNewCategory": (p) => (
-      <CreateCategoryForm data={p.output as any} />
+      <CreateCategoryForm data={p.output as any} onError={handleActionErrorChange} />
     ),
-    "tool-editCategory": (p) => (
-      <EditCategoryForm data={p.output as any} />
-    ),
+    "tool-editCategory": (p) => <EditCategoryForm data={p.output as any} onError={handleActionErrorChange} />,
     "tool-listCategoryActions": () => (
       <ListCategoryActions onSendMessage={onSendMessage} />
     ),
-    "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} />,
-    "tool-listCategories": (p) => <CategoriesList data={p.output as any} />,
-    
+    "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} onError={handleActionErrorChange} />,
+    "tool-listCategories": (p) => <CategoriesList data={p.output as any} onError={handleActionErrorChange} />,
+
     "tool-createNewCreditCard": (p) => (
-      <CreateCreditCardForm data={p.output as any} />
+      <CreateCreditCardForm data={p.output as any} onError={handleActionErrorChange} />
     ),
     "tool-listCreditCardActions": () => (
       <ListCreditCardActions onSendMessage={onSendMessage} />
     ),
-    "tool-deleteCreditCard": (p) => <DeleteCreditCardForm data={p.output as any} />,
-    "tool-listCreditCards": (p) => <CreditCardsList data={p.output as any} />,
+    "tool-deleteCreditCard": (p) => (
+      <DeleteCreditCardForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-listCreditCards": (p) => <CreditCardsList data={p.output as any} onError={handleActionErrorChange} />,
 
     "tool-createNewAccount": (p) => (
-      <CreateAccountForm data={p.output as any} />
+      <CreateAccountForm data={p.output as any} onError={handleActionErrorChange} />
     ),
-    "tool-editAccount": (p) => (
-      <EditAccountForm data={p.output as any} />
-    ),
+    "tool-editAccount": (p) => <EditAccountForm data={p.output as any} onError={handleActionErrorChange} />,
     "tool-listAccountActions": () => (
       <ListAccountActions onSendMessage={onSendMessage} />
     ),
-    "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} />,
-    "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
-    "tool-filterAccounts": (p) => <AccountsList data={p.output as any} />,
-
-    "tool-createNewItem": (p) => (
-      <CreateItemForm data={p.output as any} />
-    ),
-    "tool-editItem": (p) => (
-      <EditItemForm data={p.output as any} />
-    ),
-    "tool-deleteItem": (p) => <DeleteItemForm data={p.output as any} />,
-    "tool-listItems": (p) => <ItemsList data={p.output as any} />,
+    "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} onError={handleActionErrorChange} />,
+    "tool-listAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
+    "tool-filterAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
   };
 
   const renderParts = () =>
@@ -115,12 +123,20 @@ const MessageComponentContent = ({
 
       if (!renderer || !part.type.includes("tool")) return null;
 
-      const content = renderer(part);
-
       const castedPart = part as DynamicToolUIPart;
+      const toolErrorMessage = getErrorMessage(
+        (castedPart.output as { error?: unknown })?.error
+      );
+      const content = toolErrorMessage ? null : renderer(castedPart);
+      const errorMessage = actionError ?? toolErrorMessage;
+      const actionState = errorMessage ? "output-error" : castedPart.state;
 
       return (
-        <ActionWrapper key={partKey} state={castedPart.state}>
+        <ActionWrapper
+          key={partKey}
+          state={actionState}
+          errorMessage={errorMessage}
+        >
           {content}
         </ActionWrapper>
       );

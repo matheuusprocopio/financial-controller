@@ -231,10 +231,10 @@ public class ItemController {
 
     private PaginationRequestDTO buildPagination(Request req) {
         String pageParam = req.queryParams("page");
-        String limitParam = req.queryParams("pageLimit");
+        String sizeParam = req.queryParams("size");
 
         int page = PaginationRequestDTO.DEFAULT_PAGE;
-        int pageLimit = PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
+        int size = PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
 
         if (pageParam != null && !pageParam.isBlank()) {
             try {
@@ -244,15 +244,15 @@ public class ItemController {
             }
         }
 
-        if (limitParam != null && !limitParam.isBlank()) {
+        if (sizeParam != null && !sizeParam.isBlank()) {
             try {
-                pageLimit = Integer.parseInt(limitParam);
+                size = Integer.parseInt(sizeParam);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Query parameter 'pageLimit' must be an integer.");
+                throw new IllegalArgumentException("Query parameter 'size' must be an integer.");
             }
         }
 
-        return new PaginationRequestDTO(page, pageLimit);
+        return new PaginationRequestDTO(page, size);
     }
 
     private DateRangeDTO buildDateRange(Request req) {

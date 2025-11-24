@@ -1,18 +1,13 @@
 package com.ti2cc.api;
 
-import com.google.gson.Gson;
 import com.ti2cc.api.container.Container;
-import com.ti2cc.api.controller.UserController;
-import com.ti2cc.api.dao.UserDAO;
-import com.ti2cc.api.factory.PostgresFactory;
-import com.ti2cc.api.model.User;
 
-import java.sql.Connection;
-
-import static spark.Spark.*;
 import static spark.Spark.before;
 import static spark.Spark.options;
 import static spark.Spark.port;
+
+import static spark.Spark.*;
+
 
 public class Api {
     public static void main(String[] args) {
@@ -34,9 +29,11 @@ public class Api {
         });
 
         before((request, response) -> {
-            response.header("Access-Control-Allow-Origin", "http://localhost:3000");
+            String origin = request.headers("Origin");
+            // Libera CORS para qualquer origem (reflete o Origin recebido)
+            response.header("Access-Control-Allow-Origin", origin != null ? origin : "*");
             response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+            response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Session-Id");
             response.header("Access-Control-Allow-Credentials", "true");
         });
 

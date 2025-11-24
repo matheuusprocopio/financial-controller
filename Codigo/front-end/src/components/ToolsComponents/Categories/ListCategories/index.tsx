@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,31 +12,119 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {} from "@/components/ui/popover";
 import { Search, Filter, ArrowUpDown } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { CategorieType } from "@/types/categorie.type";
+import { usePagination } from "@/hooks/usePagination";
+import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
+import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
+import type { RequestError } from "@/utils/requestProvider";
 
 interface ICategoriesList {
   data: {
     name?: string;
     categories?: CategorieType[];
-    totalOfCategeories?: number;
+    totalOfCategories?: number;
+    currentPage?: number;
+    pageLimit?: number;
+    error?: string | RequestError;
   };
+  onError?(errMsg: string): void;
 }
 
-const CategoriesList = ({ data }: ICategoriesList) => {
-  const categories = data?.categories ?? [];
+const CategoriesList = ({ data, onError }: ICategoriesList) => {
+  const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const categoryName = data?.name ?? "";
-  const totalOfCategeories = data?.name ?? 0
+  const totalOfCategories = data?.totalOfCategories ?? 0;
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoriesData, setCategoriesData] = useState<CategorieType[]>(categories);
+  const [totalItems, setTotalItems] = useState<number>(totalOfCategories);
 
-  categories.forEach((c) => console.log(typeof c.createdAt));
+  const pagination = usePagination({
+    totalItems,
+    initialPage: data?.currentPage ?? 1,
+    initialItemsPerPage: data?.pageLimit ?? 10,
+  });
+
+  const { resetPage } = pagination;
 
   useEffect(() => {
     setSearchTerm(categoryName);
   }, [categoryName]);
+
+  useEffect(() => {
+    setCategoriesData(categories);
+    setTotalItems(totalOfCategories);
+  }, [categories, totalOfCategories]);
+
+  const filteredCategories = useMemo(() => {
+    let filtered = [...categoriesData];
+
+    if (searchTerm.trim()) {
+      filtered = filtered.filter((category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [categoriesData, searchTerm]);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchTerm, resetPage]);
+
+  const paginatedCategories = filteredCategories;
+
+  const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
+    const newPage = page ?? pagination.currentPage;
+    const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+    const nameParam = searchTerm.trim()
+      ? `&name=${encodeURIComponent(searchTerm.trim())}`
+      : "";
+    const targetPage = itemsPerPage ? 1 : newPage;
+
+    try {
+      const response = await fetch(
+        `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${nameParam}`
+      );
+      const result = await response.json();
+
+      if (!response.ok || "error" in result) {
+        const errorMessage =
+          (result as RequestError)?.error?.message ||
+          "Erro ao buscar categorias. Tente novamente.";
+        onError?.(errorMessage);
+        return;
+      }
+
+      setCategoriesData(result.data);
+      setTotalItems((prev) => result.totalItems ?? prev);
+
+      if (itemsPerPage) {
+        pagination.setItemsPerPage(newItemsPerPage);
+        pagination.resetPage();
+      } else if (page) {
+        pagination.setCurrentPage(newPage);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao buscar categorias. Tente novamente.";
+      onError?.(message);
+    }
+  };
+
+  useEffect(() => {
+    if (data?.error) {
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : data.error.error?.message || "Erro ao carregar categorias.";
+      onError?.(message);
+    }
+  }, [data?.error, onError]);
 
   return (
     <Card className={cn("w-full max-w-none")}>
@@ -85,17 +173,19 @@ const CategoriesList = ({ data }: ICategoriesList) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.length === 0 ? (
+              {paginatedCategories.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={2}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    Nenhuma categoria encontrada
+                    {searchTerm
+                      ? "Nenhuma categoria encontrada com os filtros aplicados"
+                      : "Nenhuma categoria encontrada"}
                   </TableCell>
                 </TableRow>
               ) : (
-                categories.map((categorie) => (
+                paginatedCategories.map((categorie) => (
                   <TableRow key={categorie.id}>
                     <TableCell className="font-medium">
                       {categorie.name}
@@ -110,11 +200,23 @@ const CategoriesList = ({ data }: ICategoriesList) => {
           </Table>
         </div>
 
-        {categories.length > 0 && (
-          <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
-            <span>
-              Mostrando {categories.length} de {totalOfCategeories} categorias
-            </span>
+        {filteredCategories.length > 0 && pagination.totalPages > 0 && (
+          <div className="flex flex-col gap-4">
+            <PaginationControls
+              itemsPerPage={pagination.itemsPerPage}
+              onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
+              currentPage={pagination.currentPage}
+              totalItems={totalItems}
+              showBalance={false}
+            />
+
+            {pagination.totalPages > 1 && (
+              <PaginationNumbers
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => handlePaginationChange(page)}
+              />
+            )}
           </div>
         )}
       </CardContent>

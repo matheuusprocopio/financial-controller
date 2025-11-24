@@ -15,7 +15,6 @@ export type FrontMessageType = {
 
 export type CreateMessageType = {
   id: string;
-  userId: string;
   role: string;
   parts: any[];
 };

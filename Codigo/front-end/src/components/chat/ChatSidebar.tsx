@@ -4,26 +4,36 @@ import type React from "react";
 import { useState } from "react";
 import { createChatAction } from "@/actions/chat";
 import { ChatListResponseType } from "@/types/chat.types";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useChatListPagination } from "@/hooks/useChatListPagination";
 import ChatList from "./ChatSidebar/ChatList";
 import ChatSidebarHeader from "./ChatSidebar/ChatSidebarHeader";
 import CreateChatDialog from "./ChatSidebar/CreateChatDialog";
 
 interface ChatSidebarProps {
   chatsData: ChatListResponseType;
+  chatId: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
 const HEADER_HEIGHT = 64;
-const HARDCODED_USER_ID = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
 
-const ChatSidebar = ({ isOpen, onClose, chatsData }: ChatSidebarProps) => {
+const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [chatName, setChatName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const chats = chatsData?.data ?? [];
+
+  const { chatListPage, chatListSize, handleScroll, scrollContainerRef } =
+    useChatListPagination({
+      chatsData,
+      chatsCount: chats.length,
+    });
 
   const handleNewChat = () => {
     setChatName("");
@@ -32,7 +42,13 @@ const ChatSidebar = ({ isOpen, onClose, chatsData }: ChatSidebarProps) => {
   };
 
   const handleSelectChat = (chatId: string) => {
-    router.push(`/chat?chat_id=${chatId}`);
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.set("chat_id", chatId);
+    params.set("chat_list_page", String(chatListPage));
+    params.set("chat_list_size", String(chatListSize));
+
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const handleCreateChat = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -50,7 +66,6 @@ const ChatSidebar = ({ isOpen, onClose, chatsData }: ChatSidebarProps) => {
       setCreateError(null);
 
       const resp = await createChatAction({
-        userId: HARDCODED_USER_ID,
         name: trimmedName,
       });
 
@@ -68,8 +83,6 @@ const ChatSidebar = ({ isOpen, onClose, chatsData }: ChatSidebarProps) => {
       setIsCreating(false);
     }
   };
-
-  const chats = chatsData?.data ?? [];
 
   return (
     <>
@@ -113,8 +126,16 @@ const ChatSidebar = ({ isOpen, onClose, chatsData }: ChatSidebarProps) => {
       >
         <ChatSidebarHeader onNewChat={handleNewChat} onClose={onClose} />
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          <ChatList chats={chats} onSelectChat={handleSelectChat} />
+        <div
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+          onScroll={handleScroll}
+        >
+          <ChatList
+            chats={chats}
+            onSelectChat={handleSelectChat}
+            chatId={chatId}
+          />
         </div>
       </div>
     </>

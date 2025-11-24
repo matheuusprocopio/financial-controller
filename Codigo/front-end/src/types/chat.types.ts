@@ -1,4 +1,4 @@
-import { PaginationResponse } from "./pagination.type";
+import { PaginatedResponse, PaginationParams } from "./pagination.type";
 
 export type ChatType = {
   id: string;
@@ -7,7 +7,11 @@ export type ChatType = {
   updatedAt: string; // iso string date
 };
 
-export type ChatListResponseType = PaginationResponse<ChatType>;
+export type ChatListResponseType = PaginatedResponse<ChatType>;
+
+export type ListChatParamsType = {
+  sessionId: string;
+} & PaginationParams;
 
 export type CreateChatReponseType = {
   id: string;

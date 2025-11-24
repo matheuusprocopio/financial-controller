@@ -1,21 +1,10 @@
 package com.ti2cc.api.dto;
 
-import java.util.UUID;
-
 import com.google.gson.JsonElement;
 
 public class MessageCreateDTO {
-    private UUID userId;
     private String role;
     private JsonElement parts;
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
 
     public String getRole() {
         return role;

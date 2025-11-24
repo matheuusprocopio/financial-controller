@@ -9,9 +9,10 @@ interface ICreateCreditCardForm {
     limit?: number;
     dueDate?: string;
   };
+  onError?(errMsg: string): void;
 }
 
-const CreateCreditCardForm = ({ data }: ICreateCreditCardForm) => {
+const CreateCreditCardForm = ({ data, onError }: ICreateCreditCardForm) => {
   const getCurrentMonth = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -57,7 +58,17 @@ const CreateCreditCardForm = ({ data }: ICreateCreditCardForm) => {
         limit: data?.limit !== undefined ? String(data.limit) : "",
         dueDate: data?.dueDate ?? "",
       }}
-      onSubmit={(data) => {}}
+      onSubmit={async () => {
+        try {
+        onError?.("Não implementado");
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Erro ao criar cartão de crédito.";
+          onError?.(message);
+        }
+      }}
     />
   );
 };

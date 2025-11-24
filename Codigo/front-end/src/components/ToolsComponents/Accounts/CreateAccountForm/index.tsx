@@ -9,9 +9,10 @@ interface ICreateAccountForm {
     financialInstitution?: string;
     balance?: number;
   };
+  onError?(errMsg: string): void;
 }
 
-const CreateAccountForm = ({ data }: ICreateAccountForm) => {
+const CreateAccountForm = ({ data, onError }: ICreateAccountForm) => {
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
   const initialBalance = data?.balance ?? 0;
@@ -47,12 +48,25 @@ const CreateAccountForm = ({ data }: ICreateAccountForm) => {
         balance: initialBalance.toString(),
       }}
       onSubmit={async (data) => {
-        await createAccountAction({
-          name: data["name"] ?? "",
-          userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
-          financialInstitution: data["financialInstitution"] ?? "",
-          balance: parseFloat(data["balance"] ?? "0"),
-        });
+        try {
+          const resp = await createAccountAction({
+            name: data["name"] ?? "",
+            financialInstitution: data["financialInstitution"] ?? "",
+            balance: parseFloat(data["balance"] ?? "0"),
+          });
+
+          if (resp && typeof resp === "object" && "error" in resp) {
+            const message =
+              typeof resp.error?.message === "string"
+                ? resp.error.message
+                : "Erro ao criar conta.";
+            onError?.(message);
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Erro ao criar conta.";
+          onError?.(message);
+        }
       }}
     />
   );

@@ -26,9 +26,10 @@ interface ICreditCardsList {
     status?: number | null;
     resource?: string | null;
   };
+  onError?(errMsg: string): void;
 }
 
-const CreditCardsList = ({ data }: ICreditCardsList) => {
+const CreditCardsList = ({ data, onError }: ICreditCardsList) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const creditCardsData = data?.creditCards;
@@ -45,6 +46,12 @@ const CreditCardsList = ({ data }: ICreditCardsList) => {
   useEffect(() => {
     setSearchTerm(cardName);
   }, [cardName]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      onError?.(errorMessage);
+    }
+  }, [errorMessage, onError]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

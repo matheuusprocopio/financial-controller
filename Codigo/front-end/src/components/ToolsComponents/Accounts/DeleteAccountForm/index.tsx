@@ -12,9 +12,10 @@ interface IDeleteAccountForm {
     financialInstitution?: string;
     balance?: number;
   };
+  onError(errMsg: string): void;
 }
 
-const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
+const DeleteAccountForm = ({ data, onError }: IDeleteAccountForm) => {
   const accountId = data?.accountId ?? "";
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
@@ -29,7 +30,11 @@ const DeleteAccountForm = ({ data }: IDeleteAccountForm) => {
       confirmVariant="destructive"
       onConfirm={async () => {
         if (accountId) {
-          await deleteAccountAction(accountId);
+          const resp = await deleteAccountAction(accountId);
+
+          if ("error" in resp) {
+            onError(resp.error.message);
+          }
         }
       }}
     >

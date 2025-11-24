@@ -8,9 +8,10 @@ interface ICreateCategoryForm {
     name?: string;
     alreadySubmitted?: boolean;
   };
+  onError?(errMsg: string): void;
 }
 
-const CreateCategoryForm = ({ data }: ICreateCategoryForm) => {
+const CreateCategoryForm = ({ data, onError }: ICreateCategoryForm) => {
   return (
     <FormCard
       title="Nova categoria"
@@ -29,11 +30,24 @@ const CreateCategoryForm = ({ data }: ICreateCategoryForm) => {
       }}
       alreadySubmitted={data?.alreadySubmitted}
       onSubmit={async (data) => {
-        await createCategoryAction({
-          name: data["category"] ?? "",
-          userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
-          imagePath: "",
-        });
+        try {
+          const resp = await createCategoryAction({
+            name: data["category"] ?? "",
+            imagePath: "",
+          });
+
+          if (resp && typeof resp === "object" && "error" in resp) {
+            const message =
+              typeof resp.error?.message === "string"
+                ? resp.error.message
+                : "Erro ao criar categoria.";
+            onError?.(message);
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Erro ao criar categoria.";
+          onError?.(message);
+        }
       }}
     />
   );

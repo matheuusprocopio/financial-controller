@@ -5,6 +5,7 @@ import LoadingState from "@/components/chat/gen-ui/LoadingState";
 
 interface IActionWrapper {
   children: React.ReactNode;
+  errorMessage: string | null;
   state:
     | "input-streaming"
     | "input-available"
@@ -12,9 +13,9 @@ interface IActionWrapper {
     | "output-error";
 }
 
-const ActionWrapper = ({ children, state }: IActionWrapper) => {
+const ActionWrapper = ({ children, state, errorMessage }: IActionWrapper) => {
   if (state == "output-error") {
-    return <ErrorState message={"Teste"} />;
+    return <ErrorState message={errorMessage ?? "Erro inesperado"} />;
   }
 
   if (state == "input-available") {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,45 +27,62 @@ import BaseFormCard, {
   FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
 import { accountFilterSchema, type AccountFilterFormData } from "@/formSchemas";
+import { usePagination } from "@/hooks/usePagination";
+import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
+import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
+import { RequestError } from "@/utils/requestProvider";
 
 interface IAccountsList {
   data: {
+    error?: RequestError;
     nickname: string;
     accounts: AccountType[];
     totalOfAccounts: number;
+    currentPage?: number;
+    pageLimit?: number;
   };
+  onError(errMsg: string): void;
 }
 
-const AccountsList = ({ data }: IAccountsList) => {
+const AccountsList = ({ data, onError }: IAccountsList) => {
   const accountNickname = data?.nickname ?? "";
   const accounts = useMemo(() => data?.accounts ?? [], [data?.accounts]);
   const totalOfAccounts = data?.totalOfAccounts ?? 0;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredAccounts, setFilteredAccounts] =
-    useState<AccountType[]>([]);
+  const [accountsData, setAccountsData] = useState<AccountType[]>(accounts);
+  const [totalItems, setTotalItems] = useState<number>(totalOfAccounts);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [activeFilters, setActiveFilters] = useState<AccountFilterFormData>({
     nickname: "",
     financial_institution: "",
   });
 
+  const pagination = usePagination({
+    totalItems,
+    initialPage: data?.currentPage ?? 1,
+    initialItemsPerPage: data?.pageLimit ?? 10,
+  });
+
+  const { resetPage } = pagination;
+
   useEffect(() => {
     setSearchTerm(accountNickname || "");
   }, [accountNickname]);
 
   useEffect(() => {
-    setFilteredAccounts(accounts);
-  }, [accounts]);
+    setAccountsData(accounts);
+    setTotalItems(totalOfAccounts);
+  }, [accounts, totalOfAccounts]);
 
-  useEffect(() => {
-    let filtered = [...accounts];
+  const filteredAccounts = useMemo(() => {
+    let filtered = [...accountsData];
 
     if (searchTerm.trim()) {
       filtered = filtered.filter(
         (account) =>
-          account.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          account.financial_institution
+          account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          account.financialInstitution
             .toLowerCase()
             .includes(searchTerm.toLowerCase())
       );
@@ -74,7 +91,7 @@ const AccountsList = ({ data }: IAccountsList) => {
     if (activeFilters.nickname && activeFilters.nickname.trim()) {
       const nicknameFilter = activeFilters.nickname.toLowerCase().trim();
       filtered = filtered.filter((account) =>
-        account.nickname.toLowerCase().includes(nicknameFilter)
+        account.name.toLowerCase().includes(nicknameFilter)
       );
     }
 
@@ -86,12 +103,16 @@ const AccountsList = ({ data }: IAccountsList) => {
         .toLowerCase()
         .trim();
       filtered = filtered.filter((account) =>
-        account.financial_institution.toLowerCase().includes(institutionFilter)
+        account.financialInstitution.toLowerCase().includes(institutionFilter)
       );
     }
 
-    setFilteredAccounts(filtered);
-  }, [searchTerm, accounts, activeFilters]);
+    return filtered;
+  }, [accountsData, searchTerm, activeFilters]);
+
+  useEffect(() => {
+    resetPage();
+  }, [searchTerm, activeFilters, resetPage]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -148,6 +169,45 @@ const AccountsList = ({ data }: IAccountsList) => {
     (activeFilters.nickname && activeFilters.nickname.trim()) ||
     (activeFilters.financial_institution &&
       activeFilters.financial_institution.trim());
+
+  const paginatedAccounts = filteredAccounts;
+
+  const handlePaginationChange = async (
+    page?: number,
+    itemsPerPage?: number
+  ) => {
+    const newPage = page ?? pagination.currentPage;
+    const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+    const targetPage = itemsPerPage ? 1 : newPage;
+
+    try {
+      const response = await fetch(
+        `/api/pagination/accounts?page=${targetPage}&size=${newItemsPerPage}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || "error" in result) {
+        const errorMessage =
+          (result as RequestError)?.error?.message ||
+          "Erro ao buscar contas.";
+        onError(errorMessage);
+        return;
+      }
+
+      setAccountsData(result.data);
+      setTotalItems((prev) => result.totalItems ?? prev);
+
+      if (itemsPerPage) {
+        pagination.setItemsPerPage(newItemsPerPage);
+        pagination.resetPage();
+      } else if (page) {
+        pagination.setCurrentPage(newPage);
+      }
+    } catch (error) {
+      onError("Erro ao buscar contas. Tente novamente.");
+    }
+  };
 
   return (
     <Card className={cn("w-full max-w-none")}>
@@ -241,7 +301,7 @@ const AccountsList = ({ data }: IAccountsList) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAccounts.length === 0 ? (
+              {paginatedAccounts.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={4}
@@ -253,15 +313,15 @@ const AccountsList = ({ data }: IAccountsList) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAccounts.map((account) => (
+                paginatedAccounts.map((account) => (
                   <TableRow key={account.id}>
                     <TableCell className="font-medium">
-                      {account.nickname}
+                      {account.name}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4" />
-                        {account.financial_institution}
+                        {account.financialInstitution}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -292,24 +352,31 @@ const AccountsList = ({ data }: IAccountsList) => {
           </Table>
         </div>
 
-        {filteredAccounts.length > 0 && (
-          <div className="flex justify-between items-center text-sm text-muted-foreground pt-2">
-            <span>
-              Mostrando {filteredAccounts.length} de {totalOfAccounts} contas
-              {hasActiveFilters && " (filtradas)"}
-            </span>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4" />
-                Saldo total:{" "}
-                {formatCurrency(
-                  filteredAccounts.reduce(
-                    (sum: number, account: { balance: number; }) => sum + account.balance,
-                    0
-                  )
-                )}
-              </span>
-            </div>
+        {filteredAccounts.length > 0 && pagination.totalPages > 0 && (
+          <div className="flex flex-col gap-4">
+            <PaginationControls
+              itemsPerPage={pagination.itemsPerPage}
+              onItemsPerPageChange={(value) =>
+                handlePaginationChange(undefined, Number(value))
+              }
+              currentPage={pagination.currentPage}
+              totalItems={totalItems}
+              showBalance={totalItems > 0}
+              totalBalance={accountsData.reduce(
+                (sum: number, account: { balance: number }) =>
+                  sum + account.balance,
+                0
+              )}
+              formatCurrency={formatCurrency}
+            />
+
+            {pagination.totalPages > 1 && (
+              <PaginationNumbers
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={(page) => handlePaginationChange(page)}
+              />
+            )}
           </div>
         )}
       </CardContent>

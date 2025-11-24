@@ -137,6 +137,42 @@ public class AccountDAO {
         return accounts;
     }
 
+    public List<Account> getByUserIdPaginated(UUID userId, int offset, int limit) {
+        String query = "SELECT * FROM accounts WHERE user_id = ? ORDER BY id LIMIT ? OFFSET ?";
+        List<Account> accounts = new ArrayList<>();
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, userId);
+            pstmt.setInt(2, limit);
+            pstmt.setInt(3, offset);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                accounts.add(mapAccount(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list user accounts paginated: " + e.getMessage());
+        }
+
+        return accounts;
+    }
+
+    public long countByUserId(UUID userId) {
+        String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count user accounts: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
     public boolean increaseBalance(UUID accountId, double amount) {
         String query = "UPDATE accounts SET balance = balance + ? WHERE id = ?";
         return executeBalanceUpdate(accountId, amount, query);

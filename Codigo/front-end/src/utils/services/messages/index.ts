@@ -1,17 +1,18 @@
 import { CreateMessageType, ServerMessageType } from "@/types/message.types";
 import newRequestProvider from "@/utils/requestProvider";
 
-const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
+const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
-export const listMessages = async (chatId: string, userId: string) => {
+const withSession = (sessionId: string | undefined) =>
+  sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
+
+export const listMessages = async (chatId: string, sessionId: string) => {
   const resp = await provider.get<ServerMessageType[]>(
-    `chats/${chatId}/messages?user_id=${userId}`,
+    `chats/${chatId}/messages`,
     {
-      next: {
-        tags: [`messages-${chatId}`],
-      },
+      ...withSession(sessionId),
     }
   );
 
@@ -20,11 +21,15 @@ export const listMessages = async (chatId: string, userId: string) => {
 
 export const createMessages = async (
   chatId: string,
+  sessionId: string,
   message: CreateMessageType
 ) => {
   const resp = await provider.post(`chats/${chatId}/messages`, {
     body: {
       ...message,
+    },
+    headers: {
+      "X-Session-Id": sessionId,
     },
   });
 

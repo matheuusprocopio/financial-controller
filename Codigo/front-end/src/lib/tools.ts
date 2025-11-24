@@ -6,6 +6,9 @@ import { listCategoriesPaginated } from "@/utils/services/categories";
 import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
 import { getSessionId } from "@/utils/server-cookies";
 
+import { calculateItemsAnalytics, ItemAnalyticsRequest } from "@/utils/services/itemsAnalytics";
+import { ItemAnalyticsResponse } from "@/types/analytics.types";
+
 import { AccountType } from "@/types/account.type";
 import { RequestError } from "@/utils/requestProvider";
 
@@ -17,7 +20,7 @@ export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
   inputSchema: z.object({
     name: z.string().optional(),
-    imagePath: z.string().optional(),
+    imagePath: z.string().optional(), 
     mainCategoryId: z.string().optional(),
   }),
 
@@ -508,6 +511,55 @@ export const filterAccountsTool = tool({
   },
 });
 
+export const itemsAnalyticsTool = tool({
+  description: `
+    Calcula métricas financeiras com base nos lançamentos (items) do usuário.
+    Use este tool sempre que o usuário pedir gráficos, relatórios ou comparações
+    envolvendo tempo (meses) e categorias/contas/tipos.
+
+    Prefira usar:
+    - metric: "total_expenses" para gráficos de gastos
+    - groupBy: ["month","category"] para evolução mensal por categoria
+  `,
+  inputSchema: z.object({
+    metric: z
+      .enum(["total_expenses", "total_incomes", "balance", "count_items"])
+      .describe("Qual métrica calcular."),
+    groupBy: z
+      .array(z.enum(["month", "category", "account", "type"]))
+      .min(1)
+      .max(2)
+      .describe("Dimensões para agrupar os dados."),
+    startDate: z
+      .string()
+      .describe("Data inicial no formato YYYY-MM-DD"),
+    endDate: z
+      .string()
+      .describe("Data final no formato YYYY-MM-DD"),
+    categoryId: z.string().optional(),
+    accountId: z.string().optional(),
+  }),
+
+  execute: async (input) => {
+    const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e"; // mesmo user fixo que vocês já usam
+
+    const body: ItemAnalyticsRequest = {
+      userId,
+      metric: input.metric,
+      groupBy: input.groupBy,
+      startDate: input.startDate,
+      endDate: input.endDate,
+      categoryId: input.categoryId,
+      accountId: input.accountId,
+    };
+
+    const resp = await calculateItemsAnalytics(body);
+
+    return resp as ItemAnalyticsResponse;
+  },
+});
+
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,
@@ -527,4 +579,6 @@ export const tools = {
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,
   listCreditCards: listCreditCardsTool,
+
+  itemsAnalytics: itemsAnalyticsTool,
 };

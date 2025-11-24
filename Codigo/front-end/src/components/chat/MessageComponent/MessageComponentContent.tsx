@@ -19,6 +19,9 @@ import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountFo
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
 
+import ItemsAnalyticsChart from "../gen-ui/ItemsAnalyticsChart";
+import { ItemAnalyticsResponse } from "@/types/analytics.types";
+
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
@@ -152,6 +155,10 @@ const MessageComponentContent = ({
     "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} onError={handleActionErrorChange} />,
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
     "tool-filterAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
+
+    "tool-itemsAnalytics": (p) => (
+      <ItemsAnalyticsChart data={p.output as ItemAnalyticsResponse} />
+    ),
   };
 
   const renderParts = () =>

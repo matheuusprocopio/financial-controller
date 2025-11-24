@@ -12,6 +12,7 @@ import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.MessageCreateDTO;
 import com.ti2cc.api.dto.MessageIdResponseDTO;
 import com.ti2cc.api.model.Message;
+import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.MessageService;
 
 import spark.Request;
@@ -54,9 +55,10 @@ public class MessageController {
                 return gson.toJson("Request body is required.");
             }
 
-            if (dto.getUserId() == null) {
-                res.status(400);
-                return gson.toJson("Field 'userId' is required.");
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
             }
 
             if (dto.getRole() == null || dto.getRole().isBlank()) {
@@ -69,7 +71,7 @@ public class MessageController {
                 return gson.toJson("Field 'parts' is required and must be a JSON array.");
             }
 
-            UUID messageId = messageService.createMessage(chatId, dto.getUserId(), dto.getRole(), dto.getParts());
+            UUID messageId = messageService.createMessage(chatId, sessionUser.getId(), dto.getRole(), dto.getParts());
             if (messageId != null) {
                 res.status(201);
                 return gson.toJson(new MessageIdResponseDTO(messageId));
@@ -95,17 +97,15 @@ public class MessageController {
             return gson.toJson("Path parameter 'chatId' is required.");
         }
 
-        String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null || userIdParam.isBlank()) {
-            res.status(400);
-            return gson.toJson("Query parameter 'user_id' is required.");
-        }
-
         try {
             UUID chatId = UUID.fromString(chatIdParam);
-            UUID userId = UUID.fromString(userIdParam);
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
 
-            List<Message> messages = messageService.listMessagesByChat(chatId, userId);
+            List<Message> messages = messageService.listMessagesByChat(chatId, sessionUser.getId());
             if (messages == null) {
                 res.status(404);
                 return gson.toJson("Chat not found or access denied.");

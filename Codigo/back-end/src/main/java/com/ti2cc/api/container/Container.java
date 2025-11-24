@@ -16,6 +16,7 @@ import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.dao.MessageDAO;
 import com.ti2cc.api.dao.UserDAO;
 import com.ti2cc.api.factory.PostgresFactory;
+import com.ti2cc.api.middleware.AuthMiddleware;
 import com.ti2cc.api.routes.AccountRoutes;
 import com.ti2cc.api.routes.AuthRoutes;
 import com.ti2cc.api.routes.CategoryRoutes;
@@ -31,6 +32,9 @@ import com.ti2cc.api.service.ItemService;
 import com.ti2cc.api.service.MessageService;
 import com.ti2cc.api.service.SessionService;
 import com.ti2cc.api.service.UserService;
+
+import static spark.Spark.before;
+import spark.Request;
 
 public class Container {
     public static void register() {
@@ -54,6 +58,7 @@ public class Container {
         // Serviços de autenticação
         FirebaseAuthService firebaseAuthService = new FirebaseAuthService();
         SessionService sessionService = new SessionService();
+        AuthMiddleware authMiddleware = new AuthMiddleware(sessionService);
 
         CategoryController categoryController = new CategoryController(categoryService);
         AccountController accountController = new AccountController(accountService);
@@ -72,6 +77,7 @@ public class Container {
         ChatRoutes chatRoutes = new ChatRoutes(chatController);
         MessageRoutes messageRoutes = new MessageRoutes(messageController);
 
+        registerAuthGuards(authMiddleware);
         
         categoryRoutes.register();
         accountRoutes.register();
@@ -80,5 +86,52 @@ public class Container {
         authRoutes.register();
         chatRoutes.register();
         messageRoutes.register();
+    }
+
+    private static void registerAuthGuards(AuthMiddleware authMiddleware) {
+        before("/categories", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/categories/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+
+        before("/accounts", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/accounts/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+
+        before("/chats", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/chats/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+
+        before("/users", (req, res) -> {
+            if (isPreflight(req)) return;
+            if ("POST".equalsIgnoreCase(req.requestMethod())) {
+                authMiddleware.requireValidSession(req, res);
+            }
+        });
+        before("/users/:id", (req, res) -> {
+            if (isPreflight(req)) return;
+            String method = req.requestMethod();
+            if ("PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method)) {
+                authMiddleware.requireValidSession(req, res);
+            }
+        });
+    }
+
+    private static boolean isPreflight(Request req) {
+        return "OPTIONS".equalsIgnoreCase(req.requestMethod());
     }
 }

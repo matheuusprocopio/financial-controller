@@ -29,9 +29,11 @@ public class Api {
         });
 
         before((request, response) -> {
-            response.header("Access-Control-Allow-Origin", "http://localhost:3000");
+            String origin = request.headers("Origin");
+            // Libera CORS para qualquer origem (reflete o Origin recebido)
+            response.header("Access-Control-Allow-Origin", origin != null ? origin : "*");
             response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+            response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Session-Id");
             response.header("Access-Control-Allow-Credentials", "true");
         });
 

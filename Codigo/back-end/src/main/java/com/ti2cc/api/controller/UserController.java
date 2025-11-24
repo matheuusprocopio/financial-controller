@@ -22,7 +22,19 @@ public class UserController {
     public Object create(Request req, Response res) {
         res.type("application/json");
         try {
-            User user = gson.fromJson(req.body(), User.class);
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            User existing = userService.findUserById(sessionUser.getId());
+            if (existing != null) {
+                res.status(200);
+                return gson.toJson(existing);
+            }
+
+            User user = new User(sessionUser.getId(), sessionUser.getName(), sessionUser.getEmail());
             boolean created = userService.createUser(user);
 
             if (created) {
@@ -67,8 +79,25 @@ public class UserController {
         res.type("application/json");
         try {
             UUID id = parseUserId(req.params(":id"));
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            if (sessionUser.getId() != null && !sessionUser.getId().equals(id)) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             User user = gson.fromJson(req.body(), User.class);
-            user.setId(id);
+            user.setId(sessionUser.getId() != null ? sessionUser.getId() : id);
+            if (user.getEmail() == null) {
+                user.setEmail(sessionUser.getEmail());
+            }
+            if (user.getName() == null) {
+                user.setName(sessionUser.getName());
+            }
 
             boolean updated = userService.updateUser(user);
 
@@ -93,6 +122,17 @@ public class UserController {
         res.type("application/json");
         try {
             UUID id = parseUserId(req.params(":id"));
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            if (sessionUser.getId() != null && !sessionUser.getId().equals(id)) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             boolean deleted = userService.deleteUser(id);
 
             if (deleted) {

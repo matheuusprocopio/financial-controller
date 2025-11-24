@@ -1,8 +1,11 @@
 package com.ti2cc.api.middleware;
 
+import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.SessionService;
 import spark.Request;
 import spark.Response;
+
+import static spark.Spark.halt;
 
 public class AuthMiddleware {
 
@@ -12,35 +15,37 @@ public class AuthMiddleware {
         this.sessionService = sessionService;
     }
 
-    public boolean validateSession(Request request, Response response) {
+    public User requireValidSession(Request request, Response response) {
         String sessionId = request.headers("X-Session-Id");
-        
+
         if (sessionId == null || sessionId.isEmpty()) {
-            response.status(401);
-            response.type("application/json");
-            response.body("{\"error\":\"Não autenticado. Session ID não fornecido.\"}");
-            return false;
+            unauthorized(response, "Não autenticado. Session ID não fornecido.");
         }
 
-        if (!sessionService.isValidSession(sessionId)) {
-            response.status(401);
-            response.type("application/json");
-            response.body("{\"error\":\"Sessão inválida ou expirada.\"}");
-            return false;
+        User user = sessionService.getSession(sessionId);
+        if (user == null) {
+            unauthorized(response, "Sessão inválida ou expirada.");
         }
 
-        return true;
+        attachUserToRequest(request, user, sessionId);
+        return user;
+    }
+
+    private void unauthorized(Response response, String message) {
+        response.status(401);
+        response.type("application/json");
+        response.body("{\"error\":\"" + message + "\"}");
+        halt(401, response.body());
     }
 
     /**
-     * Adiciona o usuário da sessão como atributo da requisição
-     * Deve ser chamado após validateSession retornar true
+     * Adiciona o usuário e claims da sessão como atributos da requisição.
      */
-    public void attachUserToRequest(Request request) {
-        String sessionId = request.headers("X-Session-Id");
-        if (sessionId != null) {
-            request.attribute("user", sessionService.getSession(sessionId));
-        }
+    private void attachUserToRequest(Request request, User user, String sessionId) {
+        request.attribute("user", user);
+        request.attribute("userId", user.getId());
+        request.attribute("userEmail", user.getEmail());
+        request.attribute("userName", user.getName());
+        request.attribute("sessionId", sessionId);
     }
 }
-

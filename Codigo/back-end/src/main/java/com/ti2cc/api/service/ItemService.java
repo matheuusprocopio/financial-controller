@@ -136,4 +136,28 @@ public class ItemService {
         String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
         return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter, dateRange, pagination);
     }
+        public ItemAnalyticsResponseDTO getAnalytics(ItemAnalyticsRequestDTO req) {
+        if (req == null || req.getUserId() == null) {
+            System.err.println("Invalid analytics request: missing userId");
+            return new ItemAnalyticsResponseDTO();
+        }
+
+        if (req.getStartDate() == null || req.getEndDate() == null) {
+            LocalDate end = LocalDate.now();
+            LocalDate start = end.minusMonths(6);
+            req.setStartDate(start);
+            req.setEndDate(end);
+        }
+
+        if (req.getGroupBy() == null || req.getGroupBy().isEmpty()) {
+            req.setGroupBy(List.of(ItemAnalyticsRequestDTO.GroupBy.month));
+        }
+
+        if (req.getMetric() == null) {
+            req.setMetric(ItemAnalyticsRequestDTO.Metric.total_expenses);
+        }
+
+        return itemDAO.getAnalytics(req);
+    }
+
 }

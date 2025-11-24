@@ -16,6 +16,11 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
 
+
+import com.google.gson.Gson;
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
+import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
+import com.ti2cc.api.factory.ClassMapperFactory;
 import spark.Request;
 import spark.Response;
 
@@ -197,6 +202,28 @@ public class ItemController {
             return gson.toJson("Invalid UUID format.");
         }
     }
+
+        public Object analytics(Request req, Response res) {
+        try {
+            ItemAnalyticsRequestDTO dto = gson.fromJson(req.body(), ItemAnalyticsRequestDTO.class);
+
+            if (dto.getUserId() == null) {
+                res.status(400);
+                return gson.toJson(new Error("userId is required"));
+            }
+
+            ItemAnalyticsResponseDTO resp = itemService.getAnalytics(dto);
+
+            res.status(200);
+            res.type("application/json");
+            return gson.toJson(resp);
+        } catch (Exception e) {
+            res.status(500);
+            res.type("application/json");
+            return gson.toJson(new Error("Failed to process analytics request: " + e.getMessage()));
+        }
+    }
+
 
     private PaginationRequestDTO buildPagination(Request req) {
         String pageParam = req.queryParams("page");

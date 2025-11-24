@@ -25,6 +25,7 @@ public class ItemRoutes {
             get("/category/:categoryId", controller::getByCategoryId);
             put("/:itemId", controller::update);
             delete("/:itemId", controller::delete);
+            post("/analytics", controller::analytics);
         });
     }
 }

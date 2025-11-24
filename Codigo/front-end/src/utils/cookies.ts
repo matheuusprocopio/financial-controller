@@ -1,3 +1,4 @@
+
 const COOKIE_ENDPOINT = "/api/auth/session";
 
 const fetchOptions: RequestInit = {

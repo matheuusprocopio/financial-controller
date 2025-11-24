@@ -5,6 +5,7 @@ import { UIMessage } from "@ai-sdk/react";
 
 import MessageComponent from "./MessageComponent";
 import { FrontMessageType } from "@/types/message.types";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MessageContainerProps {
   messages: FrontMessageType[];
@@ -16,6 +17,10 @@ const MessagesContainer = ({
   onSendMessage,
 }: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  const photoURL = user?.photoURL || "";
+  const displayName = user?.displayName || "";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,6 +39,8 @@ const MessagesContainer = ({
             key={message.message.id}
             message={message.message}
             timestamp={message.createdAt}
+            photoURL={photoURL}
+            displayName={displayName}
           />
         ))}
         <div ref={messagesEndRef} />

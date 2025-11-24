@@ -3,6 +3,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { listCategories } from "@/utils/services/categories";
 import { listAccounts, getAccountById } from "@/utils/services/accounts";
+import { getFirebaseId } from "@/utils/server-cookies";
 
 const ensureErrorMessage = (rawMessage?: string) => {
   if (!rawMessage) return "Unknown error";
@@ -91,28 +92,42 @@ export const listCategoriesTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const resp = await listCategories("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e", name);
+      const firebaseId = await getFirebaseId();
 
-      if (Array.isArray(resp)) {
-        const categories = resp;
-
+      if (!firebaseId) {
         return {
           name,
-          categories,
-          totalOfCategories: categories.length,
+          categories: [],
+          totalOfCategories: 0,
+          error: ensureErrorMessage(
+            "Não foi possível obter os dados do usuário."
+          ),
         };
       }
 
-      const { error } = resp;
+      const resp = await listCategories(firebaseId, name);
+
+      if ("error" in resp) {
+        const { error } = resp;
+
+        return {
+          name,
+          categories: [],
+          totalOfCategories: 0,
+          error: ensureErrorMessage(error.message),
+        };
+      }
+
+      const categories = resp;
 
       return {
         name,
-        categories: [],
-        totalOfCategories: 0,
-        error: ensureErrorMessage(error.message),
+        categories,
+        totalOfCategories: categories.length,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       return {
         name,
@@ -127,12 +142,10 @@ export const listCategoriesTool = tool({
 });
 //
 
-
-
-
 // credit card
 export const createNewCreditCardTool = tool({
-  description: "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
+  description:
+    "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
   inputSchema: z.object({
     cardName: z.string().optional(),
     financialInstitution: z.string().optional(),
@@ -140,7 +153,12 @@ export const createNewCreditCardTool = tool({
     dueDate: z.string().optional(),
   }),
 
-  execute: async ({ cardName = "", financialInstitution = "", limit = 0, dueDate = "" }) => {
+  execute: async ({
+    cardName = "",
+    financialInstitution = "",
+    limit = 0,
+    dueDate = "",
+  }) => {
     return {
       cardName,
       financialInstitution,
@@ -149,10 +167,6 @@ export const createNewCreditCardTool = tool({
     };
   },
 });
-
-
-
-
 
 export const deleteCreditCardTool = tool({
   description: "Excludes a credit card",
@@ -196,7 +210,6 @@ export const listCreditCardActionsTool = tool({
 });
 //
 
-
 // accounts
 export const createNewAccountTool = tool({
   description: "Create or add a new account to user",
@@ -233,7 +246,8 @@ export const editAccountTool = tool({
         return {
           accountId: account.id,
           name: name ?? account.nickname,
-          financialInstitution: financialInstitution ?? account.financial_institution,
+          financialInstitution:
+            financialInstitution ?? account.financial_institution,
           balance: balance ?? account.balance,
         };
       }
@@ -290,7 +304,20 @@ export const listAccountsTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const resp = await listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e");
+      const firebaseId = await getFirebaseId();
+
+      if (!firebaseId) {
+        return {
+          name,
+          accounts: [],
+          totalOfAccounts: 0,
+          error: "Não foi possível obter os dados do usuário.",
+          status: null,
+          resource: null,
+        };
+      }
+
+      const resp = await listAccounts(firebaseId);
 
       if (Array.isArray(resp)) {
         const accounts = resp;
@@ -317,7 +344,8 @@ export const listAccountsTool = tool({
         error: ensureErrorMessage(error.message),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       return {
         name,
@@ -332,7 +360,8 @@ export const listAccountsTool = tool({
 });
 
 export const filterAccountsTool = tool({
-  description: "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
+  description:
+    "Filter accounts by specific criteria like account name or financial institution. Use this when user wants to filter or search for specific accounts with criteria.",
   inputSchema: z.object({
     name: z.string().optional(),
     financialInstitution: z.string().optional(),
@@ -340,7 +369,20 @@ export const filterAccountsTool = tool({
 
   execute: async ({ name, financialInstitution }) => {
     try {
-      const resp = await listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e");
+      const firebaseId = await getFirebaseId();
+
+      if (!firebaseId) {
+        return {
+          name: name || "",
+          financialInstitution: financialInstitution || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          totalOfOriginalAccounts: 0,
+          error: "Não foi possível obter os dados do usuário.",
+        };
+      }
+
+      const resp = await listAccounts(firebaseId);
 
       if (Array.isArray(resp)) {
         let filteredAccounts = [...resp];
@@ -355,7 +397,9 @@ export const filterAccountsTool = tool({
         if (financialInstitution && financialInstitution.trim()) {
           const institutionFilter = financialInstitution.toLowerCase().trim();
           filteredAccounts = filteredAccounts.filter((account) =>
-            account.financial_institution.toLowerCase().includes(institutionFilter)
+            account.financial_institution
+              .toLowerCase()
+              .includes(institutionFilter)
           );
         }
 
@@ -379,7 +423,8 @@ export const filterAccountsTool = tool({
         error: ensureErrorMessage(error.message),
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
 
       return {
         name: name || "",
@@ -400,14 +445,14 @@ export const tools = {
   listCategoryActions: listCategoryActionsTool,
   deleteCategory: deleteCategoryTool,
   listCategories: listCategoriesTool,
-  
+
   createNewAccount: createNewAccountTool,
   editAccount: editAccountTool,
   listAccountActions: listAccountActionsTool,
   deleteAccount: deleteAccountTool,
   listAccounts: listAccountsTool,
   filterAccounts: filterAccountsTool,
-  
+
   createNewCreditCard: createNewCreditCardTool,
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,

@@ -4,13 +4,15 @@ import { createMessages } from "@/utils/services/messages";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { revalidateTag } from "next/cache";
+import { NextRequest } from "next/server";
 
 export const maxDuration = 30;
+const COOKIE_NAME = "financialcontroller_user_id";
 
-export async function POST(req: Request) {
+
+export async function POST(req: NextRequest) {
   const { messages, chatId }: { messages: UIMessage[]; chatId: string } =
     await req.json();
-
   const result = streamText({
     model: openai("o3-mini"),
     messages: convertToModelMessages(messages),
@@ -64,14 +66,20 @@ Your goal is to help the user gain clarity over their financial life, by support
       const lastUserMessage = serverMessages[serverMessages.length - 2];
       const lastAIMessage = serverMessages[serverMessages.length - 1];
 
+      const firebaseId = req.cookies.get(COOKIE_NAME)?.value;
+
+      if (!firebaseId) {
+        return;
+      }
+
       await createMessages(chatId, {
         ...lastUserMessage,
-        userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
+        userId: firebaseId,
       });
 
       await createMessages(chatId, {
         ...lastAIMessage,
-        userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
+        userId: firebaseId,
       });
 
       revalidateTag(`messages-${chatId}`);

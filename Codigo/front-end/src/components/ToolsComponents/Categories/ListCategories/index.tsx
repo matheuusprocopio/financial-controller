@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import {
 import { Search, Filter, ArrowUpDown } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { CategorieType } from "@/types/categorie.type";
-import { listCategoriesPaginated } from "@/utils/services/categories";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
@@ -28,7 +27,6 @@ interface ICategoriesList {
     totalOfCategories?: number;
     currentPage?: number;
     pageLimit?: number;
-    userId?: string;
     error?: string | RequestError;
   };
   onError?(errMsg: string): void;
@@ -38,13 +36,13 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
   const categories = useMemo(() => data?.categories ?? [], [data?.categories]);
   const categoryName = data?.name ?? "";
   const totalOfCategories = data?.totalOfCategories ?? 0;
-  const userId = data?.userId ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredCategories, setFilteredCategories] = useState<CategorieType[]>([]);
+  const [categoriesData, setCategoriesData] = useState<CategorieType[]>(categories);
+  const [totalItems, setTotalItems] = useState<number>(totalOfCategories);
 
   const pagination = usePagination({
-    totalItems: totalOfCategories,
+    totalItems,
     initialPage: data?.currentPage ?? 1,
     initialItemsPerPage: data?.pageLimit ?? 10,
   });
@@ -56,11 +54,12 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
   }, [categoryName]);
 
   useEffect(() => {
-    setFilteredCategories(categories);
-  }, [categories]);
+    setCategoriesData(categories);
+    setTotalItems(totalOfCategories);
+  }, [categories, totalOfCategories]);
 
-  useEffect(() => {
-    let filtered = [...categories];
+  const filteredCategories = useMemo(() => {
+    let filtered = [...categoriesData];
 
     if (searchTerm.trim()) {
       filtered = filtered.filter((category) =>
@@ -68,30 +67,46 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
       );
     }
 
-    setFilteredCategories(filtered);
+    return filtered;
+  }, [categoriesData, searchTerm]);
+
+  useEffect(() => {
     resetPage();
-  }, [searchTerm, categories, resetPage]);
+  }, [searchTerm, resetPage]);
 
   const paginatedCategories = filteredCategories;
 
   const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
+    const newPage = page ?? pagination.currentPage;
+    const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+    const nameParam = searchTerm.trim()
+      ? `&name=${encodeURIComponent(searchTerm.trim())}`
+      : "";
+    const targetPage = itemsPerPage ? 1 : newPage;
+
     try {
-      const newPage = page ?? pagination.currentPage;
-      const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
-      
+      const response = await fetch(
+        `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${nameParam}`
+      );
+      const result = await response.json();
+
+      if (!response.ok || "error" in result) {
+        const errorMessage =
+          (result as RequestError)?.error?.message ||
+          "Erro ao buscar categorias. Tente novamente.";
+        onError?.(errorMessage);
+        return;
+      }
+
+      setCategoriesData(result.data);
+      setTotalItems((prev) => result.totalItems ?? prev);
+
       if (itemsPerPage) {
         pagination.setItemsPerPage(newItemsPerPage);
         pagination.resetPage();
       } else if (page) {
         pagination.setCurrentPage(newPage);
       }
-
-      const result = await listCategoriesPaginated(userId, {
-        page: itemsPerPage ? 1 : newPage,
-        size: newItemsPerPage,
-      }, searchTerm);
-      
-      setFilteredCategories(result.data);
     } catch (error) {
       const message =
         error instanceof Error
@@ -191,7 +206,7 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
               itemsPerPage={pagination.itemsPerPage}
               onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
               currentPage={pagination.currentPage}
-              totalItems={totalOfCategories}
+              totalItems={totalItems}
               showBalance={false}
             />
 

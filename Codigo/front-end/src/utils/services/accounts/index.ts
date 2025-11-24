@@ -10,36 +10,50 @@ const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
-export const listAccounts = async (userId: string) => {
-  const response = await provider.get<AccountType[]>(
-    `accounts?user_id=${userId}`
-  );
+const withSession = (sessionId: string | undefined) =>
+  sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
+
+export const listAccounts = async (sessionId: string) => {
+  const response = await provider.get<AccountType[]>(`accounts`, {
+    ...withSession(sessionId),
+  });
 
   return response;
 };
 
 export const listAccountsPaginated = async (
-  userId: string,
+  sessionId: string,
   pagination: PaginationParams
 ) => {
   const response = await provider.get<PaginatedResponse<AccountType>>(
-    `accounts/paginated?user_id=${userId}&page=${pagination.page}&size=${pagination.size}`
+    `accounts/paginated?page=${pagination.page}&size=${pagination.size}`,
+    {
+      ...withSession(sessionId),
+    }
   );
 
   return response;
 };
 
-export const getAccountById = async (accountId: string) => {
-  const response = await provider.get<AccountType>(`accounts/${accountId}`);
+export const getAccountById = async (accountId: string, sessionId: string) => {
+  const response = await provider.get<AccountType>(`accounts/${accountId}`, {
+    ...withSession(sessionId),
+  });
 
   return response;
 };
 
-export const createAccount = async (payload: CreateAccountType) => {
+export const createAccount = async (
+  sessionId: string,
+  payload: CreateAccountType
+) => {
   const response = await provider.post<AccountType, CreateAccountType>(
     `accounts`,
     {
       body: payload,
+      headers: {
+        "X-Session-Id": sessionId,
+      },
     }
   );
 
@@ -48,12 +62,16 @@ export const createAccount = async (payload: CreateAccountType) => {
 
 export const updateAccount = async (
   accountId: string,
+  sessionId: string,
   payload: UpdateAccountType
 ): Promise<RequestError | any> => {
   const response = await provider.put<any, UpdateAccountType>(
     `accounts/${accountId}`,
     {
       body: payload,
+      headers: {
+        "X-Session-Id": sessionId,
+      },
     }
   );
 
@@ -61,7 +79,12 @@ export const updateAccount = async (
 };
 
 export const deleteAccount = async (
-  accountId: string
+  accountId: string,
+  sessionId: string
 ): Promise<RequestError> => {
-  return await provider.delete(`accounts/${accountId}`);
+  return await provider.delete(`accounts/${accountId}`, {
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
 };

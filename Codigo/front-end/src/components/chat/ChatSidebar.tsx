@@ -18,7 +18,6 @@ interface ChatSidebarProps {
 }
 
 const HEADER_HEIGHT = 64;
-const HARDCODED_USER_ID = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
 
 const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) => {
   const router = useRouter();
@@ -67,7 +66,6 @@ const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) =
       setCreateError(null);
 
       const resp = await createChatAction({
-        userId: HARDCODED_USER_ID,
         name: trimmedName,
       });
 

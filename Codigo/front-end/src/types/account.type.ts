@@ -9,7 +9,6 @@ export type AccountType = {
 
 export type CreateAccountType = {
   name: string;
-  userId: string;
   financialInstitution: string;
   balance: number;
 };

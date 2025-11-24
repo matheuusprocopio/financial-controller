@@ -51,7 +51,6 @@ const CreateAccountForm = ({ data, onError }: ICreateAccountForm) => {
         try {
           const resp = await createAccountAction({
             name: data["name"] ?? "",
-            userId: "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
             financialInstitution: data["financialInstitution"] ?? "",
             balance: parseFloat(data["balance"] ?? "0"),
           });

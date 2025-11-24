@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className=" h-full">
       <body
-        className={`h-full font-sans ${GeistSans.variable} ${GeistMono.variable}`}
+        className={`h-full font-sans ${GeistSans.variable} ${GeistMono.variable} dark`}
       >
         <AppProviders>{children}</AppProviders>
       </body>

@@ -127,7 +127,7 @@ const FormCard = ({
         </CardContent>
 
         <CardFooter>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full mt-4">
             {submitLabel}
           </Button>
         </CardFooter>

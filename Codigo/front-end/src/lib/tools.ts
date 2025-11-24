@@ -1,11 +1,11 @@
 import { creditCardsMock } from "@/data/creditCardsMock";
 import { tool } from "ai";
 import { z } from "zod";
+
 import { listCategoriesPaginated } from "@/utils/services/categories";
-import {
-  getAccountById,
-  listAccountsPaginated,
-} from "@/utils/services/accounts";
+import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
+import { getSessionId } from "@/utils/server-cookies";
+
 import { AccountType } from "@/types/account.type";
 import { RequestError } from "@/utils/requestProvider";
 
@@ -81,9 +81,25 @@ export const listCategoriesTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          name,
+          categories: [],
+          totalOfCategories: 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "categories/paginated",
+            },
+          },
+        };
+      }
+
       const resp = await listCategoriesPaginated(
-        userId,
+        sessionId,
         { page: 1, size: 10 },
         name
       );
@@ -103,7 +119,6 @@ export const listCategoriesTool = tool({
         totalOfCategories: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       if (isRequestError(error)) {
@@ -135,6 +150,7 @@ export const listCategoriesTool = tool({
 });
 //
 
+// credit card
 export const createNewCreditCardTool = tool({
   description:
     "Create or add a new credit card to user. The dueDate should be in format YYYY-MM (year and month only, without day)",
@@ -201,7 +217,6 @@ export const listCreditCardActionsTool = tool({
   },
 });
 
-
 export const createNewAccountTool = tool({
   description: "Create or add a new account to user",
   inputSchema: z.object({
@@ -230,7 +245,24 @@ export const editAccountTool = tool({
 
   execute: async ({ accountId, name, financialInstitution, balance }) => {
     try {
-      const resp = await getAccountById(accountId);
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter a sessão do usuário.",
+              resource: `accounts/${accountId}`,
+            },
+          },
+        };
+      }
+
+      const resp = await getAccountById(accountId, sessionId);
 
       if (isRequestError(resp)) {
         return {
@@ -323,8 +355,24 @@ export const listAccountsTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
-      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          nickname: name,
+          accounts: [],
+          totalOfAccounts: 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "accounts/paginated",
+            },
+          },
+        };
+      }
+
+      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
 
       if (isRequestError(resp)) {
         return {
@@ -347,7 +395,6 @@ export const listAccountsTool = tool({
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       const message =
@@ -379,8 +426,24 @@ export const filterAccountsTool = tool({
 
   execute: async ({ name, financialInstitution }) => {
     try {
-      const userId = "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e";
-      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          nickname: name || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "accounts/paginated",
+            },
+          },
+        };
+      }
+
+      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
 
       if (isRequestError(resp)) {
         return {
@@ -415,7 +478,6 @@ export const filterAccountsTool = tool({
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       if (isRequestError(error)) {

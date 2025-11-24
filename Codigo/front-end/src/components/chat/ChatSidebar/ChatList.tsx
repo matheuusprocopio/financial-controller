@@ -19,10 +19,7 @@ const ChatList = ({ chats, chatId, onSelectChat }: ChatListProps) => {
           chat={chat}
           onSelect={() => onSelectChat(chat.id)}
           onDelete={async () => {
-            const resp = await deleteChatAction(
-              "7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e",
-              chat.id
-            );
+            const resp = await deleteChatAction(chat.id);
 
             if (chat.id == chatId) {
               onSelectChat(resp.id);

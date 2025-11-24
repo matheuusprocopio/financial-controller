@@ -10,9 +10,10 @@ interface IEditAccountForm {
     financialInstitution?: string;
     balance?: number;
   };
+  onError(errMsg: string): void;
 }
 
-const EditAccountForm = ({ data }: IEditAccountForm) => {
+const EditAccountForm = ({ data, onError }: IEditAccountForm) => {
   const accountId = data?.accountId ?? "";
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
@@ -63,7 +64,15 @@ const EditAccountForm = ({ data }: IEditAccountForm) => {
           }
           
           if (Object.keys(updatePayload).length > 0) {
-            await updateAccountAction(accountId, updatePayload);
+            const resp = await updateAccountAction(accountId, updatePayload);
+
+            if ("error" in resp) {
+              const message =
+                typeof resp.error?.message === "string"
+                  ? resp.error.message
+                  : "Erro ao atualizar conta.";
+              onError(message);
+            }
           }
         }
       }}

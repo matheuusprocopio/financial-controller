@@ -1,29 +1,18 @@
 import { creditCardsMock } from "@/data/creditCardsMock";
 import { tool } from "ai";
 import { z } from "zod";
-import { listCategories } from "@/utils/services/categories";
-import { listAccounts, getAccountById } from "@/utils/services/accounts";
+
+import { listCategoriesPaginated } from "@/utils/services/categories";
+import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
 import { getFirebaseId } from "@/utils/server-cookies";
 
-const ensureErrorMessage = (rawMessage?: string) => {
-  if (!rawMessage) return "Unknown error";
+import { AccountType } from "@/types/account.type";
+import { RequestError } from "@/utils/requestProvider";
 
-  try {
-    const parsed = JSON.parse(rawMessage);
-
-    if (parsed && typeof parsed === "object" && "message" in parsed) {
-      const extracted = (parsed as { message?: unknown }).message;
-
-      if (typeof extracted === "string" && extracted.trim()) return extracted;
-    }
-  } catch (err) {
-    // ignore parse failures and use raw message
-  }
-
-  return rawMessage;
+const isRequestError = (resp: unknown): resp is RequestError => {
+  return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
 };
 
-// categories
 export const createNewCategoryTool = tool({
   description: "Create or add a new category or sub-category to user",
   inputSchema: z.object({
@@ -92,40 +81,56 @@ export const listCategoriesTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const firebaseId = await getFirebaseId();
+      const userId = await getFirebaseId();
 
-      if (!firebaseId) {
+      if (!userId) {
         return {
           name,
           categories: [],
           totalOfCategories: 0,
-          error: ensureErrorMessage(
-            "Não foi possível obter os dados do usuário."
-          ),
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "categories/paginated",
+            },
+          },
         };
       }
 
-      const resp = await listCategories(firebaseId, name);
+      const resp = await listCategoriesPaginated(
+        userId,
+        { page: 1, size: 10 },
+        name
+      );
 
-      if ("error" in resp) {
-        const { error } = resp;
-
+      if (isRequestError(resp)) {
         return {
           name,
           categories: [],
           totalOfCategories: 0,
-          error: ensureErrorMessage(error.message),
+          error: resp,
         };
       }
-
-      const categories = resp;
 
       return {
         name,
-        categories,
-        totalOfCategories: categories.length,
+        categories: resp.data,
+        totalOfCategories: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          name,
+          categories: [],
+          totalOfCategories: 0,
+          error,
+        };
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
@@ -133,9 +138,13 @@ export const listCategoriesTool = tool({
         name,
         categories: [],
         totalOfCategories: 0,
-        error: errorMessage,
-        status: null,
-        resource: null,
+        error: {
+          error: {
+            status: 500,
+            message: errorMessage,
+            resource: "categories/paginated",
+          },
+        },
       };
     }
   },
@@ -208,9 +217,7 @@ export const listCreditCardActionsTool = tool({
     return "Credit cards available list";
   },
 });
-//
 
-// accounts
 export const createNewAccountTool = tool({
   description: "Create or add a new account to user",
   inputSchema: z.object({
@@ -241,13 +248,23 @@ export const editAccountTool = tool({
     try {
       const resp = await getAccountById(accountId);
 
-      if (resp && !resp.error) {
+      if (isRequestError(resp)) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error: resp,
+        };
+      }
+
+      if (resp) {
         const account = resp;
         return {
           accountId: account.id,
-          name: name ?? account.nickname,
+          name: name ?? account.name,
           financialInstitution:
-            financialInstitution ?? account.financial_institution,
+            financialInstitution ?? account.financialInstitution,
           balance: balance ?? account.balance,
         };
       }
@@ -259,12 +276,30 @@ export const editAccountTool = tool({
         balance: balance ?? 0,
       };
     } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error,
+        };
+      }
+
       return {
         accountId,
         name: name ?? "",
         financialInstitution: financialInstitution ?? "",
         balance: balance ?? 0,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: isRequestError(error)
+          ? error
+          : {
+              error: {
+                status: 500,
+                message: error instanceof Error ? error.message : "Unknown error",
+                resource: `accounts/${accountId}`,
+              },
+            },
       };
     }
   },
@@ -304,56 +339,63 @@ export const listAccountsTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const firebaseId = await getFirebaseId();
+      const userId = await getFirebaseId();
 
-      if (!firebaseId) {
+      if (!userId) {
         return {
-          name,
+          nickname: name,
           accounts: [],
           totalOfAccounts: 0,
-          error: "Não foi possível obter os dados do usuário.",
-          status: null,
-          resource: null,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "accounts/paginated",
+            },
+          },
         };
       }
 
-      const resp = await listAccounts(firebaseId);
+      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (Array.isArray(resp)) {
-        const accounts = resp;
-
-        const filteredAccounts = name
-          ? accounts.filter((account) =>
-              account.nickname.toLowerCase().includes(name.toLowerCase())
-            )
-          : accounts;
-
+      if (isRequestError(resp)) {
         return {
-          name,
-          accounts: filteredAccounts,
-          totalOfAccounts: filteredAccounts.length,
+          nickname: name,
+          accounts: [],
+          totalOfAccounts: 0,
+          error: resp,
         };
       }
 
-      const { error } = resp;
+      const filteredAccounts = name
+        ? resp.data.filter((account: AccountType) =>
+            account.name.toLowerCase().includes(name.toLowerCase())
+          )
+        : resp.data;
 
       return {
-        name,
-        accounts: [],
-        totalOfAccounts: 0,
-        error: ensureErrorMessage(error.message),
+        nickname: name,
+        accounts: filteredAccounts,
+        totalOfAccounts: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const message =
+        isRequestError(error)
+          ? error.error.message
+          : error instanceof Error
+          ? error.message
+          : "Unknown error";
 
       return {
-        name,
+        nickname: name,
         accounts: [],
         totalOfAccounts: 0,
-        error: errorMessage,
-        status: null,
-        resource: null,
+        error: isRequestError(error)
+          ? error
+          : { error: { status: 500, message, resource: "accounts/paginated" } },
       };
     }
   },
@@ -369,75 +411,89 @@ export const filterAccountsTool = tool({
 
   execute: async ({ name, financialInstitution }) => {
     try {
-      const firebaseId = await getFirebaseId();
+      const userId = await getFirebaseId();
 
-      if (!firebaseId) {
+      if (!userId) {
         return {
-          name: name || "",
-          financialInstitution: financialInstitution || "",
+          nickname: name || "",
           accounts: [],
           totalOfAccounts: 0,
-          totalOfOriginalAccounts: 0,
-          error: "Não foi possível obter os dados do usuário.",
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "accounts/paginated",
+            },
+          },
         };
       }
 
-      const resp = await listAccounts(firebaseId);
+      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
 
-      if (Array.isArray(resp)) {
-        let filteredAccounts = [...resp];
-
-        if (name && name.trim()) {
-          const nameFilter = name.toLowerCase().trim();
-          filteredAccounts = filteredAccounts.filter((account) =>
-            account.nickname.toLowerCase().includes(nameFilter)
-          );
-        }
-
-        if (financialInstitution && financialInstitution.trim()) {
-          const institutionFilter = financialInstitution.toLowerCase().trim();
-          filteredAccounts = filteredAccounts.filter((account) =>
-            account.financial_institution
-              .toLowerCase()
-              .includes(institutionFilter)
-          );
-        }
-
+      if (isRequestError(resp)) {
         return {
-          name: name || "",
-          financialInstitution: financialInstitution || "",
-          accounts: filteredAccounts,
-          totalOfAccounts: filteredAccounts.length,
-          totalOfOriginalAccounts: resp.length,
+          nickname: name || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          error: resp,
         };
       }
 
-      const { error } = resp;
+      let filteredAccounts = [...resp.data];
+
+      if (name && name.trim()) {
+        const nameFilter = name.toLowerCase().trim();
+        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
+          account.name.toLowerCase().includes(nameFilter)
+        );
+      }
+
+      if (financialInstitution && financialInstitution.trim()) {
+        const institutionFilter = financialInstitution.toLowerCase().trim();
+        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
+          account.financialInstitution
+            .toLowerCase()
+            .includes(institutionFilter)
+        );
+      }
 
       return {
-        name: name || "",
-        financialInstitution: financialInstitution || "",
-        accounts: [],
-        totalOfAccounts: 0,
-        totalOfOriginalAccounts: 0,
-        error: ensureErrorMessage(error.message),
+        nickname: name || "",
+        accounts: filteredAccounts,
+        totalOfAccounts: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+        userId,
       };
     } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          nickname: name || "",
+          accounts: [],
+          totalOfAccounts: 0,
+          error,
+        };
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
 
       return {
-        name: name || "",
-        financialInstitution: financialInstitution || "",
+        nickname: name || "",
         accounts: [],
         totalOfAccounts: 0,
-        totalOfOriginalAccounts: 0,
-        error: errorMessage,
+        error: {
+          error: {
+            status: 500,
+            message: errorMessage,
+            resource: "accounts/paginated",
+          },
+        },
       };
     }
   },
 });
-//
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,

@@ -81,6 +81,24 @@ public class ChatDAO {
         return null;
     }
 
+    public Chat findMostRecentByUser(UUID userId) {
+        String query = "SELECT id, name, user_id, created_at, updated_at FROM chat "
+                + "WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return mapChat(rs);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to fetch most recent chat: " + e.getMessage());
+        }
+
+        return null;
+    }
+
     public PaginatedResponseDTO<Chat> listByUser(UUID userId, PaginationRequestDTO pagination) {
         List<Chat> chats = new ArrayList<>();
         long totalItems = 0;

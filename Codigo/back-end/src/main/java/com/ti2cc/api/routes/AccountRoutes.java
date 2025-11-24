@@ -20,6 +20,7 @@ public class AccountRoutes {
         path("/accounts", () -> {
             post("", controller::create);
             get("", controller::listByUser);
+            get("/paginated", controller::listByUserPaginated);
             get("/:accountId", controller::getById);
             put("/:accountId", controller::update);
             delete("/:accountId", controller::delete);

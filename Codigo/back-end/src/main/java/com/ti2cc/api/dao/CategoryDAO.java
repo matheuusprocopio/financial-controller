@@ -1,7 +1,5 @@
 package com.ti2cc.api.dao;
 
-import com.ti2cc.api.model.Category;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.ti2cc.api.model.Category;
 
 public class CategoryDAO {
     private Connection connection;
@@ -195,5 +195,89 @@ public class CategoryDAO {
         }
 
         return list;
+    }
+
+    public List<Category> getByFiltersPaginated(UUID userId, String name, UUID mainCategoryId, int offset, int limit) {
+        List<Category> list = new ArrayList<>();
+        StringBuilder query = new StringBuilder("SELECT * FROM categories WHERE user_id = ?");
+
+        boolean hasNameFilter = name != null && !name.trim().isEmpty();
+
+        if (hasNameFilter) {
+            query.append(" AND name ILIKE ?");
+        }
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        query.append(" ORDER BY id LIMIT ? OFFSET ?");
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setObject(paramIndex++, userId);
+
+            if (hasNameFilter) {
+                pstmt.setString(paramIndex++, "%" + name.trim() + "%");
+            }
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex++, mainCategoryId);
+            }
+
+            pstmt.setInt(paramIndex++, limit);
+            pstmt.setInt(paramIndex, offset);
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Category c = new Category(
+                        (UUID) rs.getObject("id"),
+                        (UUID) rs.getObject("user_id"),
+                        rs.getString("name"),
+                        rs.getString("image_path"),
+                        (UUID) rs.getObject("main_category_id"));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list categories by filters paginated: " + e.getMessage());
+        }
+
+        return list;
+    }
+
+    public long countByFilters(UUID userId, String name, UUID mainCategoryId) {
+        StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM categories WHERE user_id = ?");
+
+        boolean hasNameFilter = name != null && !name.trim().isEmpty();
+
+        if (hasNameFilter) {
+            query.append(" AND name ILIKE ?");
+        }
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setObject(paramIndex++, userId);
+
+            if (hasNameFilter) {
+                pstmt.setString(paramIndex++, "%" + name.trim() + "%");
+            }
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex, mainCategoryId);
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count categories by filters: " + e.getMessage());
+        }
+
+        return 0;
     }
 }

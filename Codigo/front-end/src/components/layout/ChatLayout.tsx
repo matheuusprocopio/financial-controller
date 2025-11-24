@@ -10,9 +10,11 @@ import { ChatListResponseType } from "@/types/chat.types";
 const ChatLayout = ({
   children,
   chatsData,
+  chatId,
 }: {
   children: React.ReactNode;
   chatsData: ChatListResponseType;
+  chatId: string,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -30,6 +32,7 @@ const ChatLayout = ({
         <Header onToggleSidebar={handleToggleSidebar} />
         <div className="relative flex h-full flex-1 min-h-0 overflow-hidden">
           <ChatSidebar
+            chatId={chatId}
             chatsData={chatsData}
             isOpen={sidebarOpen}
             onClose={handleCloseSidebar}

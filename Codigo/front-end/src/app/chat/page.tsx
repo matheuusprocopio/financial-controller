@@ -1,6 +1,6 @@
 import ChatComponent from "@/components/chat/ChatComponent";
 import ChatLayout from "@/components/layout/ChatLayout";
-import { getFirebaseId } from "@/utils/server-cookies";
+import { getSessionId } from "@/utils/server-cookies";
 import { listChats } from "@/utils/services/chat";
 import { listMessages } from "@/utils/services/messages";
 
@@ -18,9 +18,11 @@ const ChatPage = async (props: ChatPageProps) => {
   const chatListPageAsString = searchParams?.chat_list_page ?? "1";
   const chatListSizeAsString = searchParams?.chat_list_size ?? "10";
 
-  const firebaseId = await getFirebaseId();
+  const sessionId = await getSessionId();
 
-  if (!firebaseId) {
+  console.log(sessionId);
+
+  if (!sessionId) {
     return <div>Error to load user data</div>;
   }
 
@@ -28,7 +30,7 @@ const ChatPage = async (props: ChatPageProps) => {
   const chatListSize = parseInt(chatListSizeAsString);
 
   const chatsResp = await listChats({
-    userId: firebaseId,
+    sessionId,
     page: chatListPage,
     size: chatListSize,
   });
@@ -39,7 +41,7 @@ const ChatPage = async (props: ChatPageProps) => {
 
   const chatId = searchParams.chat_id ?? chatsResp.data[0].id;
 
-  const messagesResp = await listMessages(chatId, firebaseId);
+  const messagesResp = await listMessages(chatId, sessionId);
 
 
   if ("error" in messagesResp) {

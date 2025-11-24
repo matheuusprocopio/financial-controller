@@ -7,7 +7,7 @@ import { revalidateTag } from "next/cache";
 import { NextRequest } from "next/server";
 
 export const maxDuration = 30;
-const COOKIE_NAME = "financialcontroller_user_id";
+const COOKIE_NAME = "financialcontroller_session_id";
 
 
 export async function POST(req: NextRequest) {
@@ -66,20 +66,18 @@ Your goal is to help the user gain clarity over their financial life, by support
       const lastUserMessage = serverMessages[serverMessages.length - 2];
       const lastAIMessage = serverMessages[serverMessages.length - 1];
 
-      const firebaseId = req.cookies.get(COOKIE_NAME)?.value;
+      const sessionId = req.cookies.get(COOKIE_NAME)?.value;
 
-      if (!firebaseId) {
+      if (!sessionId) {
         return;
       }
 
-      await createMessages(chatId, {
+      await createMessages(chatId, sessionId, {
         ...lastUserMessage,
-        userId: firebaseId,
       });
 
-      await createMessages(chatId, {
+      await createMessages(chatId, sessionId, {
         ...lastAIMessage,
-        userId: firebaseId,
       });
 
       revalidateTag(`messages-${chatId}`);

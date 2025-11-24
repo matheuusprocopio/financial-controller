@@ -1,32 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const COOKIE_NAME = "financialcontroller_user_id";
+const COOKIE_NAME = "financialcontroller_session_id";
 const DEFAULT_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
 
 export async function GET(request: NextRequest) {
   const value = request.cookies.get(COOKIE_NAME)?.value ?? null;
-  return NextResponse.json({ userId: value });
+  return NextResponse.json({ sessionId: value });
 }
 
 interface CookiePayload {
-  userId?: string;
+  sessionId?: string;
   maxAgeDays?: number;
 }
 
 export async function POST(request: Request) {
-  const { userId, maxAgeDays }: CookiePayload = await request.json();
+  const { sessionId, maxAgeDays }: CookiePayload = await request.json();
 
-  if (!userId) {
+  if (!sessionId) {
     return NextResponse.json(
-      { success: false, message: "userId é obrigatório" },
+      { success: false, message: "sessionId é obrigatório" },
       { status: 400 }
     );
   }
 
-  const response = NextResponse.json({ success: true, userId });
+  const response = NextResponse.json({ success: true, sessionId });
   response.cookies.set({
     name: COOKIE_NAME,
-    value: userId,
+    value: sessionId,
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

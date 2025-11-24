@@ -10,7 +10,6 @@ export type CategorieType = {
 export type CreateCategoryType = {
   name: string;
   imagePath: string;
-  userId: string;
   mainCategoryId?: string;
 };
 

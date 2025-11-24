@@ -10,7 +10,7 @@ export type ChatType = {
 export type ChatListResponseType = PaginatedResponse<ChatType>;
 
 export type ListChatParamsType = {
-  userId: string;
+  sessionId: string;
 } & PaginationParams;
 
 export type CreateChatReponseType = {

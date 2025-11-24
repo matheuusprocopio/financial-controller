@@ -18,12 +18,10 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import type { UserType } from "@/types/user.type";
-import type { RequestError } from "@/utils/requestProvider";
-import { getUserById } from "@/utils/services/users";
 import { deleteCookie, getCookie, setCookie } from "@/utils/cookies";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-const USER_ID_COOKIE = "financialcontroller_user_id";
+const SESSION_COOKIE = "financialcontroller_session_id";
 
 interface AuthResponse {
   success: boolean;
@@ -50,9 +48,9 @@ export interface UseAuthReturn {
   ) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loginBackend: (idToken: string) => Promise<AuthResponse>;
-  validateSession: () => Promise<AuthResponse>;
+  validateSession: (overrideSessionId?: string) => Promise<AuthResponse>;
   logoutBackend: () => Promise<AuthResponse>;
-  loadBackendUser: (userId?: string) => Promise<UserType | null>;
+  loadBackendUser: () => Promise<UserType | null>;
 
   refreshToken: () => Promise<string | null>;
   getIdToken: () => Promise<string | null>;
@@ -67,9 +65,6 @@ function useProvideAuth(): UseAuthReturn {
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
   const [loadingBackendUser, setLoadingBackendUser] = useState<boolean>(false);
 
-  const isRequestError = (response: unknown): response is RequestError => {
-    return !!response && typeof response === "object" && "error" in response;
-  };
  // se mudar ele vai la e faz
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -101,23 +96,18 @@ function useProvideAuth(): UseAuthReturn {
     }
   }, []);
 
-  const loadBackendUser = useCallback(async (forcedUserId?: string): Promise<UserType | null> => {
-    const storedId = forcedUserId ?? (await getCookie(USER_ID_COOKIE));
-    if (!storedId) {
+  const loadBackendUser = useCallback(async (): Promise<UserType | null> => {
+    const storedSession = sessionId ?? (await getCookie(SESSION_COOKIE));
+    if (!storedSession) {
       setBackendUser(null);
+      setSessionId(null);
       return null;
     }
 
     setLoadingBackendUser(true);
     try {
-      const response = await getUserById(storedId);
-      if (!response || isRequestError(response)) {
-        setBackendUser(null);
-        return null;
-      }
-
-      setBackendUser(response);
-      return response;
+      const data = await validateSession(storedSession);
+      return data.user ?? null;
     } catch (error) {
       console.error("Erro ao carregar usuário do backend:", error);
       setBackendUser(null);
@@ -125,7 +115,7 @@ function useProvideAuth(): UseAuthReturn {
     } finally {
       setLoadingBackendUser(false);
     }
-  }, []);
+  }, [sessionId]);
 
   useEffect(() => {
     loadBackendUser();
@@ -134,11 +124,11 @@ function useProvideAuth(): UseAuthReturn {
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem("sessionId", sessionId);
-    } else {
-      localStorage.removeItem("sessionId");
-      deleteCookie(USER_ID_COOKIE);
-      setBackendUser(null);
+      return;
     }
+
+    // Preserve the backend cookie; it is cleared explicitly during logout flows
+    localStorage.removeItem("sessionId");
   }, [sessionId]);
 
   const loginWithEmail = useCallback(
@@ -241,7 +231,7 @@ function useProvideAuth(): UseAuthReturn {
       }
 
       await signOut(auth);
-      await deleteCookie(USER_ID_COOKIE);
+      await deleteCookie(SESSION_COOKIE);
       setBackendUser(null);
     } catch (error: any) {
       throw error;
@@ -268,8 +258,8 @@ function useProvideAuth(): UseAuthReturn {
 
       if (response.ok && data.success && data.sessionId) {
         setSessionId(data.sessionId);
-        if (data.user?.id) {
-          await setCookie(USER_ID_COOKIE, data.user.id);
+        await setCookie(SESSION_COOKIE, data.sessionId);
+        if (data.user) {
           setBackendUser(data.user);
         }
         return data;
@@ -284,36 +274,42 @@ function useProvideAuth(): UseAuthReturn {
   }, []);
 
 
-  const validateSession = useCallback(async (): Promise<AuthResponse> => {
-    if (!sessionId) {
-      throw new Error("Nenhuma sessão ativa");
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/auth/validate`, {
-        method: "GET",
-        headers: { "X-Session-Id": sessionId },
-      });
-
-      const data: AuthResponse = await response.json();
-
-      if (response.ok && data.success) {
-        if (data.user?.id) {
-          await setCookie(USER_ID_COOKIE, data.user.id);
-          setBackendUser(data.user);
-        }
-        return data;
-      } else {
-        setSessionId(null);
-        throw new Error(data.message || "Sessão inválida ou expirada");
+  const validateSession = useCallback(
+    async (overrideSessionId?: string): Promise<AuthResponse> => {
+      const activeSessionId = overrideSessionId ?? sessionId;
+      if (!activeSessionId) {
+        throw new Error("Nenhuma sessão ativa");
       }
-    } catch (error: any) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
+
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_BASE}/auth/validate`, {
+          method: "GET",
+          headers: { "X-Session-Id": activeSessionId },
+        });
+
+        const data: AuthResponse = await response.json();
+
+        if (response.ok && data.success) {
+          setSessionId(activeSessionId);
+          await setCookie(SESSION_COOKIE, activeSessionId);
+          if (data.user) {
+            setBackendUser(data.user);
+          }
+          return data;
+        } else {
+          setSessionId(null);
+          setBackendUser(null);
+          throw new Error(data.message || "Sessão inválida ou expirada");
+        }
+      } catch (error: any) {
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sessionId]
+  );
 
   useEffect(() => {
     if (!sessionId || backendUser) {
@@ -348,7 +344,7 @@ function useProvideAuth(): UseAuthReturn {
 
       if (response.ok) {
         setSessionId(null);
-        await deleteCookie(USER_ID_COOKIE);
+        await deleteCookie(SESSION_COOKIE);
         setBackendUser(null);
         return data;
       } else {
@@ -427,4 +423,3 @@ export function useAuth(): UseAuthReturn {
   }
   return context;
 }
-

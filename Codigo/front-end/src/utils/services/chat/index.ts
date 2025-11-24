@@ -9,10 +9,14 @@ const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
+const withSession = (sessionId: string | undefined) =>
+  sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
+
 export const listChats = async (params: ListChatParamsType) => {
   return await provider.get<ChatListResponseType>(
-    `chats?user_id=${params.userId}&page=${params.page}&size=${params.size}`,
+    `chats?page=${params.page}&size=${params.size}`,
     {
+      ...withSession(params.sessionId),
       next: {
         tags: ["list-chat"],
       },
@@ -20,17 +24,24 @@ export const listChats = async (params: ListChatParamsType) => {
   );
 };
 
-export const createChat = async (userId: string, name: string) => {
+export const createChat = async (sessionId: string, name: string) => {
   return await provider.post<CreateChatReponseType, { name: string }>(
-    `chats?user_id=${userId}`,
+    `chats`,
     {
       body: {
         name: name,
+      },
+      headers: {
+        "X-Session-Id": sessionId,
       },
     }
   );
 };
 
-export const deleteChat = async (chatId: string) => {
-  return await provider.delete<any>(`chats/${chatId}`);
+export const deleteChat = async (chatId: string, sessionId: string) => {
+  return await provider.delete<any>(`chats/${chatId}`, {
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
 };

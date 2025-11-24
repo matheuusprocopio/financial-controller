@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { listCategoriesPaginated } from "@/utils/services/categories";
 import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
-import { getFirebaseId } from "@/utils/server-cookies";
+import { getSessionId } from "@/utils/server-cookies";
 
 import { AccountType } from "@/types/account.type";
 import { RequestError } from "@/utils/requestProvider";
@@ -81,9 +81,9 @@ export const listCategoriesTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const userId = await getFirebaseId();
+      const sessionId = await getSessionId();
 
-      if (!userId) {
+      if (!sessionId) {
         return {
           name,
           categories: [],
@@ -99,7 +99,7 @@ export const listCategoriesTool = tool({
       }
 
       const resp = await listCategoriesPaginated(
-        userId,
+        sessionId,
         { page: 1, size: 10 },
         name
       );
@@ -119,7 +119,6 @@ export const listCategoriesTool = tool({
         totalOfCategories: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       if (isRequestError(error)) {
@@ -246,7 +245,24 @@ export const editAccountTool = tool({
 
   execute: async ({ accountId, name, financialInstitution, balance }) => {
     try {
-      const resp = await getAccountById(accountId);
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        return {
+          accountId,
+          name: name ?? "",
+          financialInstitution: financialInstitution ?? "",
+          balance: balance ?? 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter a sessão do usuário.",
+              resource: `accounts/${accountId}`,
+            },
+          },
+        };
+      }
+
+      const resp = await getAccountById(accountId, sessionId);
 
       if (isRequestError(resp)) {
         return {
@@ -339,9 +355,9 @@ export const listAccountsTool = tool({
 
   execute: async ({ name = "" }) => {
     try {
-      const userId = await getFirebaseId();
+      const sessionId = await getSessionId();
 
-      if (!userId) {
+      if (!sessionId) {
         return {
           nickname: name,
           accounts: [],
@@ -356,7 +372,7 @@ export const listAccountsTool = tool({
         };
       }
 
-      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
+      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
 
       if (isRequestError(resp)) {
         return {
@@ -379,7 +395,6 @@ export const listAccountsTool = tool({
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       const message =
@@ -411,9 +426,9 @@ export const filterAccountsTool = tool({
 
   execute: async ({ name, financialInstitution }) => {
     try {
-      const userId = await getFirebaseId();
+      const sessionId = await getSessionId();
 
-      if (!userId) {
+      if (!sessionId) {
         return {
           nickname: name || "",
           accounts: [],
@@ -428,7 +443,7 @@ export const filterAccountsTool = tool({
         };
       }
 
-      const resp = await listAccountsPaginated(userId, { page: 1, size: 10 });
+      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
 
       if (isRequestError(resp)) {
         return {
@@ -463,7 +478,6 @@ export const filterAccountsTool = tool({
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
-        userId,
       };
     } catch (error) {
       if (isRequestError(error)) {

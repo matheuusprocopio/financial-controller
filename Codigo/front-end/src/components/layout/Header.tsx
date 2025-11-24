@@ -31,7 +31,7 @@ const Header = ({
   onToggleSidebar,
 }: IHeader) => {
   const router = useRouter();
-  const { logout, loading, user: firebaseUser, backendUser, loadBackendUser } = useAuth();
+  const { logout, loading, user: firebaseUser, backendUser, loadBackendUser, sessionId } = useAuth();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [userData, setUserData] = useState<UserType | null>(null);
   const [cookieChecked, setCookieChecked] = useState(false);
@@ -83,7 +83,11 @@ const Header = ({
 
   const handleUpdateUser = async (user: UserType) => {
     try {
-      const response = await updateUser(user.id, { name: user.name, email: user.email });
+      if (!sessionId) {
+        throw new Error("Sessão inválida");
+      }
+
+      const response = await updateUser(user.id, { name: user.name, email: user.email }, sessionId);
       if (!response) {
         throw new Error("Resposta inválida ao atualizar usuário");
       }
@@ -91,7 +95,7 @@ const Header = ({
         throw new Error(response.error.message || "Erro ao atualizar usuário");
       }
       setUserData(response);
-      await loadBackendUser(response.id);
+      await loadBackendUser();
     } catch (error: any) {
       throw new Error(error.message || "Erro ao atualizar usuário");
     }
@@ -99,7 +103,11 @@ const Header = ({
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      const response = await deleteUser(userId);
+      if (!sessionId) {
+        throw new Error("Sessão inválida");
+      }
+
+      const response = await deleteUser(userId, sessionId);
       if (response && isRequestError(response)) {
         throw new Error(response.error.message || "Erro ao deletar usuário");
       }

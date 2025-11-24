@@ -46,9 +46,9 @@ public class Container {
 
         CategoryService categoryService = new CategoryService(categoryDAO);
         AccountService accountService = new AccountService(accountDAO);
-        UserService userService = new UserService(userDAO);
-        ItemService itemService = new ItemService(itemDAO);
         ChatService chatService = new ChatService(chatDAO);
+        UserService userService = new UserService(userDAO, chatService);
+        ItemService itemService = new ItemService(itemDAO);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
 
         // Serviços de autenticação

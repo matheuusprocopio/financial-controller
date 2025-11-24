@@ -1,6 +1,7 @@
 package com.ti2cc.api.service;
 
 import com.ti2cc.api.dao.UserDAO;
+import com.ti2cc.api.service.ChatService;
 import com.ti2cc.api.model.User;
 
 import java.util.List;
@@ -9,9 +10,11 @@ import java.util.UUID;
 public class UserService {
 
     private final UserDAO userDAO;
+    private final ChatService chatService;
 
-    public UserService(UserDAO userDAO) {
+    public UserService(UserDAO userDAO, ChatService chatService) {
         this.userDAO = userDAO;
+        this.chatService = chatService;
     }
 
     public boolean createUser(User user) {
@@ -30,7 +33,13 @@ public class UserService {
             return false;
         }
 
-        return userDAO.create(user);
+        boolean created = userDAO.create(user);
+
+        if (created && chatService != null) {
+            chatService.createChat(user.getId(), "Hello World");
+        }
+
+        return created;
     }
 
     public List<User> listAllUsers() {

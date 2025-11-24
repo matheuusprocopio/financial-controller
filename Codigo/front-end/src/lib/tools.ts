@@ -3,6 +3,8 @@ import { tool } from "ai";
 import { z } from "zod";
 import { listCategories } from "@/utils/services/categories";
 import { listAccounts, getAccountById } from "@/utils/services/accounts";
+import { listItems, getItemById } from "@/utils/services/items";
+import { findBestMatch } from "@/utils/fuzzySearch";
 
 const ensureErrorMessage = (rawMessage?: string) => {
   if (!rawMessage) return "Unknown error";
@@ -394,6 +396,287 @@ export const filterAccountsTool = tool({
 });
 //
 
+
+// items
+export const createNewItemTool = tool({
+  description: `Create or add a new transaction (item) to user. Analyze the user's message and automatically determine:
+  - If it's income (received money, salary, payment received) or expense (spent money, paid, bought)
+  - Suggest the most appropriate category based on the context (e.g., "almoço" -> food category, "uber" -> transport)
+  - Suggest the most appropriate account if mentioned or use default
+  - Use current date/time unless user specifies otherwise
+  - Extract the amount from the message
+  
+  Examples:
+  - "gastei 300 reais no almoço" -> expense, food category, 300, today
+  - "recebi meu salário de 5000" -> income, salary category, 5000, today
+  - "paguei 150 de uber" -> expense, transport category, 150, today`,
+  
+  inputSchema: z.object({
+    name: z.string().describe("Short name for the transaction (e.g., 'Almoço', 'Uber', 'Salário')"),
+    description: z.string().describe("Detailed description extracted from user message"),
+    amount: z.number().positive("Amount must be positive").describe("The monetary amount"),
+    type: z.enum(["income", "expense"]).describe("Automatically determined: 'income' if received money, 'expense' if spent/paid"),
+    suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
+    suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
+  }),
+
+  execute: async ({ name, description, amount, type, suggestedCategoryName, suggestedAccountName }) => {
+    try {
+      const [categoriesResp, accountsResp] = await Promise.all([
+        listCategories("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e"),
+        listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e"),
+      ]);
+
+      if (!Array.isArray(categoriesResp) || categoriesResp.length === 0) {
+        return {
+          name,
+          description,
+          amount,
+          date: new Date().toISOString().split("T")[0],
+          type,
+          categoryId: "",
+          accountId: "",
+          error: "No categories available. Please create a category first.",
+          suggestedCategoryName,
+          suggestedAccountName,
+        };
+      }
+
+      if (!Array.isArray(accountsResp) || accountsResp.length === 0) {
+        return {
+          name,
+          description,
+          amount,
+          date: new Date().toISOString().split("T")[0],
+          type,
+          categoryId: "",
+          accountId: "",
+          error: "No accounts available. Please create an account first.",
+          suggestedCategoryName,
+          suggestedAccountName,
+        };
+      }
+
+      const matchedCategory = findBestMatch(
+        categoriesResp,
+        suggestedCategoryName,
+        (cat) => cat.name
+      );
+      const matchedAccount = findBestMatch(
+        accountsResp,
+        suggestedAccountName,
+        (acc) => acc.nickname
+      );
+
+      const currentDate = new Date().toISOString().split("T")[0];
+
+      return {
+        name,
+        description,
+        amount,
+        date: currentDate,
+        type,
+        categoryId: matchedCategory.id,
+        accountId: matchedAccount.id,
+        suggestedCategoryName: matchedCategory.name,
+        suggestedAccountName: matchedAccount.name,
+        matchConfidence: {
+          category: matchedCategory.confidence,
+          account: matchedAccount.confidence,
+        },
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        name,
+        description,
+        amount,
+        date: new Date().toISOString().split("T")[0],
+        type,
+        categoryId: "",
+        accountId: "",
+        error: errorMessage,
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+  },
+});
+
+export const editItemTool = tool({
+  description: "Edit an existing transaction (item)",
+  inputSchema: z.object({
+    itemId: z.string(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    amount: z.number().optional(),
+    date: z.string().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+    categoryId: z.string().optional(),
+    accountId: z.string().optional(),
+  }),
+
+  execute: async ({ itemId, name, description, amount, date, type, categoryId, accountId }) => {
+    try {
+      const resp = await getItemById(itemId);
+
+      if (resp && !("error" in resp)) {
+        const item = resp;
+        return {
+          itemId: item.id,
+          name: name ?? item.name,
+          description: description ?? item.description,
+          amount: amount ?? item.amount,
+          date: date ?? item.date,
+          type: type ?? item.type,
+          categoryId: categoryId ?? item.categoryId,
+          accountId: accountId ?? item.accountId,
+        };
+      }
+
+      return {
+        itemId,
+        name: name ?? "",
+        description: description ?? "",
+        amount: amount ?? 0,
+        date: date ?? new Date().toISOString().split("T")[0],
+        type: type ?? "expense",
+        categoryId: categoryId ?? "",
+        accountId: accountId ?? "",
+      };
+    } catch (error) {
+      return {
+        itemId,
+        name: name ?? "",
+        description: description ?? "",
+        amount: amount ?? 0,
+        date: date ?? new Date().toISOString().split("T")[0],
+        type: type ?? "expense",
+        categoryId: categoryId ?? "",
+        accountId: accountId ?? "",
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  },
+});
+
+export const deleteItemTool = tool({
+  description: "Excludes a transaction (item)",
+  inputSchema: z.object({
+    itemId: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    amount: z.number().optional(),
+    date: z.string().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+  }),
+
+  execute: async ({ itemId, name, description, amount, date, type }) => {
+    return {
+      itemId,
+      name,
+      description,
+      amount,
+      date,
+      type,
+    };
+  },
+});
+
+export const listItemsTool = tool({
+  description: `List all transactions (items) for the user with flexible date filtering.
+  
+  The AI should intelligently interpret user queries and set appropriate date ranges:
+  - "gastos do mês passado" / "last month" -> first day to last day of previous month
+  - "janeiro de 2024" / "January 2024" -> 2024-01-01 to 2024-01-31
+  - "este ano" / "this year" -> 2025-01-01 to today
+  - "últimos 30 dias" / "last 30 days" -> 30 days ago to today
+  - "semana passada" / "last week" -> first day to last day of previous week
+  - No date specified -> last 30 days (default)
+  
+  Can also be filtered by name/description and transaction type.`,
+  
+  inputSchema: z.object({
+    name: z.string().optional().describe("Filter by transaction name or description"),
+    startDate: z.string().optional().describe("Start date in YYYY-MM-DD format. AI should calculate based on user query."),
+    endDate: z.string().optional().describe("End date in YYYY-MM-DD format. AI should calculate based on user query. Defaults to today if not specified."),
+    type: z.enum(["income", "expense"]).optional().describe("Filter by transaction type: 'income' for received money, 'expense' for spent money"),
+    page: z.number().optional(),
+    pageLimit: z.number().optional(),
+  }),
+
+  execute: async ({ name = "", startDate, endDate, type, page, pageLimit }) => {
+    try {
+      const today = new Date();
+      let finalStartDate: string;
+      let finalEndDate: string;
+      
+      if (!startDate && !endDate) {
+        const thirtyDaysAgo = new Date(today);
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+        finalStartDate = thirtyDaysAgo.toISOString().split("T")[0];
+        finalEndDate = today.toISOString().split("T")[0];
+      } else {
+        finalStartDate = startDate || new Date(today.getFullYear(), 0, 1).toISOString().split("T")[0];
+        finalEndDate = endDate || today.toISOString().split("T")[0];
+      }
+
+      const resp = await listItems("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e", {
+        name: name || undefined,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        type: type || undefined,
+        page,
+        pageLimit,
+      });
+
+      if (resp && !("error" in resp)) {
+        return {
+          name,
+          startDate: finalStartDate,
+          endDate: finalEndDate,
+          type: type || "all",
+          data: resp.data,
+          totalItems: resp.totalItems,
+          currentPage: resp.currentPage,
+          pageLimit: resp.pageLimit,
+        };
+      }
+
+      const error = "error" in resp ? resp.error : { message: "Unknown error" };
+
+      return {
+        name,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        type: type || "all",
+        data: [],
+        totalItems: 0,
+        error: ensureErrorMessage(error.message),
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      return {
+        name,
+        data: [],
+        totalItems: 0,
+        error: errorMessage,
+      };
+    }
+  },
+});
+
+export const listItemActionsTool = tool({
+  description: "List the available actions for transactions (items)",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Items available list";
+  },
+});
+//
+
 export const tools = {
   createNewCategory: createNewCategoryTool,
   editCategory: editCategoryTool,
@@ -412,4 +695,10 @@ export const tools = {
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,
   listCreditCards: listCreditCardsTool,
+
+  createNewItem: createNewItemTool,
+  editItem: editItemTool,
+  listItemActions: listItemActionsTool,
+  deleteItem: deleteItemTool,
+  listItems: listItemsTool
 };

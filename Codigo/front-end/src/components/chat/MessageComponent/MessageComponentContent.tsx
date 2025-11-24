@@ -17,6 +17,11 @@ import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountFo
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
 
+import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
+import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
+import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
+import ItemsList from "@/components/ToolsComponents/Items/ListItems";
+
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
@@ -69,6 +74,15 @@ const MessageComponentContent = ({
     "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} />,
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} />,
     "tool-filterAccounts": (p) => <AccountsList data={p.output as any} />,
+
+    "tool-createNewItem": (p) => (
+      <CreateItemForm data={p.output as any} />
+    ),
+    "tool-editItem": (p) => (
+      <EditItemForm data={p.output as any} />
+    ),
+    "tool-deleteItem": (p) => <DeleteItemForm data={p.output as any} />,
+    "tool-listItems": (p) => <ItemsList data={p.output as any} />,
   };
 
   const renderParts = () =>

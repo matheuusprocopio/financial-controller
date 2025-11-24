@@ -43,7 +43,7 @@ public class Container {
         CategoryService categoryService = new CategoryService(categoryDAO);
         AccountService accountService = new AccountService(accountDAO);
         UserService userService = new UserService(userDAO);
-        ItemService itemService = new ItemService(itemDAO);
+        ItemService itemService = new ItemService(itemDAO, accountDAO);
         ChatService chatService = new ChatService(chatDAO);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
 

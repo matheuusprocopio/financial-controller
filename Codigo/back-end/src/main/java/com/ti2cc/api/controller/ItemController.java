@@ -77,16 +77,21 @@ public class ItemController {
         try {
             UUID userId = UUID.fromString(userIdParam);
             String categoryIdParam = req.queryParams("category_id");
+            String accountIdParam = req.queryParams("account_id");
             String nameFilter = req.queryParams("name");
+            String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
             PaginatedResponseDTO<Item> items;
 
             if (categoryIdParam != null && !categoryIdParam.isBlank()) {
                 UUID categoryId = UUID.fromString(categoryIdParam);
-                items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, dateRange, pagination);
+                items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, dateRange, pagination);
+            } else if (accountIdParam != null && !accountIdParam.isBlank()) {
+                UUID accountId = UUID.fromString(accountIdParam);
+                items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, dateRange, pagination);
             } else {
-                items = itemService.listItemsByUserId(userId, nameFilter, dateRange, pagination);
+                items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, dateRange, pagination);
             }
 
             res.status(200);
@@ -121,9 +126,10 @@ public class ItemController {
         try {
             UUID userId = UUID.fromString(req.params(":userId"));
             String nameFilter = req.queryParams("name");
+            String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, nameFilter, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, dateRange, pagination);
             res.status(200);
             return gson.toJson(items);
         } catch (IllegalArgumentException e) {
@@ -144,9 +150,34 @@ public class ItemController {
             UUID categoryId = UUID.fromString(req.params(":categoryId"));
             UUID userId = UUID.fromString(userIdParam);
             String nameFilter = req.queryParams("name");
+            String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, dateRange, pagination);
+            res.status(200);
+            return gson.toJson(items);
+        } catch (IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson(e.getMessage());
+        }
+    }
+
+    public Object getByAccountId(Request req, Response res) {
+        res.type("application/json");
+        String userIdParam = req.queryParams("user_id");
+        if (userIdParam == null) {
+            res.status(400);
+            return gson.toJson("Query parameter 'user_id' is required.");
+        }
+
+        try {
+            UUID accountId = UUID.fromString(req.params(":accountId"));
+            UUID userId = UUID.fromString(userIdParam);
+            String nameFilter = req.queryParams("name");
+            String typeFilter = req.queryParams("type");
+            PaginationRequestDTO pagination = buildPagination(req);
+            DateRangeDTO dateRange = buildDateRange(req);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, dateRange, pagination);
             res.status(200);
             return gson.toJson(items);
         } catch (IllegalArgumentException e) {

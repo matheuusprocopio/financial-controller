@@ -1,10 +1,10 @@
 export type ChartSeries = {
-  key: string;   
-  label: string; 
+  key: string;   // nome da chave numérica no data (ex: "gastos")
+  label: string; // rótulo exibido na legenda (ex: "Gastos")
 };
 
 export type ChartDataPoint = {
-  x: string; 
+  x: string; // eixo X (data ou categoria)
   [key: string]: number | string;
 };
 

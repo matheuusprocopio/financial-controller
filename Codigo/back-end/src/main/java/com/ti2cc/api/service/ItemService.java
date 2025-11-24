@@ -9,6 +9,10 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.model.Item;
 
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
+import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
+import java.time.LocalDate;
+
 public class ItemService {
     private final ItemDAO itemDAO;
 

@@ -9,6 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
+import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
+import com.ti2cc.api.dto.ItemAnalyticsPointDTO;
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO.GroupBy;
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO.Metric;
+
+
 import com.ti2cc.api.dto.DateRangeDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;

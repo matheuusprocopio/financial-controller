@@ -74,6 +74,15 @@ public class ChatService {
         return chatDAO.getById(chatId);
     }
 
+    public Chat findMostRecentChatByUser(UUID userId) {
+        if (userId == null) {
+            System.err.println("User ID cannot be null.");
+            return null;
+        }
+
+        return chatDAO.findMostRecentByUser(userId);
+    }
+
     public PaginatedResponseDTO<Chat> listChatsByUser(UUID userId, PaginationRequestDTO pagination) {
         if (userId == null) {
             System.err.println("User ID cannot be null.");

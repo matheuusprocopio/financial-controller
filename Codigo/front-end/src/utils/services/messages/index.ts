@@ -1,18 +1,13 @@
 import { CreateMessageType, ServerMessageType } from "@/types/message.types";
 import newRequestProvider from "@/utils/requestProvider";
 
-const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
+const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
 export const listMessages = async (chatId: string, userId: string) => {
   const resp = await provider.get<ServerMessageType[]>(
-    `chats/${chatId}/messages?user_id=${userId}`,
-    {
-      next: {
-        tags: [`messages-${chatId}`],
-      },
-    }
+    `chats/${chatId}/messages?user_id=${userId}`
   );
 
   return resp;

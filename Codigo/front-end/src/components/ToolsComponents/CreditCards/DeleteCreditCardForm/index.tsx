@@ -10,11 +10,13 @@ interface IDeleteCreditCardForm {
     cardId?: string;
     financialInstitution?: string;
   };
+  onError?(errMsg: string): void;
 }
 
-const DeleteCreditCardForm = ({ data }: IDeleteCreditCardForm) => {
+const DeleteCreditCardForm = ({ data, onError }: IDeleteCreditCardForm) => {
   const cardName = data?.cardName ?? "Cartão não encontrado";
   const financialInstitution = data?.financialInstitution;
+  const cardId = data?.cardId;
 
   return (
     <ConfirmationCard
@@ -23,7 +25,12 @@ const DeleteCreditCardForm = ({ data }: IDeleteCreditCardForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
-      onConfirm={() => {}}
+      onConfirm={() => {
+        if (!cardId) {
+          onError?.("Cartão não encontrado para exclusão.");
+        }
+        // Integração pendente: ao implementar, propague possíveis erros via onError.
+      }}
     >
       <Card className="p-3 border-destructive/20 bg-destructive/5">
         <div className="flex items-center gap-3">

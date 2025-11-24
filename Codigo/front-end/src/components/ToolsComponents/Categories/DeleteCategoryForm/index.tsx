@@ -10,9 +10,10 @@ interface IDeleteCategoryForm {
     categoryId?: string;
     name?: string;
   };
+  onError?(errMsg: string): void;
 }
 
-const DeleteCategoryForm = ({ data }: IDeleteCategoryForm) => {
+const DeleteCategoryForm = ({ data, onError }: IDeleteCategoryForm) => {
   const categoryId = data?.categoryId ?? "";
   const categoryName = data?.name ?? "Not found";
 
@@ -25,7 +26,23 @@ const DeleteCategoryForm = ({ data }: IDeleteCategoryForm) => {
       confirmVariant="destructive"
       onConfirm={async () => {
         if (categoryId) {
-          await deleteCategoryAction(categoryId);
+          try {
+            const resp = await deleteCategoryAction(categoryId);
+
+            if (resp && typeof resp === "object" && "error" in resp) {
+              const message =
+                typeof (resp as any).error?.message === "string"
+                  ? (resp as any).error.message
+                  : "Erro ao deletar categoria.";
+              onError?.(message);
+            }
+          } catch (error) {
+            const message =
+              error instanceof Error
+                ? error.message
+                : "Erro ao deletar categoria.";
+            onError?.(message);
+          }
         }
       }}
     >

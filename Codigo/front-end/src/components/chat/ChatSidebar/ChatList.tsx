@@ -6,10 +6,11 @@ import { ChatType } from "@/types/chat.types";
 
 interface ChatListProps {
   chats: ChatType[];
+  chatId: string;
   onSelectChat: (chatId: string) => void;
 }
 
-const ChatList = ({ chats, onSelectChat }: ChatListProps) => {
+const ChatList = ({ chats, chatId, onSelectChat }: ChatListProps) => {
   return (
     <div className="p-3 space-y-2 pr-2">
       {chats.map((chat) => (
@@ -23,7 +24,9 @@ const ChatList = ({ chats, onSelectChat }: ChatListProps) => {
               chat.id
             );
 
-            onSelectChat(resp.id);
+            if (chat.id == chatId) {
+              onSelectChat(resp.id);
+            }
           }}
         />
       ))}

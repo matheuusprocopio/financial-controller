@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploadModal } from "@/components/ui/file-upload-modal";
 import { Send, Mic, Paperclip } from "lucide-react";
+import { transcribeAudio } from "@/utils/services/audio-transcript";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -30,13 +31,37 @@ function VoiceWaveAnimation() {
   );
 }
 
+function TranscribingIndicator() {
+  return (
+    <div className="relative mb-3 overflow-hidden rounded-lg border border-cyan-300/30 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-indigo-500/10 p-3 text-xs text-cyan-50 shadow-inner">
+      <div className="flex items-center gap-2">
+        <span className="flex h-4 w-4 items-center justify-center">
+          <span className="h-4 w-4 rounded-full border-2 border-b-transparent border-cyan-200 animate-spin" />
+        </span>
+        <div className="flex flex-col">
+          <span className="font-semibold tracking-wide uppercase text-[10px] text-cyan-200">
+            Processando
+          </span>
+          <span className="text-[11px] text-cyan-50/80">
+            Transcrevendo seu áudio e preparando a resposta...
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const [inputValue, setInputValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   useEffect(() => {
     if (isRecording) {
@@ -92,9 +117,81 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     });
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
+  const handleTranscription = async (file: File) => {
+    try {
+      setIsTranscribing(true);
+      setTranscribeError(null);
+      const { text } = await transcribeAudio(file);
+      await onSendMessage(text);
+    } catch (error) {
+      console.error("Erro ao transcrever áudio:", error);
+      setTranscribeError("Não foi possível transcrever o áudio.");
+    } finally {
+      setIsTranscribing(false);
+    }
   };
+
+  const stopRecording = () => {
+    const recorder = mediaRecorderRef.current;
+
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    }
+
+    setIsRecording(false);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      setTranscribeError(null);
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+        const file = new File([audioBlob], `gravacao-${Date.now()}.webm`, {
+          type: "audio/webm",
+        });
+
+        void handleTranscription(file);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Erro ao iniciar a gravação:", error);
+      setIsRecording(false);
+    }
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      stopRecording();
+      mediaRecorderRef.current?.stream
+        ?.getTracks()
+        .forEach((track) => track.stop());
+    };
+  }, []);
 
   return (
     <div className="relative z-10 border-t border-purple-400/20 bg-black/60 p-6 backdrop-blur-2xl">
@@ -105,6 +202,14 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             <span className="text-sm font-medium text-red-400">
               Gravando: {formatTime(recordingTime)}
             </span>
+          </div>
+        )}
+        {isTranscribing && (
+          <TranscribingIndicator />
+        )}
+        {transcribeError && (
+          <div className="flex items-center gap-2 mb-3 p-2 rounded-lg border border-red-400/30 bg-red-500/10 text-xs text-red-200">
+            {transcribeError}
           </div>
         )}
         <div className="flex items-center gap-3">
@@ -140,8 +245,8 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             size="icon"
             onClick={toggleRecording}
             className={`flex-shrink-0 h-11 w-11 ${
-              isRecording 
-                ? "bg-red-500 hover:bg-red-600" 
+              isRecording
+                ? "bg-red-500 hover:bg-red-600"
                 : "rounded-lg border border-purple-400/30 bg-purple-500/10 text-white transition hover:border-purple-400/50 hover:bg-purple-500/20"
             }`}
           >

@@ -66,5 +66,5 @@
 # Arquivos de log e temporários da JVM
 /back-end/*.log
 /back-end/hs_err_pid*
-
+/back-end/service-account-key.json
 /.metadata/

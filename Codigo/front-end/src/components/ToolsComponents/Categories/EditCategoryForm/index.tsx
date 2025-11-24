@@ -10,9 +10,10 @@ interface IEditCategoryForm {
     imagePath?: string;
     mainCategoryId?: string;
   };
+  onError?(errMsg: string): void;
 }
 
-const EditCategoryForm = ({ data }: IEditCategoryForm) => {
+const EditCategoryForm = ({ data, onError }: IEditCategoryForm) => {
   const categoryId = data?.categoryId ?? "";
   const categoryName = data?.name ?? "";
   const imagePath = data?.imagePath ?? "";
@@ -63,7 +64,23 @@ const EditCategoryForm = ({ data }: IEditCategoryForm) => {
           }
           
           if (Object.keys(updatePayload).length > 0) {
-            await updateCategoryAction(categoryId, updatePayload);
+            try {
+              const resp = await updateCategoryAction(categoryId, updatePayload);
+
+              if (resp && typeof resp === "object" && "error" in resp) {
+                const message =
+                  typeof (resp as any).error?.message === "string"
+                    ? (resp as any).error.message
+                    : "Erro ao atualizar categoria.";
+                onError?.(message);
+              }
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : "Erro ao atualizar categoria.";
+              onError?.(message);
+            }
           }
         }
       }}

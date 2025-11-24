@@ -70,7 +70,7 @@ const BaseFormCard = <T extends z.ZodType<any, any>>({
             ))}
           </CardContent>
 
-          <CardFooter className="flex gap-2">
+          <CardFooter className="flex gap-2 mt-3">
             {onCancel && (
               <Button
                 type="button"

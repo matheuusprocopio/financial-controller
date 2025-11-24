@@ -3,8 +3,15 @@
 import { deleteItemAction } from "@/actions/item";
 import ConfirmationCard from "@/components/chat/gen-ui/ConfirmationCard";
 import { Card } from "@/components/ui/card";
-import { Trash2, DollarSign, Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  Trash2,
+  DollarSign,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { RequestError } from "@/utils/requestProvider";
 
 interface IDeleteItemForm {
   data: {
@@ -15,9 +22,10 @@ interface IDeleteItemForm {
     date?: string;
     type?: "income" | "expense";
   };
+  onError?(errMsg: string): void;
 }
 
-const DeleteItemForm = ({ data }: IDeleteItemForm) => {
+const DeleteItemForm = ({ data, onError }: IDeleteItemForm) => {
   const itemId = data?.itemId ?? "";
   const itemName = data?.name ?? "";
   const description = data?.description ?? "";
@@ -53,7 +61,12 @@ const DeleteItemForm = ({ data }: IDeleteItemForm) => {
       confirmVariant="destructive"
       onConfirm={async () => {
         if (itemId) {
-          await deleteItemAction(itemId);
+          const resp = await deleteItemAction(itemId);
+
+          if ("error" in resp) {
+            const err = resp as RequestError;
+            onError?.(err.error.message);
+          }
         }
       }}
     >

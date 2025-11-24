@@ -1,10 +1,13 @@
 import { ItemType, CreateItemType, UpdateItemType } from "@/types/item.type";
-import { PaginationResponse } from "@/types/pagination.type";
-import newRequestProvider from "@/utils/requestProvider";
+import { PaginatedResponse } from "@/types/pagination.type";
+import newRequestProvider, { RequestError, createRequestError } from "@/utils/requestProvider";
 
-const BASE_URL: string = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
+const BASE_URL: string = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
+
+const withSession = (sessionId: string | undefined) =>
+  sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
 
 const transformItemFromBackend = (backendItem: any): ItemType => ({
   id: backendItem.id,
@@ -30,8 +33,9 @@ const transformItemToBackend = (item: CreateItemType | UpdateItemType) => ({
 });
 
 export const listItems = async (
-  userId: string,
+  sessionId: string,
   options?: {
+    userId?: string;
     name?: string;
     categoryId?: string;
     accountId?: string;
@@ -41,9 +45,9 @@ export const listItems = async (
     page?: number;
     pageLimit?: number;
   }
-) => {
+): Promise<PaginatedResponse<ItemType> | RequestError> => {
   const params = new URLSearchParams();
-  params.append("user_id", userId);
+  if (options?.userId) params.append("user_id", options.userId);
 
   if (options?.name) params.append("name", options.name);
   if (options?.categoryId) params.append("category_id", options.categoryId);
@@ -54,8 +58,11 @@ export const listItems = async (
   if (options?.page) params.append("page", options.page.toString());
   if (options?.pageLimit) params.append("pageLimit", options.pageLimit.toString());
 
-  const response = await provider.get<PaginationResponse<any>>(
-    `items?${params.toString()}`
+  const response = await provider.get<PaginatedResponse<ItemType>>(
+    `items?${params.toString()}`,
+    {
+      ...withSession(sessionId),
+    }
   );
 
   if (response && !("error" in response)) {
@@ -68,21 +75,12 @@ export const listItems = async (
   return response;
 };
 
-export const getItemById = async (itemId: string) => {
-  const response = await provider.get<any>(`items/${itemId}`);
-
-  if (response && !("error" in response)) {
-    return transformItemFromBackend(response);
-  }
-
-  return response;
-};
-
-export const createItem = async (payload: CreateItemType) => {
-  const backendPayload = transformItemToBackend(payload);
-
-  const response = await provider.post<any, any>(`items`, {
-    body: backendPayload,
+export const getItemById = async (
+  itemId: string,
+  sessionId: string
+): Promise<ItemType | RequestError> => {
+  const response = await provider.get<ItemType>(`items/${itemId}`, {
+    ...withSession(sessionId),
   });
 
   if (response && !("error" in response)) {
@@ -92,7 +90,39 @@ export const createItem = async (payload: CreateItemType) => {
   return response;
 };
 
-export const updateItem = async (itemId: string, payload: UpdateItemType) => {
+export const createItem = async (
+  sessionId: string,
+  payload: CreateItemType
+): Promise<ItemType | RequestError> => {
+  if (!payload.userId) {
+    return createRequestError(
+      400,
+      "O identificador do usuário é obrigatório para criar uma transação.",
+      "items"
+    );
+  }
+
+  const backendPayload = transformItemToBackend(payload);
+
+  const response = await provider.post<any, any>(`items`, {
+    body: backendPayload,
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
+
+  if (response && !("error" in response)) {
+    return transformItemFromBackend(response);
+  }
+
+  return response;
+};
+
+export const updateItem = async (
+  itemId: string,
+  sessionId: string,
+  payload: UpdateItemType
+): Promise<ItemType | RequestError> => {
   const backendPayload: any = {};
 
   if (payload.categoryId !== undefined) {
@@ -119,19 +149,27 @@ export const updateItem = async (itemId: string, payload: UpdateItemType) => {
 
   const response = await provider.put<any, any>(`items/${itemId}`, {
     body: backendPayload,
+    headers: {
+      "X-Session-Id": sessionId,
+    },
   });
 
-  if (response && typeof response === 'string') {
-    return await getItemById(itemId);
+  if (response && typeof response === "string") {
+    return await getItemById(itemId, sessionId);
   }
 
-  if (response && typeof response === 'object' && !("error" in response)) {
-    return await getItemById(itemId);
+  if (response && typeof response === "object" && !("error" in response)) {
+    return await getItemById(itemId, sessionId);
   }
 
   return response;
 };
 
-export const deleteItem = async (itemId: string) => {
-  return await provider.delete(`items/${itemId}`);
+export const deleteItem = async (
+  itemId: string,
+  sessionId: string
+): Promise<{} | RequestError> => {
+  return await provider.delete(`items/${itemId}`, {
+    ...withSession(sessionId),
+  });
 };

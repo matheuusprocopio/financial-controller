@@ -55,7 +55,7 @@ export const SelectFormField = <T extends FieldValues>({
             defaultValue={formField.value}
           >
             <FormControl>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue
                   placeholder={field.placeholder || "Selecione uma opção"}
                 />

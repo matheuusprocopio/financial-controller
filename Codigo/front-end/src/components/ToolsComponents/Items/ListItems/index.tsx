@@ -29,7 +29,7 @@ import BaseFormCard, {
   FormFieldConfig,
 } from "@/components/ToolsComponents/Base/BaseFormCard";
 import { itemFilterSchema, type ItemFilterFormData } from "@/formSchemas";
-import { listItems } from "@/utils/services/items";
+import { RequestError } from "@/utils/requestProvider";
 
 interface IItemsList {
   data: {
@@ -57,34 +57,54 @@ const ItemsList = ({ data: initialData }: IItemsList) => {
     dateRange: undefined,
   });
   const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Função para buscar items do back-end
   const fetchItems = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const today = new Date();
       const thirtyDaysAgo = new Date(today);
       thirtyDaysAgo.setDate(today.getDate() - 30);
 
-      const result = await listItems("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e", {
-        name: searchTerm.trim() || activeFilters.name || undefined,
-        type: activeFilters.type || undefined,
-        categoryId: activeFilters.categoryId || undefined,
-        accountId: activeFilters.accountId || undefined,
-        startDate: activeFilters.dateRange?.from 
-          ? activeFilters.dateRange.from.toISOString().split("T")[0]
-          : thirtyDaysAgo.toISOString().split("T")[0],
-        endDate: activeFilters.dateRange?.to
-          ? activeFilters.dateRange.to.toISOString().split("T")[0]
-          : today.toISOString().split("T")[0],
-      });
+      const params = new URLSearchParams();
+      const nameFilter = searchTerm.trim() || activeFilters.name?.trim();
+      if (nameFilter) params.set("name", nameFilter);
+      if (activeFilters.type) params.set("type", activeFilters.type);
+      if (activeFilters.categoryId) params.set("categoryId", activeFilters.categoryId);
+      if (activeFilters.accountId) params.set("accountId", activeFilters.accountId);
 
-      if (result && !("error" in result)) {
-        setItems(result.data);
-        setTotalOfItems(result.totalItems);
+      const startDate =
+        activeFilters.dateRange?.from?.toISOString().split("T")[0] ??
+        thirtyDaysAgo.toISOString().split("T")[0];
+      const endDate =
+        activeFilters.dateRange?.to?.toISOString().split("T")[0] ??
+        today.toISOString().split("T")[0];
+
+      params.set("startDate", startDate);
+      params.set("endDate", endDate);
+
+      const response = await fetch(`/api/pagination/items?${params.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok || (result && result.error)) {
+        const message =
+          result?.error?.message ||
+          "Erro ao carregar itens.";
+        setItems([]);
+        setTotalOfItems(0);
+        setError(message);
+        return;
+      }
+
+      if (result && !result.error) {
+        setItems(result.data ?? []);
+        setTotalOfItems(result.totalItems ?? 0);
       }
     } catch (error) {
-      console.error("Error fetching items:", error);
+      const message = (error as RequestError)?.error?.message ?? "Erro ao carregar itens.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -271,6 +291,12 @@ const ItemsList = ({ data: initialData }: IItemsList) => {
               validationSchema={itemFilterSchema}
               className="border-0 shadow-none bg-transparent"
             />
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
           </div>
         )}
 

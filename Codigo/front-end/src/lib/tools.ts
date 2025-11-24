@@ -4,10 +4,12 @@ import { z } from "zod";
 
 import { listCategoriesPaginated } from "@/utils/services/categories";
 import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
+import { listItems, getItemById } from "@/utils/services/items";
 import { getSessionId } from "@/utils/server-cookies";
+import { findBestMatch } from "@/utils/fuzzySearch";
 
 import { AccountType } from "@/types/account.type";
-import { RequestError } from "@/utils/requestProvider";
+import { RequestError, createRequestError } from "@/utils/requestProvider";
 
 const isRequestError = (resp: unknown): resp is RequestError => {
   return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
@@ -508,6 +510,384 @@ export const filterAccountsTool = tool({
   },
 });
 
+// items
+export const createNewItemTool = tool({
+  description: `Create or add a new transaction (item) to user. Analyze the user's message and automatically determine:
+  - If it's income (received money, salary, payment received) or expense (spent money, paid, bought)
+  - Suggest the most appropriate category based on the context (e.g., "almoço" -> food category, "uber" -> transport)
+  - Suggest the most appropriate account if mentioned or use default
+  - Use current date/time unless user specifies otherwise
+  - Extract the amount from the message
+  
+  Examples:
+  - "gastei 300 reais no almoço" -> expense, food category, 300, today
+  - "recebi meu salário de 5000" -> income, salary category, 5000, today
+  - "paguei 150 de uber" -> expense, transport category, 150, today`,
+  
+  inputSchema: z.object({
+    name: z.string().describe("Short name for the transaction (e.g., 'Almoço', 'Uber', 'Salário')"),
+    description: z.string().describe("Detailed description extracted from user message"),
+    amount: z.number().positive("Amount must be positive").describe("The monetary amount"),
+    type: z.enum(["income", "expense"]).describe("Automatically determined: 'income' if received money, 'expense' if spent/paid"),
+    suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
+    suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
+  }),
+
+  execute: async ({ name, description, amount, type, suggestedCategoryName, suggestedAccountName }) => {
+    const today = new Date().toISOString().split("T")[0];
+    const sessionId = await getSessionId();
+
+    if (!sessionId) {
+      return {
+        name,
+        description,
+        amount,
+        date: today,
+        type,
+        categoryId: "",
+        accountId: "",
+        error: createRequestError(
+          401,
+          "Não foi possível obter a sessão do usuário.",
+          "items"
+        ),
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+
+    const [categoriesResp, accountsResp] = await Promise.all([
+      listCategoriesPaginated(sessionId, { page: 1, size: 10 }),
+      listAccountsPaginated(sessionId, { page: 1, size: 10 }),
+    ]);
+
+    if (isRequestError(categoriesResp)) {
+      return {
+        name,
+        description,
+        amount,
+        date: today,
+        type,
+        categoryId: "",
+        accountId: "",
+        error: categoriesResp,
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+
+    if (isRequestError(accountsResp)) {
+      return {
+        name,
+        description,
+        amount,
+        date: today,
+        type,
+        categoryId: "",
+        accountId: "",
+        error: accountsResp,
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+
+    const categories = categoriesResp.data ?? [];
+    const accounts = accountsResp.data ?? [];
+
+    if (categories.length === 0) {
+      return {
+        name,
+        description,
+        amount,
+        date: today,
+        type,
+        categoryId: "",
+        accountId: "",
+        error: createRequestError(404, "Nenhuma categoria encontrada. Crie uma categoria primeiro.", "categories"),
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+
+    if (accounts.length === 0) {
+      return {
+        name,
+        description,
+        amount,
+        date: today,
+        type,
+        categoryId: "",
+        accountId: "",
+        error: createRequestError(404, "Nenhuma conta encontrada. Crie uma conta primeiro.", "accounts"),
+        suggestedCategoryName,
+        suggestedAccountName,
+      };
+    }
+
+    const matchedCategory = findBestMatch(
+      categories,
+      suggestedCategoryName,
+      (cat) => cat.name
+    );
+    const matchedAccount = findBestMatch(
+      accounts,
+      suggestedAccountName,
+      (acc) => acc.name
+    );
+
+    return {
+      name,
+      description,
+      amount,
+      date: today,
+      type,
+      categoryId: matchedCategory.id,
+      accountId: matchedAccount.id,
+      suggestedCategoryName: matchedCategory.name,
+      suggestedAccountName: matchedAccount.name,
+      matchConfidence: {
+        category: matchedCategory.confidence,
+        account: matchedAccount.confidence,
+      },
+    };
+  },
+});
+
+export const editItemTool = tool({
+  description: "Edit an existing transaction (item)",
+  inputSchema: z.object({
+    itemId: z.string(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    amount: z.number().optional(),
+    date: z.string().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+    categoryId: z.string().optional(),
+    accountId: z.string().optional(),
+  }),
+
+  execute: async ({ itemId, name, description, amount, date, type, categoryId, accountId }) => {
+    const today = new Date().toISOString().split("T")[0];
+    const sessionId = await getSessionId();
+
+    if (!sessionId) {
+      return {
+        itemId,
+        name: name ?? "",
+        description: description ?? "",
+        amount: amount ?? 0,
+        date: date ?? today,
+        type: type ?? "expense",
+        categoryId: categoryId ?? "",
+        accountId: accountId ?? "",
+        error: createRequestError(
+          401,
+          "Não foi possível obter a sessão do usuário.",
+          `items/${itemId}`
+        ),
+      };
+    }
+
+    try {
+      const resp = await getItemById(itemId, sessionId);
+
+      if (isRequestError(resp)) {
+        return {
+          itemId,
+          name: name ?? "",
+          description: description ?? "",
+          amount: amount ?? 0,
+          date: date ?? today,
+          type: type ?? "expense",
+          categoryId: categoryId ?? "",
+          accountId: accountId ?? "",
+          error: resp,
+        };
+      }
+
+      if (resp) {
+        const item = resp;
+        return {
+          itemId: item.id,
+          name: name ?? item.name,
+          description: description ?? item.description,
+          amount: amount ?? item.amount,
+          date: date ?? item.date,
+          type: type ?? item.type,
+          categoryId: categoryId ?? item.categoryId,
+          accountId: accountId ?? item.accountId,
+        };
+      }
+
+      return {
+        itemId,
+        name: name ?? "",
+        description: description ?? "",
+        amount: amount ?? 0,
+        date: date ?? today,
+        type: type ?? "expense",
+        categoryId: categoryId ?? "",
+        accountId: accountId ?? "",
+      };
+    } catch (error) {
+      return {
+        itemId,
+        name: name ?? "",
+        description: description ?? "",
+        amount: amount ?? 0,
+        date: date ?? today,
+        type: type ?? "expense",
+        categoryId: categoryId ?? "",
+        accountId: accountId ?? "",
+        error: isRequestError(error)
+          ? error
+          : createRequestError(
+              500,
+              error instanceof Error ? error.message : "Unknown error",
+              `items/${itemId}`
+            ),
+      };
+    }
+  },
+});
+
+export const deleteItemTool = tool({
+  description: "Excludes a transaction (item)",
+  inputSchema: z.object({
+    itemId: z.string(),
+    name: z.string(),
+    description: z.string().optional(),
+    amount: z.number().optional(),
+    date: z.string().optional(),
+    type: z.enum(["income", "expense"]).optional(),
+  }),
+
+  execute: async ({ itemId, name, description, amount, date, type }) => {
+    return {
+      itemId,
+      name,
+      description,
+      amount,
+      date,
+      type,
+    };
+  },
+});
+
+export const listItemsTool = tool({
+  description: `List all transactions (items) for the user with flexible date filtering.
+  
+  The AI should intelligently interpret user queries and set appropriate date ranges:
+  - "gastos do mês passado" / "last month" -> first day to last day of previous month
+  - "janeiro de 2024" / "January 2024" -> 2024-01-01 to 2024-01-31
+  - "este ano" / "this year" -> 2025-01-01 to today
+  - "últimos 30 dias" / "last 30 days" -> 30 days ago to today
+  - "semana passada" / "last week" -> first day to last day of previous week
+  - No date specified -> last 30 days (default)
+  
+  Can also be filtered by name/description and transaction type.`,
+  
+  inputSchema: z.object({
+    name: z.string().optional().describe("Filter by transaction name or description"),
+    startDate: z.string().optional().describe("Start date in YYYY-MM-DD format. AI should calculate based on user query."),
+    endDate: z.string().optional().describe("End date in YYYY-MM-DD format. AI should calculate based on user query. Defaults to today if not specified."),
+    type: z.enum(["income", "expense"]).optional().describe("Filter by transaction type: 'income' for received money, 'expense' for spent money"),
+    page: z.number().optional(),
+    pageLimit: z.number().optional(),
+  }),
+
+  execute: async ({ name = "", startDate, endDate, type, page, pageLimit }) => {
+    const today = new Date();
+    let finalStartDate: string;
+    let finalEndDate: string;
+    
+    if (!startDate && !endDate) {
+      const thirtyDaysAgo = new Date(today);
+      thirtyDaysAgo.setDate(today.getDate() - 30);
+      finalStartDate = thirtyDaysAgo.toISOString().split("T")[0];
+      finalEndDate = today.toISOString().split("T")[0];
+    } else {
+      finalStartDate = startDate || new Date(today.getFullYear(), 0, 1).toISOString().split("T")[0];
+      finalEndDate = endDate || today.toISOString().split("T")[0];
+    }
+
+    const sessionId = await getSessionId();
+
+    if (!sessionId) {
+      return {
+        name,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        type: type || "all",
+        data: [],
+        totalItems: 0,
+        error: createRequestError(
+          401,
+          "Não foi possível obter a sessão do usuário.",
+          "items"
+        ),
+      };
+    }
+
+    try {
+      const resp = await listItems(sessionId, {
+        name: name || undefined,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        type: type || undefined,
+        page,
+        pageLimit,
+      });
+
+      if (isRequestError(resp)) {
+        return {
+          name,
+          startDate: finalStartDate,
+          endDate: finalEndDate,
+          type: type || "all",
+          data: [],
+          totalItems: 0,
+          error: resp,
+        };
+      }
+
+      return {
+        name,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        type: type || "all",
+        data: resp.data,
+        totalItems: resp.totalItems,
+        currentPage: resp.currentPage,
+        pageLimit: resp.pageLimit,
+      };
+    } catch (error) {
+      return {
+        name,
+        data: [],
+        totalItems: 0,
+        error: isRequestError(error)
+          ? error
+          : createRequestError(
+              500,
+              error instanceof Error ? error.message : "Unknown error",
+              "items"
+            ),
+      };
+    }
+  },
+});
+
+export const listItemActionsTool = tool({
+  description: "List the available actions for transactions (items)",
+  inputSchema: z.object({}),
+
+  execute: async () => {
+    return "Items available list";
+  },
+});
+//
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,
@@ -527,4 +907,10 @@ export const tools = {
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,
   listCreditCards: listCreditCardsTool,
+
+  createNewItem: createNewItemTool,
+  editItem: editItemTool,
+  listItemActions: listItemActionsTool,
+  deleteItem: deleteItemTool,
+  listItems: listItemsTool,
 };

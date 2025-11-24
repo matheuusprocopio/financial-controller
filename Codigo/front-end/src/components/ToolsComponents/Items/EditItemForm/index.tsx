@@ -1,16 +1,16 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { updateItemAction } from "@/actions/item";
 import { getItemById } from "@/utils/services/items";
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listCategories } from "@/utils/services/categories";
 import { listAccounts } from "@/utils/services/accounts";
+import FormCard, { type FormField } from "@/components/chat/gen-ui/FormCard";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
+import { RequestError } from "@/utils/requestProvider";
+import { getErrorMessage } from "@/utils/errors";
+import { formatCurrencyValue, parseCurrencyToNumber } from "@/utils/currency";
 
 interface IEditItemForm {
   data?: {
@@ -23,24 +23,45 @@ interface IEditItemForm {
     categoryId?: string;
     accountId?: string;
   };
+  onError?(errMsg: string): void;
 }
 
-const EditItemForm = ({ data }: IEditItemForm) => {
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
-  const [accounts, setAccounts] = useState<Array<{ id: string; nickname: string }>>([]);
+const EditItemForm = ({ data, onError }: IEditItemForm) => {
+  const { sessionId, backendUser, loading: authLoading } = useAuth();
+  const [categoriesOptions, setCategoriesOptions] = useState<{ value: string; label: string }[]>([]);
+  const [accountsOptions, setAccountsOptions] = useState<{ value: string; label: string }[]>([]);
   const [itemData, setItemData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    amount: 0,
-    type: "expense" as "income" | "expense",
-    categoryId: "",
-    accountId: "",
-    date: new Date(),
+  const [error, setError] = useState<string | null>(null);
+
+  const [defaultValues, setDefaultValues] = useState<Record<string, string>>({
+    name: data?.name ?? "",
+    description: data?.description ?? "",
+    amount: formatCurrencyValue(data?.amount),
+    type: data?.type ?? "expense",
+    categoryId: data?.categoryId ?? "",
+    accountId: data?.accountId ?? "",
+    date: data?.date ?? new Date().toISOString().split("T")[0],
   });
+
+  useEffect(() => {
+    setDefaultValues((prev) => ({
+      ...prev,
+      name: data?.name ?? prev.name ?? "",
+      description: data?.description ?? prev.description ?? "",
+      amount: formatCurrencyValue(data?.amount ?? prev.amount ?? "0"),
+      type: data?.type ?? (prev.type as "income" | "expense") ?? "expense",
+      categoryId: data?.categoryId ?? prev.categoryId ?? "",
+      accountId: data?.accountId ?? prev.accountId ?? "",
+      date: data?.date ?? prev.date ?? new Date().toISOString().split("T")[0],
+    }));
+  }, [data]);
+
+  const handleError = (message: string) => {
+    setError(message);
+    onError?.(message);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,70 +70,193 @@ const EditItemForm = ({ data }: IEditItemForm) => {
         return;
       }
 
+      if (!sessionId || !backendUser) {
+        handleError("Sessão inválida. Entre novamente para continuar.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const [categoriesResp, accountsResp, itemResp] = await Promise.all([
-          listCategories("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e"),
-          listAccounts("7c1f1e0d-8f5b-4c8b-96b5-2a42e9f7328e"),
-          getItemById(data.itemId),
+          listCategories(sessionId),
+          listAccounts(sessionId),
+          getItemById(data.itemId, sessionId),
         ]);
 
-        if (Array.isArray(categoriesResp)) {
-          setCategories(categoriesResp);
+        if (Array.isArray(categoriesResp) && !("error" in categoriesResp)) {
+          const mapped = categoriesResp.map((cat) => ({ value: cat.id, label: cat.name }));
+          setCategoriesOptions(mapped);
+          setDefaultValues((prev) => ({
+            ...prev,
+            categoryId: prev.categoryId || mapped[0]?.value || "",
+          }));
+        } else if (categoriesResp && "error" in categoriesResp) {
+          handleError(getErrorMessage((categoriesResp as RequestError).error) || "Erro ao carregar categorias.");
         }
 
-        if (Array.isArray(accountsResp)) {
-          setAccounts(accountsResp);
+        if (Array.isArray(accountsResp) && !("error" in accountsResp)) {
+          const mapped = accountsResp.map((acc) => ({ value: acc.id, label: acc.name }));
+          setAccountsOptions(mapped);
+          setDefaultValues((prev) => ({
+            ...prev,
+            accountId: prev.accountId || mapped[0]?.value || "",
+          }));
+        } else if (accountsResp && "error" in accountsResp) {
+          handleError(getErrorMessage((accountsResp as RequestError).error) || "Erro ao carregar contas.");
         }
 
         if (itemResp && !("error" in itemResp)) {
           setItemData(itemResp);
-          setFormData({
-            name: data.name ?? itemResp.name ?? "",
-            description: data.description ?? itemResp.description ?? "",
-            amount: data.amount ?? itemResp.amount ?? 0,
-            type: (data.type ?? itemResp.type ?? "expense") as "income" | "expense",
-            categoryId: data.categoryId ?? itemResp.categoryId ?? "",
-            accountId: data.accountId ?? itemResp.accountId ?? "",
-            date: data.date ? new Date(data.date) : (itemResp.date ? new Date(itemResp.date) : new Date()),
-          });
+          setDefaultValues((prev) => ({
+            ...prev,
+            name: data?.name ?? itemResp.name ?? prev.name ?? "",
+            description: data?.description ?? itemResp.description ?? prev.description ?? "",
+            amount: formatCurrencyValue(data?.amount ?? itemResp.amount ?? prev.amount ?? "0"),
+            type: data?.type ?? itemResp.type ?? (prev.type as "income" | "expense") ?? "expense",
+            categoryId: data?.categoryId ?? itemResp.categoryId ?? prev.categoryId ?? "",
+            accountId: data?.accountId ?? itemResp.accountId ?? prev.accountId ?? "",
+            date:
+              data?.date ??
+              itemResp.date ??
+              prev.date ??
+              new Date().toISOString().split("T")[0],
+          }));
+        } else if (itemResp && "error" in itemResp) {
+          handleError(itemResp.error.message);
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (err) {
+        const message = (err as RequestError)?.error?.message ?? "Erro ao carregar dados.";
+        handleError(message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (!authLoading) {
+      fetchData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.itemId]);
+  }, [authLoading, sessionId, backendUser?.id, data?.itemId]);
 
-  const handleSubmit = async () => {
-    if (!data?.itemId) return;
+  const fields = useMemo<FormField[]>(() => {
+    return [
+      {
+        name: "name",
+        label: "Nome da transação",
+        type: "text",
+        placeholder: "Ex: Salário, Almoço, etc.",
+        required: true,
+      },
+      {
+        name: "description",
+        label: "Descrição",
+        type: "textarea",
+        placeholder: "Descreva a transação...",
+        required: true,
+      },
+      {
+        name: "amount",
+        label: "Valor",
+        type: "currency",
+        placeholder: "R$ 0,00",
+        required: true,
+      },
+      {
+        name: "type",
+        label: "Tipo",
+        type: "select",
+        required: true,
+        options: [
+          { value: "income", label: "Receita" },
+          { value: "expense", label: "Despesa" },
+        ],
+      },
+      {
+        name: "categoryId",
+        label: "Categoria",
+        type: "select",
+        required: true,
+        options: categoriesOptions,
+      },
+      {
+        name: "accountId",
+        label: "Conta",
+        type: "select",
+        required: true,
+        options: accountsOptions,
+      },
+      {
+        name: "date",
+        label: "Data",
+        type: "date",
+        required: true,
+      },
+    ];
+  }, [accountsOptions, categoriesOptions]);
+
+  const handleSubmit = async (values: Record<string, string>) => {
+    if (!data?.itemId) return false;
+
+    if (!sessionId || !backendUser) {
+      handleError("Sessão inválida. Tente fazer login novamente.");
+      return false;
+    }
+
+    if (!itemData) {
+      handleError("Não foi possível carregar os dados da transação.");
+      return false;
+    }
 
     const payload: any = {};
-    
-    if (formData.name !== itemData?.name) payload.name = formData.name;
-    if (formData.description !== itemData?.description) payload.description = formData.description;
-    if (formData.amount !== itemData?.amount) payload.amount = formData.amount;
-    if (formData.type !== itemData?.type) payload.type = formData.type;
-    if (formData.categoryId !== itemData?.categoryId) payload.categoryId = formData.categoryId;
-    if (formData.accountId !== itemData?.accountId) payload.accountId = formData.accountId;
-    
-    const itemDate = itemData?.date ? new Date(itemData.date).toISOString().split("T")[0] : null;
-    const newDate = formData.date.toISOString().split("T")[0];
+    if ((values.name ?? "") !== (itemData.name ?? "")) payload.name = values.name ?? "";
+    if ((values.description ?? "") !== (itemData.description ?? "")) payload.description = values.description ?? "";
+
+    const newAmount = parseCurrencyToNumber(values.amount);
+    if (newAmount !== itemData.amount) payload.amount = newAmount;
+
+    const newType = (values.type as "income" | "expense") ?? "expense";
+    if (newType !== itemData.type) payload.type = newType;
+
+    if ((values.categoryId ?? "") !== (itemData.categoryId ?? "")) payload.categoryId = values.categoryId ?? "";
+    if ((values.accountId ?? "") !== (itemData.accountId ?? "")) payload.accountId = values.accountId ?? "";
+
+    const newDate = values.date ?? new Date().toISOString().split("T")[0];
+    const itemDate = itemData.date ? itemData.date.split("T")[0] : "";
     if (newDate !== itemDate) payload.date = newDate;
 
-    await updateItemAction(data.itemId, payload);
+    if (Object.keys(payload).length === 0) {
+      handleError("Nenhuma alteração detectada.");
+      return false;
+    }
+
+    const resp = await updateItemAction(data.itemId, payload);
+
+    if (resp && typeof resp === "object" && "error" in resp) {
+      handleError(getErrorMessage((resp as RequestError).error) || "Erro ao atualizar transação.");
+      return false;
+    }
+
     setIsSubmitted(true);
+    return true;
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <Card className="w-full max-w-2xl">
         <CardContent className="flex items-center justify-center p-8">
           <p className="text-muted-foreground">Carregando...</p>
         </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full max-w-2xl border-destructive bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive">Erro ao carregar dados</CardTitle>
+          <CardDescription>{error}</CardDescription>
+        </CardHeader>
       </Card>
     );
   }
@@ -134,7 +278,7 @@ const EditItemForm = ({ data }: IEditItemForm) => {
         <CardHeader>
           <CardTitle className="text-green-600">Transação atualizada com sucesso!</CardTitle>
           <CardDescription className="text-green-600">
-            {formData.type === "income" ? "Receita" : "Despesa"} de R$ {formData.amount.toFixed(2)} atualizada
+            {itemData?.type === "income" ? "Receita" : "Despesa"} atualizada
           </CardDescription>
         </CardHeader>
       </Card>
@@ -142,119 +286,14 @@ const EditItemForm = ({ data }: IEditItemForm) => {
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>Editar transação</CardTitle>
-        <CardDescription>
-          Revise e confirme as alterações na transação
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Nome da transação</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Ex: Salário, Almoço, etc."
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Descreva a transação..."
-            rows={3}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="amount">Valor (R$)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              placeholder="0.00"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">Tipo</Label>
-            <Select
-              value={formData.type}
-              onValueChange={(value) => setFormData({ ...formData, type: value as "income" | "expense" })}
-            >
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income">Receita</SelectItem>
-                <SelectItem value="expense">Despesa</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Categoria</Label>
-          <Select
-            value={formData.categoryId}
-            onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-          >
-            <SelectTrigger id="category">
-              <SelectValue placeholder="Selecione uma categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="account">Conta</Label>
-          <Select
-            value={formData.accountId}
-            onValueChange={(value) => setFormData({ ...formData, accountId: value })}
-          >
-            <SelectTrigger id="account">
-              <SelectValue placeholder="Selecione uma conta" />
-            </SelectTrigger>
-            <SelectContent>
-              {accounts.map((account) => (
-                <SelectItem key={account.id} value={account.id}>
-                  {account.nickname}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="date">Data</Label>
-          <Input
-            id="date"
-            type="date"
-            value={formData.date.toISOString().split("T")[0]}
-            onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
-          />
-        </div>
-      </CardContent>
-      <CardFooter>
-        <Button onClick={handleSubmit} className="w-full">
-          Confirmar alterações
-        </Button>
-      </CardFooter>
-    </Card>
+    <FormCard
+      title="Editar transação"
+      description="Revise e confirme as alterações na transação"
+      fields={fields}
+      submitLabel="Confirmar alterações"
+      defaultFormData={defaultValues}
+      onSubmit={handleSubmit}
+    />
   );
 };
 

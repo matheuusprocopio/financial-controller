@@ -11,9 +11,14 @@ import com.ti2cc.api.model.Account;
 public class AccountService {
 
     private final AccountDAO accountDAO;
+    private GoalService goalService;
 
     public AccountService(AccountDAO accountDAO) {
         this.accountDAO = accountDAO;
+    }
+
+    public void setGoalService(GoalService goalService) {
+        this.goalService = goalService;
     }
 
     public boolean createAccount(Account account) {
@@ -91,7 +96,11 @@ public class AccountService {
             return false;
         }
 
-        return accountDAO.increaseBalance(accountId, amount);
+        boolean updated = accountDAO.increaseBalance(accountId, amount);
+        if (updated) {
+            notifyGoalsAboutBalanceChange(accountId, amount);
+        }
+        return updated;
     }
 
     public boolean decreaseBalance(UUID accountId, double amount) {
@@ -99,7 +108,11 @@ public class AccountService {
             return false;
         }
 
-        return accountDAO.decreaseBalance(accountId, amount);
+        boolean updated = accountDAO.decreaseBalance(accountId, amount);
+        if (updated) {
+            notifyGoalsAboutBalanceChange(accountId, -amount);
+        }
+        return updated;
     }
 
     private boolean isValidBalanceOperation(UUID accountId, double amount) {
@@ -114,6 +127,19 @@ public class AccountService {
         }
 
         return true;
+    }
+
+    private void notifyGoalsAboutBalanceChange(UUID accountId, double delta) {
+        if (goalService == null || accountId == null || delta == 0) {
+            return;
+        }
+
+        Account account = accountDAO.getById(accountId);
+        if (account == null || account.getUserId() == null) {
+            return;
+        }
+
+        goalService.applyAccountDelta(account.getUserId(), accountId, delta);
     }
 
     private boolean isAccountValidForCreation(Account account) {

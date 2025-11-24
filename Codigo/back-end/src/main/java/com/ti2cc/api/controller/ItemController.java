@@ -10,9 +10,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
+import com.ti2cc.api.dto.CreateItemDTO;
 import com.ti2cc.api.dto.DateRangeDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
+import com.ti2cc.api.dto.UpdateItemDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
 
@@ -47,7 +49,27 @@ public class ItemController {
     public Object create(Request req, Response res) {
         res.type("application/json");
         try {
-            Item item = gson.fromJson(req.body(), Item.class);
+            UUID sessionUserId = getUserIdFromRequest(req);
+            if (sessionUserId == null) {
+                res.status(401);
+                return gson.toJson("Sessão inválida ou usuário não identificado.");
+            }
+
+            CreateItemDTO dto = gson.fromJson(req.body(), CreateItemDTO.class);
+            if (dto == null) {
+                res.status(400);
+                return gson.toJson("Request body is required.");
+            }
+
+            Item item = new Item();
+            item.setCategoryId(dto.getCategoryId() != null ? UUID.fromString(dto.getCategoryId()) : null);
+            item.setAccountId(dto.getAccountId() != null ? UUID.fromString(dto.getAccountId()) : null);
+            item.setUserId(sessionUserId);
+            item.setName(dto.getName());
+            item.setDescription(dto.getDescription());
+            item.setAmount(dto.getAmount());
+            item.setDate(dto.getDate());
+            item.setType(dto.getType());
             boolean created = itemService.createItem(item);
 
             if (created) {
@@ -68,14 +90,13 @@ public class ItemController {
 
     public Object list(Request req, Response res) {
         res.type("application/json");
-        String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null) {
-            res.status(400);
-            return gson.toJson("Query parameter 'user_id' is required.");
+        UUID userId = getUserIdFromRequest(req);
+        if (userId == null) {
+            res.status(401);
+            return gson.toJson("Sessão inválida ou usuário não identificado.");
         }
 
         try {
-            UUID userId = UUID.fromString(userIdParam);
             String categoryIdParam = req.queryParams("category_id");
             String accountIdParam = req.queryParams("account_id");
             String nameFilter = req.queryParams("name");
@@ -124,7 +145,11 @@ public class ItemController {
     public Object listByUserPath(Request req, Response res) {
         res.type("application/json");
         try {
-            UUID userId = UUID.fromString(req.params(":userId"));
+            UUID userId = getUserIdFromRequest(req);
+            if (userId == null) {
+                res.status(401);
+                return gson.toJson("Sessão inválida ou usuário não identificado.");
+            }
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
@@ -140,15 +165,14 @@ public class ItemController {
 
     public Object getByCategoryId(Request req, Response res) {
         res.type("application/json");
-        String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null) {
-            res.status(400);
-            return gson.toJson("Query parameter 'user_id' is required.");
+        UUID userId = getUserIdFromRequest(req);
+        if (userId == null) {
+            res.status(401);
+            return gson.toJson("Sessão inválida ou usuário não identificado.");
         }
 
         try {
             UUID categoryId = UUID.fromString(req.params(":categoryId"));
-            UUID userId = UUID.fromString(userIdParam);
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
@@ -164,15 +188,14 @@ public class ItemController {
 
     public Object getByAccountId(Request req, Response res) {
         res.type("application/json");
-        String userIdParam = req.queryParams("user_id");
-        if (userIdParam == null) {
-            res.status(400);
-            return gson.toJson("Query parameter 'user_id' is required.");
+        UUID userId = getUserIdFromRequest(req);
+        if (userId == null) {
+            res.status(401);
+            return gson.toJson("Sessão inválida ou usuário não identificado.");
         }
 
         try {
             UUID accountId = UUID.fromString(req.params(":accountId"));
-            UUID userId = UUID.fromString(userIdParam);
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
             PaginationRequestDTO pagination = buildPagination(req);
@@ -189,9 +212,32 @@ public class ItemController {
     public Object update(Request req, Response res) {
         res.type("application/json");
         try {
+            UUID sessionUserId = getUserIdFromRequest(req);
+            if (sessionUserId == null) {
+                res.status(401);
+                return gson.toJson("Sessão inválida ou usuário não identificado.");
+            }
+
             UUID id = UUID.fromString(req.params(":itemId"));
-            Item item = gson.fromJson(req.body(), Item.class);
+            UpdateItemDTO dto = gson.fromJson(req.body(), UpdateItemDTO.class);
+            Item item = new Item();
             item.setId(id);
+            item.setUserId(sessionUserId);
+            if (dto != null) {
+                item.setCategoryId(dto.getCategoryId() != null ? UUID.fromString(dto.getCategoryId()) : null);
+                item.setAccountId(dto.getAccountId() != null ? UUID.fromString(dto.getAccountId()) : null);
+                item.setName(dto.getName());
+                item.setDescription(dto.getDescription());
+                item.setAmount(dto.getAmount());
+                item.setDate(dto.getDate());
+                item.setType(dto.getType());
+            }
+
+            Item existing = itemService.findItemById(id);
+            if (existing != null && !existing.getUserId().equals(sessionUserId)) {
+                res.status(403);
+                return gson.toJson("Usuário não autorizado a alterar este item.");
+            }
 
             boolean updated = itemService.updateItem(item);
             if (updated) {
@@ -213,7 +259,20 @@ public class ItemController {
     public Object delete(Request req, Response res) {
         res.type("application/json");
         try {
+            UUID sessionUserId = getUserIdFromRequest(req);
+            if (sessionUserId == null) {
+                res.status(401);
+                return gson.toJson("Sessão inválida ou usuário não identificado.");
+            }
+
             UUID id = UUID.fromString(req.params(":itemId"));
+
+            Item existing = itemService.findItemById(id);
+            if (existing != null && !existing.getUserId().equals(sessionUserId)) {
+                res.status(403);
+                return gson.toJson("Usuário não autorizado a deletar este item.");
+            }
+
             boolean deleted = itemService.deleteItem(id);
 
             if (deleted) {
@@ -230,8 +289,8 @@ public class ItemController {
     }
 
     private PaginationRequestDTO buildPagination(Request req) {
-        String pageParam = req.queryParams("page");
-        String sizeParam = req.queryParams("size");
+        String pageParam = getFirstParam(req, "page");
+        String sizeParam = getFirstParam(req, "size", "pageLimit", "page_limit");
 
         int page = PaginationRequestDTO.DEFAULT_PAGE;
         int size = PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
@@ -248,7 +307,7 @@ public class ItemController {
             try {
                 size = Integer.parseInt(sizeParam);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Query parameter 'size' must be an integer.");
+                throw new IllegalArgumentException("Query parameter 'size'/'pageLimit' must be an integer.");
             }
         }
 
@@ -256,8 +315,8 @@ public class ItemController {
     }
 
     private DateRangeDTO buildDateRange(Request req) {
-        LocalDate startDate = parseDate(req.queryParams("start_date"), "start_date");
-        LocalDate endDate = parseDate(req.queryParams("end_date"), "end_date");
+        LocalDate startDate = parseDate(getFirstParam(req, "start_date", "startDate"), "start_date/startDate");
+        LocalDate endDate = parseDate(getFirstParam(req, "end_date", "endDate"), "end_date/endDate");
         return new DateRangeDTO(startDate, endDate);
     }
 
@@ -271,5 +330,29 @@ public class ItemController {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Query parameter '" + paramName + "' must be in ISO format (yyyy-MM-dd).");
         }
+    }
+
+    private UUID getUserIdFromRequest(Request req) {
+        UUID userIdAttr = req.attribute("userId");
+        if (userIdAttr != null) {
+            return userIdAttr;
+        }
+
+        String userIdParam = req.queryParams("user_id");
+        if (userIdParam == null || userIdParam.isBlank()) {
+            return null;
+        }
+
+        return UUID.fromString(userIdParam);
+    }
+
+    private String getFirstParam(Request req, String... names) {
+        for (String name : names) {
+            String value = req.queryParams(name);
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 }

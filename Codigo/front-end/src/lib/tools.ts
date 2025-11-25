@@ -3,7 +3,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { listCategoriesPaginated } from "@/utils/services/categories";
-import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
+import { listAccountsPaginated, getAccountById, listAccounts } from "@/utils/services/accounts";
 import { listGoals, getGoalById } from "@/utils/services/goals";
 import { getSessionId } from "@/utils/server-cookies";
 
@@ -548,13 +548,74 @@ export const createNewGoalTool = tool({
     deadline: z.string().optional(),
   }),
   execute: async ({ title = "", description = "", accountId = "", targetAmount = 0, deadline = "" }) => {
-    return {
+    const baseResponse = {
       title,
       description,
       accountId,
       targetAmount,
       deadline,
     };
+
+    try {
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          ...baseResponse,
+          accounts: [],
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "accounts",
+            },
+          },
+        };
+      }
+
+      const accountsResponse = await listAccounts(sessionId);
+
+      if (isRequestError(accountsResponse)) {
+        return {
+          ...baseResponse,
+          accounts: [],
+          error: accountsResponse,
+        };
+      }
+
+      const accounts = accountsResponse.map((account) => ({
+        id: account.id,
+        name: account.name,
+        financialInstitution: account.financialInstitution,
+      }));
+
+      return {
+        ...baseResponse,
+        accounts,
+      };
+    } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          ...baseResponse,
+          accounts: [],
+          error,
+        };
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+      return {
+        ...baseResponse,
+        accounts: [],
+        error: {
+          error: {
+            status: 500,
+            message: errorMessage,
+            resource: "accounts",
+          },
+        },
+      };
+    }
   },
 });
 
@@ -579,6 +640,7 @@ export const editGoalTool = tool({
           accountId,
           targetAmount,
           deadline,
+          accounts: [],
           error: {
             error: {
               status: 401,
@@ -592,17 +654,39 @@ export const editGoalTool = tool({
       const goalResp = await getGoalById(goalId, sessionId);
 
       if (isRequestError(goalResp)) {
-        return { goalId, title, description, accountId, targetAmount, deadline, error: goalResp };
+        return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
       }
 
       const goal = goalResp;
-      return {
+
+      const baseGoalData = {
         goalId: goal.id,
         title: title ?? goal.title,
         description: description ?? goal.description,
         accountId: accountId ?? goal.accountId,
         targetAmount: targetAmount ?? goal.targetAmount,
         deadline: deadline ?? goal.deadline,
+      };
+
+      const accountsResp = await listAccounts(sessionId);
+
+      if (isRequestError(accountsResp)) {
+        return {
+          ...baseGoalData,
+          accounts: [],
+          error: accountsResp,
+        };
+      }
+
+      const accounts = accountsResp.map((acc) => ({
+        id: acc.id,
+        name: acc.name,
+        financialInstitution: acc.financialInstitution,
+      }));
+
+      return {
+        ...baseGoalData,
+        accounts,
       };
     } catch (error) {
       return {
@@ -612,6 +696,7 @@ export const editGoalTool = tool({
         accountId,
         targetAmount,
         deadline,
+        accounts: [],
         error: {
           error: {
             status: 500,

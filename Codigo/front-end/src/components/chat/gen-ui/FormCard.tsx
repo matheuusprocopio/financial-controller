@@ -15,15 +15,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface FormField {
   name: string;
   label: string;
-  type: "text" | "email" | "number" | "textarea" | "date" | "month";
+  type:
+    | "text"
+    | "email"
+    | "number"
+    | "textarea"
+    | "date"
+    | "month"
+    | "select";
   placeholder?: string;
   required?: boolean;
   min?: string;
+  options?: { label: string; value: string }[];
 }
 
 interface IFormCard {
@@ -111,6 +126,25 @@ const FormCard = ({
                   onChange={(e) => handleChange(field.name, e.target.value)}
                   className="min-h-[80px]"
                 />
+              ) : field.type === "select" ? (
+                <Select
+                  value={formData[field.name] ?? ""}
+                  onValueChange={(value) => handleChange(field.name, value)}
+                >
+                  <SelectTrigger className="w-full" aria-required={field.required}>
+                    <SelectValue placeholder={field.placeholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(field.options ?? []).map((option, index) => (
+                      <SelectItem
+                        key={`${option.value || "empty"}-${index}`}
+                        value={option.value}
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               ) : (
                 <Input
                   id={field.name}

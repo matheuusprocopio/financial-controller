@@ -1,7 +1,12 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import { updateGoalAction } from "@/actions/goal";
 import FormCard from "@/components/chat/gen-ui/FormCard";
+import { AccountType } from "@/types/account.type";
+
+type GoalFormAccount = Pick<AccountType, "id" | "name" | "financialInstitution">;
 
 interface IEditGoalForm {
   data: {
@@ -11,20 +16,93 @@ interface IEditGoalForm {
     accountId?: string | null;
     targetAmount?: number;
     deadline?: string | null;
+    accounts?: GoalFormAccount[];
   };
   onError(errMsg: string): void;
 }
 
 const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
+  const GLOBAL_ACCOUNT_VALUE = "__goal_global__";
   const goalId = data?.goalId ?? "";
   const title = data?.title ?? "";
   const description = data?.description ?? "";
-  const accountId = data?.accountId ?? "";
+  const originalAccountId = data?.accountId ?? null;
   const targetAmount = data?.targetAmount ?? 0;
   const deadline = data?.deadline ?? "";
+  const [availableAccounts, setAvailableAccounts] = useState<GoalFormAccount[]>(
+    data?.accounts ?? []
+  );
+  const hasSyncedAccounts = (data?.accounts?.length ?? 0) > 0;
+  const hasRequestedFallback = useRef(false);
 
   const normalizeDateInput = (value?: string | null) =>
     value ? value.substring(0, 10) : "";
+
+  useEffect(() => {
+    setAvailableAccounts(data?.accounts ?? []);
+  }, [data?.accounts]);
+
+  useEffect(() => {
+    if (hasSyncedAccounts || hasRequestedFallback.current) {
+      return;
+    }
+
+    let isMounted = true;
+    hasRequestedFallback.current = true;
+
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch("/api/pagination/accounts?page=1&size=50");
+        const payload = await response.json();
+
+        if (!response.ok || "error" in payload) {
+          hasRequestedFallback.current = false;
+          return;
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        const normalizedAccounts = (payload?.data ?? []).map(
+          (account: AccountType) => ({
+            id: account.id,
+            name: account.name,
+            financialInstitution: account.financialInstitution,
+          })
+        );
+
+        setAvailableAccounts(normalizedAccounts);
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            "Erro ao buscar contas para o formulário de edição de metas.",
+            error
+          );
+        }
+        hasRequestedFallback.current = false;
+      }
+    };
+
+    fetchAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasSyncedAccounts]);
+
+  const accountOptions = [
+    { value: GLOBAL_ACCOUNT_VALUE, label: "Meta global (sem conta)" },
+    ...availableAccounts.map((account) => ({
+      value: account.id,
+      label: `${account.name} - ${account.financialInstitution}`,
+    })),
+  ];
+
+  const defaultAccountValue =
+    originalAccountId === null
+      ? GLOBAL_ACCOUNT_VALUE
+      : originalAccountId ?? "";
 
   return (
     <FormCard
@@ -46,8 +124,9 @@ const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
         {
           name: "accountId",
           label: "Conta vinculada (opcional)",
-          type: "text",
-          placeholder: "UUID da conta ou deixe vazio para meta global",
+          type: "select",
+          placeholder: "Selecione a conta desta meta",
+          options: accountOptions,
         },
         {
           name: "targetAmount",
@@ -66,7 +145,7 @@ const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
       defaultFormData={{
         title,
         description: description ?? "",
-        accountId: accountId ?? "",
+        accountId: defaultAccountValue,
         targetAmount: targetAmount.toString(),
         deadline: normalizeDateInput(deadline),
       }}
@@ -87,9 +166,16 @@ const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
         }
 
         if (formData["accountId"] !== undefined) {
-          updatePayload.accountId = formData["accountId"]
-            ? formData["accountId"]
-            : null;
+          const selectedAccount = formData["accountId"];
+          const normalizedAccountId = !selectedAccount
+            ? null
+            : selectedAccount === GLOBAL_ACCOUNT_VALUE
+            ? null
+            : selectedAccount.trim();
+
+          if (normalizedAccountId !== originalAccountId) {
+            updatePayload.accountId = normalizedAccountId;
+          }
         }
 
         if (

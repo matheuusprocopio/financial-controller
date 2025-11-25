@@ -54,15 +54,78 @@ export const editCategoryTool = tool({
 export const deleteCategoryTool = tool({
   description: "Excludes a category or sub-category",
   inputSchema: z.object({
-    categoryId: z.string(),
+    categoryId: z.string().optional(),
     name: z.string(),
   }),
 
-  execute: async ({ categoryId, name }) => {
-    return {
-      categoryId,
-      name,
-    };
+  execute: async ({ categoryId = "", name }) => {
+    try {
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          categoryId: "",
+          name,
+          error: createRequestError(
+            401,
+            "Não foi possível obter a sessão do usuário.",
+            "categories/paginated"
+          ),
+        };
+      }
+
+      const resp = await listCategoriesPaginated(
+        sessionId,
+        { page: 1, size: 1 },
+        undefined,
+        name
+      );
+
+      if (isRequestError(resp)) {
+        return {
+          categoryId: "",
+          name,
+          error: resp,
+        };
+      }
+
+      const [bestMatch] = resp.data ?? [];
+
+      if (!bestMatch) {
+        return {
+          categoryId: "",
+          name,
+          error: createRequestError(
+            404,
+            "Nenhuma categoria encontrada para deletar. Tente especificar melhor o nome.",
+            "categories/paginated"
+          ),
+        };
+      }
+
+      return {
+        categoryId: bestMatch.id,
+        name: bestMatch.name,
+        semanticalSearch: name,
+        totalOfCategories: resp.totalItems,
+      };
+    } catch (error) {
+      if (isRequestError(error)) {
+        return {
+          categoryId: "",
+          name,
+          error,
+        };
+      }
+
+      const message = error instanceof Error ? error.message : "Unknown error";
+
+      return {
+        categoryId: "",
+        name,
+        error: createRequestError(500, message, "categories/paginated"),
+      };
+    }
   },
 });
 
@@ -100,10 +163,13 @@ export const listCategoriesTool = tool({
         };
       }
 
+      const searchTerm = name.length > 0 ? name : undefined;
+
       const resp = await listCategoriesPaginated(
         sessionId,
         { page: 1, size: 10 },
-        name
+        name,
+        searchTerm
       );
 
       if (isRequestError(resp)) {
@@ -556,8 +622,14 @@ export const createNewItemTool = tool({
       };
     }
 
+    const categorySearchTerm =
+      suggestedCategoryName?.trim() ||
+      name?.trim() ||
+      description?.trim() ||
+      "";
+
     const [categoriesResp, accountsResp] = await Promise.all([
-      listCategoriesPaginated(sessionId, { page: 1, size: 10 }),
+      listCategoriesPaginated(sessionId, { page: 1, size: 5 }, undefined, categorySearchTerm || undefined),
       listAccountsPaginated(sessionId, { page: 1, size: 10 }),
     ]);
 
@@ -645,6 +717,7 @@ export const createNewItemTool = tool({
       accountId: matchedAccount.id,
       suggestedCategoryName: matchedCategory.name,
       suggestedAccountName: matchedAccount.name,
+      categories,
       matchConfidence: {
         category: matchedCategory.confidence,
         account: matchedAccount.confidence,

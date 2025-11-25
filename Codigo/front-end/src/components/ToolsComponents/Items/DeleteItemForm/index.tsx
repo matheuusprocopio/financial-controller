@@ -21,11 +21,13 @@ interface IDeleteItemForm {
     amount?: number;
     date?: string;
     type?: "income" | "expense";
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const DeleteItemForm = ({ data, onError }: IDeleteItemForm) => {
+const DeleteItemForm = ({ data, onError, onSubmitted }: IDeleteItemForm) => {
   const itemId = data?.itemId ?? "";
   const itemName = data?.name ?? "";
   const description = data?.description ?? "";
@@ -59,14 +61,29 @@ const DeleteItemForm = ({ data, onError }: IDeleteItemForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onConfirm={async () => {
-        if (itemId) {
+        if (!itemId) {
+          onError?.("Transação não encontrada para exclusão.", data);
+          return false;
+        }
+
+        try {
           const resp = await deleteItemAction(itemId);
 
-          if ("error" in resp) {
+          if (resp && typeof resp === "object" && "error" in resp) {
             const err = resp as RequestError;
-            onError?.(err.error.message);
+            onError?.(err.error.message, resp);
+            return false;
           }
+
+          return true;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Erro ao deletar transação.";
+          onError?.(message, error);
+          return false;
         }
       }}
     >

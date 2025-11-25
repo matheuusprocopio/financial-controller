@@ -11,6 +11,7 @@ import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.MessageCreateDTO;
 import com.ti2cc.api.dto.MessageIdResponseDTO;
+import com.ti2cc.api.dto.MessageUpdateDTO;
 import com.ti2cc.api.model.Message;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.MessageService;
@@ -71,7 +72,13 @@ public class MessageController {
                 return gson.toJson("Field 'parts' is required and must be a JSON array.");
             }
 
-            UUID messageId = messageService.createMessage(chatId, sessionUser.getId(), dto.getRole(), dto.getParts());
+            UUID messageId = messageService.createMessage(
+                    chatId,
+                    sessionUser.getId(),
+                    dto.getId(),
+                    dto.getRole(),
+                    dto.getParts()
+            );
             if (messageId != null) {
                 res.status(201);
                 return gson.toJson(new MessageIdResponseDTO(messageId));
@@ -113,6 +120,45 @@ public class MessageController {
 
             res.status(200);
             return gson.toJson(messages);
+        } catch (IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson("Invalid UUID format: " + e.getMessage());
+        }
+    }
+
+    public Object update(Request req, Response res) {
+        res.type("application/json");
+
+        String chatIdParam = req.params(":chatId");
+        String messageIdParam = req.params(":messageId");
+        if (chatIdParam == null || chatIdParam.isBlank() || messageIdParam == null || messageIdParam.isBlank()) {
+            res.status(400);
+            return gson.toJson("Path parameters 'chatId' and 'messageId' are required.");
+        }
+
+        try {
+            UUID chatId = UUID.fromString(chatIdParam);
+
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null || sessionUser.getId() == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            MessageUpdateDTO dto = gson.fromJson(req.body(), MessageUpdateDTO.class);
+            if (dto == null || dto.getParts() == null) {
+                res.status(400);
+                return gson.toJson("Field 'parts' is required and must be a JSON array.");
+            }
+
+            boolean updated = messageService.updateMessageParts(chatId, messageIdParam, sessionUser.getId(), dto.getParts());
+            if (updated) {
+                res.status(200);
+                return gson.toJson("Message updated successfully.");
+            }
+
+            res.status(400);
+            return gson.toJson("Failed to update message.");
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid UUID format: " + e.getMessage());

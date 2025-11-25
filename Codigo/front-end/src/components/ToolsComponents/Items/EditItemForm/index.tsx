@@ -22,17 +22,19 @@ interface IEditItemForm {
     type?: "income" | "expense";
     categoryId?: string;
     accountId?: string;
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const EditItemForm = ({ data, onError }: IEditItemForm) => {
+const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
   const { sessionId, backendUser, loading: authLoading } = useAuth();
   const [categoriesOptions, setCategoriesOptions] = useState<{ value: string; label: string }[]>([]);
   const [accountsOptions, setAccountsOptions] = useState<{ value: string; label: string }[]>([]);
   const [itemData, setItemData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(!!data?.alreadySubmitted);
   const [error, setError] = useState<string | null>(null);
 
   const [defaultValues, setDefaultValues] = useState<Record<string, string>>({
@@ -58,9 +60,15 @@ const EditItemForm = ({ data, onError }: IEditItemForm) => {
     }));
   }, [data]);
 
-  const handleError = (message: string) => {
+  useEffect(() => {
+    if (data?.alreadySubmitted) {
+      setIsSubmitted(true);
+    }
+  }, [data?.alreadySubmitted]);
+
+  const handleError = (message: string, payload?: unknown) => {
     setError(message);
-    onError?.(message);
+    onError?.(message, payload);
   };
 
   useEffect(() => {
@@ -195,10 +203,13 @@ const EditItemForm = ({ data, onError }: IEditItemForm) => {
   }, [accountsOptions, categoriesOptions]);
 
   const handleSubmit = async (values: Record<string, string>) => {
-    if (!data?.itemId) return false;
+    if (!data?.itemId) {
+      handleError("ID da transação não informado para atualização.", data);
+      return false;
+    }
 
     if (!sessionId || !backendUser) {
-      handleError("Sessão inválida. Tente fazer login novamente.");
+      handleError("Sessão inválida. Tente fazer login novamente.", { sessionId, backendUser });
       return false;
     }
 
@@ -229,10 +240,18 @@ const EditItemForm = ({ data, onError }: IEditItemForm) => {
       return false;
     }
 
-    const resp = await updateItemAction(data.itemId, payload);
+    try {
+      const resp = await updateItemAction(data.itemId, payload);
 
-    if (resp && typeof resp === "object" && "error" in resp) {
-      handleError(getErrorMessage((resp as RequestError).error) || "Erro ao atualizar transação.");
+      if (resp && typeof resp === "object" && "error" in resp) {
+        handleError(
+          getErrorMessage((resp as RequestError).error) || "Erro ao atualizar transação.",
+          resp
+        );
+        return false;
+      }
+    } catch (error) {
+      handleError(getErrorMessage(error) || "Erro ao atualizar transação.", error);
       return false;
     }
 
@@ -293,6 +312,7 @@ const EditItemForm = ({ data, onError }: IEditItemForm) => {
       submitLabel="Confirmar alterações"
       defaultFormData={defaultValues}
       onSubmit={handleSubmit}
+      onSubmitted={onSubmitted}
     />
   );
 };

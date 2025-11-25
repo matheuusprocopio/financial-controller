@@ -36,6 +36,7 @@ export default function ChatWrapper({
     <div className="flex h-full flex-1 flex-col overflow-hidden min-h-0">
       <MessagesContainer
         messages={frontMessages}
+        chatId={chatId}
         onSendMessage={handleSendMessage}
       />
       <ChatInput onSendMessage={handleSendMessage} />

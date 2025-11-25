@@ -10,6 +10,7 @@ import { listAccounts } from "@/utils/services/accounts";
 import { RequestError } from "@/utils/requestProvider";
 import { getErrorMessage } from "@/utils/errors";
 import { formatCurrencyValue, parseCurrencyToNumber } from "@/utils/currency";
+import { CategorieType } from "@/types/categorie.type";
 
 interface ICreateItemForm {
   data: {
@@ -22,11 +23,14 @@ interface ICreateItemForm {
     accountId?: string;
     suggestedCategoryName?: string;
     suggestedAccountName?: string;
+    categories?: CategorieType[];
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const CreateItemForm = ({ data, onError }: ICreateItemForm) => {
+const CreateItemForm = ({ data, onError, onSubmitted }: ICreateItemForm) => {
   const { sessionId, backendUser, loading: authLoading } = useAuth();
   const [categoriesOptions, setCategoriesOptions] = useState<
     { value: string; label: string }[]
@@ -40,12 +44,12 @@ const CreateItemForm = ({ data, onError }: ICreateItemForm) => {
     amount: formatCurrencyValue(data?.amount),
     date: data?.date ?? new Date().toISOString().split("T")[0],
     type: data?.type ?? "expense",
-    categoryId: data?.categoryId ?? "",
+    categoryId: data?.categoryId ?? data?.categories?.[0]?.id ?? "",
     accountId: data?.accountId ?? "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(!!data?.alreadySubmitted);
   const [lastSubmittedData, setLastSubmittedData] = useState<{
     amount: number;
     name: string;
@@ -62,14 +66,25 @@ const CreateItemForm = ({ data, onError }: ICreateItemForm) => {
       ),
       date: data?.date ?? prev.date ?? new Date().toISOString().split("T")[0],
       type: data?.type ?? (prev.type as "income" | "expense") ?? "expense",
-      categoryId: data?.categoryId ?? prev.categoryId ?? "",
+      categoryId: data?.categoryId ?? prev.categoryId ?? data?.categories?.[0]?.id ?? "",
       accountId: data?.accountId ?? prev.accountId ?? "",
     }));
   }, [data]);
 
-  const handleError = (message: string) => {
+  useEffect(() => {
+    if (data?.alreadySubmitted) {
+      setIsSubmitted(true);
+      setLastSubmittedData({
+        amount: data?.amount ?? 0,
+        name: data?.name ?? "Transação",
+        type: data?.type ?? "expense",
+      });
+    }
+  }, [data?.alreadySubmitted, data?.amount, data?.name, data?.type]);
+
+  const handleError = (message: string, payload?: unknown) => {
     setError(message);
-    onError?.(message);
+    onError?.(message, payload);
   };
 
   useEffect(() => {
@@ -82,25 +97,23 @@ const CreateItemForm = ({ data, onError }: ICreateItemForm) => {
 
       setLoading(true);
       try {
-        const [categoriesResp, accountsResp] = await Promise.all([
-          listCategories(sessionId),
-          listAccounts(sessionId),
-        ]);
+        const shouldFetchCategories = !(data?.categories && data.categories.length > 0);
+        const categoriesResult: CategorieType[] | RequestError =
+          shouldFetchCategories
+            ? await listCategories(sessionId, undefined, data?.suggestedCategoryName || data?.name)
+            : data?.categories ?? [];
+        const accountsResp = await listAccounts(sessionId);
 
-        if (
-          categoriesResp &&
-          !("error" in categoriesResp) &&
-          Array.isArray(categoriesResp)
-        ) {
+        if (Array.isArray(categoriesResult)) {
           setCategoriesOptions(
-            categoriesResp.map((cat) => ({ value: cat.id, label: cat.name }))
+            categoriesResult.map((cat) => ({ value: cat.id, label: cat.name }))
           );
           setDefaultValues((prev) => ({
             ...prev,
-            categoryId: prev.categoryId || categoriesResp[0]?.id || "",
+            categoryId: prev.categoryId || data?.categoryId || categoriesResult[0]?.id || "",
           }));
-        } else if (categoriesResp && "error" in categoriesResp) {
-          handleError(getErrorMessage((categoriesResp as RequestError).error) || "Erro ao carregar categorias.");
+        } else if (categoriesResult && "error" in categoriesResult) {
+          handleError(getErrorMessage((categoriesResult as RequestError).error) || "Erro ao carregar categorias.");
         }
 
         if (
@@ -210,23 +223,34 @@ const handleSubmit = async (values: Record<string, string>) => {
     setError(null);
 
     if (!sessionId || !backendUser) {
-      handleError("Sessão inválida. Tente fazer login novamente.");
+      handleError("Sessão inválida. Tente fazer login novamente.", {
+        sessionId,
+        backendUser,
+      });
       return false;
     }
 
-    const resp = await createItemAction({
-      name: values.name ?? "",
-      description: values.description ?? "",
-      amount: parseCurrencyToNumber(values.amount),
-      type: (values.type as "income" | "expense") ?? "expense",
-      categoryId: values.categoryId ?? "",
-      accountId: values.accountId ?? "",
-      date: values.date ?? new Date().toISOString().split("T")[0],
-      userId: backendUser.id,
-    });
+    try {
+      const resp = await createItemAction({
+        name: values.name ?? "",
+        description: values.description ?? "",
+        amount: parseCurrencyToNumber(values.amount),
+        type: (values.type as "income" | "expense") ?? "expense",
+        categoryId: values.categoryId ?? "",
+        accountId: values.accountId ?? "",
+        date: values.date ?? new Date().toISOString().split("T")[0],
+        userId: backendUser.id,
+      });
 
-    if (resp && typeof resp === "object" && "error" in resp) {
-      handleError(getErrorMessage((resp as RequestError).error) || "Erro ao criar transação.");
+      if (resp && typeof resp === "object" && "error" in resp) {
+        handleError(
+          getErrorMessage((resp as RequestError).error) || "Erro ao criar transação.",
+          resp
+        );
+        return false;
+      }
+    } catch (error) {
+      handleError(getErrorMessage(error) || "Erro ao criar transação.", error);
       return false;
     }
 
@@ -283,6 +307,7 @@ const handleSubmit = async (values: Record<string, string>) => {
       submitLabel="Confirmar e adicionar"
       defaultFormData={defaultValues}
       onSubmit={handleSubmit}
+      onSubmitted={onSubmitted}
     />
   );
 };

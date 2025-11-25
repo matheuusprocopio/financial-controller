@@ -9,11 +9,13 @@ interface IDeleteCategoryForm {
   data: {
     categoryId?: string;
     name?: string;
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const DeleteCategoryForm = ({ data, onError }: IDeleteCategoryForm) => {
+const DeleteCategoryForm = ({ data, onError, onSubmitted }: IDeleteCategoryForm) => {
   const categoryId = data?.categoryId ?? "";
   const categoryName = data?.name ?? "Not found";
 
@@ -24,25 +26,33 @@ const DeleteCategoryForm = ({ data, onError }: IDeleteCategoryForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onConfirm={async () => {
-        if (categoryId) {
-          try {
-            const resp = await deleteCategoryAction(categoryId);
+        if (!categoryId) {
+          return false;
+        }
 
-            if (resp && typeof resp === "object" && "error" in resp) {
-              const message =
-                typeof (resp as any).error?.message === "string"
-                  ? (resp as any).error.message
-                  : "Erro ao deletar categoria.";
-              onError?.(message);
-            }
-          } catch (error) {
+        try {
+          const resp = await deleteCategoryAction(categoryId);
+
+          if (resp && typeof resp === "object" && "error" in resp) {
             const message =
-              error instanceof Error
-                ? error.message
-                : "Erro ao deletar categoria.";
-            onError?.(message);
+              typeof (resp as any).error?.message === "string"
+                ? (resp as any).error.message
+              : "Erro ao deletar categoria.";
+            onError?.(message, resp);
+            return false;
           }
+
+          return true;
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Erro ao deletar categoria.";
+          onError?.(message, error);
+          return false;
         }
       }}
     >

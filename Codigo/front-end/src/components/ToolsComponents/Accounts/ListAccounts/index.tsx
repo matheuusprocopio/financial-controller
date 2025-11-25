@@ -41,7 +41,7 @@ interface IAccountsList {
     currentPage?: number;
     pageLimit?: number;
   };
-  onError(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
 }
 
 const AccountsList = ({ data, onError }: IAccountsList) => {
@@ -191,7 +191,7 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
         const errorMessage =
           (result as RequestError)?.error?.message ||
           "Erro ao buscar contas.";
-        onError(errorMessage);
+        onError?.(errorMessage, result);
         return;
       }
 
@@ -205,7 +205,7 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
         pagination.setCurrentPage(newPage);
       }
     } catch (error) {
-      onError("Erro ao buscar contas. Tente novamente.");
+      onError?.("Erro ao buscar contas. Tente novamente.", error);
     }
   };
 

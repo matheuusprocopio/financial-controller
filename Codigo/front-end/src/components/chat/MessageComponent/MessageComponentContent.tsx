@@ -16,6 +16,11 @@ import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccou
 import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountForm";
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
+import CreateGoalForm from "@/components/ToolsComponents/Goals/CreateGoalForm";
+import EditGoalForm from "@/components/ToolsComponents/Goals/EditGoalForm";
+import DeleteGoalForm from "@/components/ToolsComponents/Goals/DeleteGoalForm";
+import GoalsList from "@/components/ToolsComponents/Goals/ListGoals";
+import ListGoalActions from "@/components/ToolsComponents/Goals/ListGoalActions";
 
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
@@ -91,6 +96,20 @@ const MessageComponentContent = ({
     "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} onError={handleActionErrorChange} />,
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
     "tool-filterAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
+
+    "tool-createNewGoal": (p) => (
+      <CreateGoalForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-editGoal": (p) => (
+      <EditGoalForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-listGoalActions": () => (
+      <ListGoalActions onSendMessage={onSendMessage} />
+    ),
+    "tool-deleteGoal": (p) => (
+      <DeleteGoalForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-listGoals": (p) => <GoalsList data={p.output as any} onError={handleActionErrorChange} />,
   };
 
   const renderParts = () =>

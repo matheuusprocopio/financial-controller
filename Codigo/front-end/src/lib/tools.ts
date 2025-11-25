@@ -4,9 +4,11 @@ import { z } from "zod";
 
 import { listCategoriesPaginated } from "@/utils/services/categories";
 import { listAccountsPaginated, getAccountById } from "@/utils/services/accounts";
+import { listGoals, getGoalById } from "@/utils/services/goals";
 import { getSessionId } from "@/utils/server-cookies";
 
 import { AccountType } from "@/types/account.type";
+import { GoalType } from "@/types/goal.types";
 import { RequestError } from "@/utils/requestProvider";
 
 const isRequestError = (resp: unknown): resp is RequestError => {
@@ -508,6 +510,254 @@ export const filterAccountsTool = tool({
   },
 });
 
+const filterGoalsByParams = (
+  goals: GoalType[],
+  filters: { title?: string; accountId?: string; status?: "achieved" | "pending" }
+) => {
+  let filtered = [...goals];
+
+  if (filters.title && filters.title.trim()) {
+    const query = filters.title.toLowerCase().trim();
+    filtered = filtered.filter((goal) => goal.title.toLowerCase().includes(query));
+  }
+
+  if (filters.accountId && filters.accountId.trim()) {
+    if (filters.accountId === "global") {
+      filtered = filtered.filter((goal) => goal.accountId === null);
+    } else {
+      filtered = filtered.filter((goal) => goal.accountId === filters.accountId);
+    }
+  }
+
+  if (filters.status === "achieved") {
+    filtered = filtered.filter((goal) => goal.achieved);
+  } else if (filters.status === "pending") {
+    filtered = filtered.filter((goal) => !goal.achieved);
+  }
+
+  return filtered;
+};
+
+export const createNewGoalTool = tool({
+  description: "Create or add a new financial goal",
+  inputSchema: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    accountId: z.string().optional(),
+    targetAmount: z.number().optional(),
+    deadline: z.string().optional(),
+  }),
+  execute: async ({ title = "", description = "", accountId = "", targetAmount = 0, deadline = "" }) => {
+    return {
+      title,
+      description,
+      accountId,
+      targetAmount,
+      deadline,
+    };
+  },
+});
+
+export const editGoalTool = tool({
+  description: "Edit an existing financial goal",
+  inputSchema: z.object({
+    goalId: z.string(),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    accountId: z.string().optional(),
+    targetAmount: z.number().optional(),
+    deadline: z.string().optional(),
+  }),
+  execute: async ({ goalId, title, description, accountId, targetAmount, deadline }) => {
+    try {
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        return {
+          goalId,
+          title,
+          description,
+          accountId,
+          targetAmount,
+          deadline,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: `goals/${goalId}`,
+            },
+          },
+        };
+      }
+
+      const goalResp = await getGoalById(goalId, sessionId);
+
+      if (isRequestError(goalResp)) {
+        return { goalId, title, description, accountId, targetAmount, deadline, error: goalResp };
+      }
+
+      const goal = goalResp;
+      return {
+        goalId: goal.id,
+        title: title ?? goal.title,
+        description: description ?? goal.description,
+        accountId: accountId ?? goal.accountId,
+        targetAmount: targetAmount ?? goal.targetAmount,
+        deadline: deadline ?? goal.deadline,
+      };
+    } catch (error) {
+      return {
+        goalId,
+        title,
+        description,
+        accountId,
+        targetAmount,
+        deadline,
+        error: {
+          error: {
+            status: 500,
+            message: error instanceof Error ? error.message : "Erro desconhecido",
+            resource: `goals/${goalId}`,
+          },
+        },
+      };
+    }
+  },
+});
+
+export const deleteGoalTool = tool({
+  description: "Delete an existing goal",
+  inputSchema: z.object({
+    goalId: z.string(),
+  }),
+  execute: async ({ goalId }) => {
+    try {
+      const sessionId = await getSessionId();
+      if (!sessionId) {
+        return {
+          goalId,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: `goals/${goalId}`,
+            },
+          },
+        };
+      }
+
+      const goalResp = await getGoalById(goalId, sessionId);
+
+      if (isRequestError(goalResp)) {
+        return { goalId, error: goalResp };
+      }
+
+      return {
+        goalId: goalResp.id,
+        title: goalResp.title,
+        targetAmount: goalResp.targetAmount,
+        currentAmount: goalResp.currentAmount,
+        achieved: goalResp.achieved,
+        deadline: goalResp.deadline,
+      };
+    } catch (error) {
+      return {
+        goalId,
+        error: {
+          error: {
+            status: 500,
+            message: error instanceof Error ? error.message : "Erro desconhecido",
+            resource: `goals/${goalId}`,
+          },
+        },
+      };
+    }
+  },
+});
+
+export const listGoalActionsTool = tool({
+  description: "List the possible actions related to goals",
+  inputSchema: z.object({}),
+  execute: async () => {
+    return "Goals available list";
+  },
+});
+
+export const listGoalsTool = tool({
+  description: "List all financial goals for the authenticated user",
+  inputSchema: z.object({
+    title: z.string().optional(),
+    accountId: z.string().optional(),
+    status: z.enum(["achieved", "pending"]).optional(),
+  }),
+  execute: async ({ title = "", accountId = "", status }) => {
+    try {
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          title,
+          accountId,
+          status,
+          goals: [],
+          totalOfGoals: 0,
+          error: {
+            error: {
+              status: 401,
+              message: "Não foi possível obter os dados do usuário.",
+              resource: "goals",
+            },
+          },
+        };
+      }
+
+      const resp = await listGoals(sessionId);
+
+      if (isRequestError(resp)) {
+        return {
+          title,
+          accountId,
+          status,
+          goals: [],
+          totalOfGoals: 0,
+          error: resp,
+        };
+      }
+
+      const filteredGoals = filterGoalsByParams(resp, {
+        title,
+        accountId,
+        status,
+      });
+
+      return {
+        title,
+        accountId,
+        status,
+        goals: filteredGoals,
+        totalOfGoals: filteredGoals.length,
+        currentPage: 1,
+        pageLimit: filteredGoals.length || 10,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      return {
+        title,
+        accountId,
+        status,
+        goals: [],
+        totalOfGoals: 0,
+        error: {
+          error: {
+            status: 500,
+            message,
+            resource: "goals",
+          },
+        },
+      };
+    }
+  },
+});
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,
@@ -527,4 +777,10 @@ export const tools = {
   listCreditCardActions: listCreditCardActionsTool,
   deleteCreditCard: deleteCreditCardTool,
   listCreditCards: listCreditCardsTool,
+
+  createNewGoal: createNewGoalTool,
+  editGoal: editGoalTool,
+  listGoalActions: listGoalActionsTool,
+  deleteGoal: deleteGoalTool,
+  listGoals: listGoalsTool,
 };

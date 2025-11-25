@@ -110,6 +110,8 @@ function useProvideAuth(): UseAuthReturn {
       return data.user ?? null;
     } catch (error) {
       console.error("Erro ao carregar usuário do backend:", error);
+      await deleteCookie(SESSION_COOKIE);
+      setSessionId(null);
       setBackendUser(null);
       return null;
     } finally {
@@ -217,7 +219,6 @@ function useProvideAuth(): UseAuthReturn {
   const logout = useCallback(async (): Promise<void> => {
     setLoading(true);
     try {
-      // Faz logout do backend primeiro se houver sessão
       if (sessionId) {
         try {
           await fetch(`${API_BASE}/auth/logout`, {
@@ -227,12 +228,12 @@ function useProvideAuth(): UseAuthReturn {
         } catch (error) {
           console.error("Erro ao fazer logout do backend:", error);
         }
-        setSessionId(null);
       }
 
-      await signOut(auth);
       await deleteCookie(SESSION_COOKIE);
+      setSessionId(null);
       setBackendUser(null);
+      await signOut(auth);
     } catch (error: any) {
       throw error;
     } finally {

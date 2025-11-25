@@ -27,6 +27,7 @@ import com.ti2cc.api.routes.UserRoutes;
 import com.ti2cc.api.service.AccountService;
 import com.ti2cc.api.service.CategoryService;
 import com.ti2cc.api.service.ChatService;
+import com.ti2cc.api.service.EmbeddingService;
 import com.ti2cc.api.service.FirebaseAuthService;
 import com.ti2cc.api.service.ItemService;
 import com.ti2cc.api.service.MessageService;
@@ -48,7 +49,8 @@ public class Container {
         MessageDAO messageDAO = new MessageDAO(postgresConn);
 
 
-        CategoryService categoryService = new CategoryService(categoryDAO);
+        EmbeddingService embeddingService = new EmbeddingService();
+        CategoryService categoryService = new CategoryService(categoryDAO, embeddingService);
         AccountService accountService = new AccountService(accountDAO);
         ChatService chatService = new ChatService(chatDAO);
         UserService userService = new UserService(userDAO, chatService);

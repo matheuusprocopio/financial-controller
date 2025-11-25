@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.ti2cc.api.dto.CategoryResponseDTO;
 import com.ti2cc.api.dto.CategoryUpdateDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
@@ -43,7 +44,7 @@ public class CategoryController {
 
             if (created) {
                 res.status(201);
-                return gson.toJson(category);
+                return gson.toJson(toResponse(category));
             } else {
                 res.status(400);
                 return gson.toJson("Failed to create category.");
@@ -66,15 +67,20 @@ public class CategoryController {
             String nameParam = req.queryParams("name");
             String name = (nameParam == null || nameParam.isBlank()) ? null : nameParam;
             String mainCategoryIdParam = req.queryParams("main_category_id");
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
 
             UUID mainCategoryId = null;
             if (mainCategoryIdParam != null && !mainCategoryIdParam.isBlank()) {
                 mainCategoryId = UUID.fromString(mainCategoryIdParam);
             }
 
-            List<Category> categories = categoryService.listCategories(sessionUser.getId(), name, mainCategoryId);
+            List<Category> categories = categoryService.listCategories(sessionUser.getId(), name, mainCategoryId, semanticQuery);
+            List<CategoryResponseDTO> response = categories.stream()
+                    .map(this::toResponse)
+                    .toList();
             res.status(200);
-            return gson.toJson(categories);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid UUID format: " + e.getMessage());
@@ -92,6 +98,8 @@ public class CategoryController {
             String nameParam = req.queryParams("name");
             String name = (nameParam == null || nameParam.isBlank()) ? null : nameParam;
             String mainCategoryIdParam = req.queryParams("main_category_id");
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
 
             UUID mainCategoryId = null;
             if (mainCategoryIdParam != null && !mainCategoryIdParam.isBlank()) {
@@ -102,10 +110,17 @@ public class CategoryController {
             int size = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
             
             PaginationRequestDTO pagination = new PaginationRequestDTO(page, size);
-            PaginatedResponseDTO<Category> paginatedCategories = categoryService.listCategoriesPaginated(sessionUser.getId(), name, mainCategoryId, pagination);
+            PaginatedResponseDTO<Category> paginatedCategories = categoryService.listCategoriesPaginated(sessionUser.getId(), name, mainCategoryId, semanticQuery, pagination);
+            PaginatedResponseDTO<CategoryResponseDTO> response = new PaginatedResponseDTO<>(
+                    paginatedCategories.getData().stream()
+                            .map(this::toResponse)
+                            .toList(),
+                    paginatedCategories.getTotalItems(),
+                    paginatedCategories.getCurrentPage(),
+                    paginatedCategories.getPageLimit());
             
             res.status(200);
-            return gson.toJson(paginatedCategories);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid parameters format: " + e.getMessage());
@@ -129,7 +144,7 @@ public class CategoryController {
                 return gson.toJson("Access denied.");
             }
             res.status(200);
-            return gson.toJson(category);
+            return gson.toJson(toResponse(category));
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid ID format.");
@@ -215,5 +230,17 @@ public class CategoryController {
             res.status(400);
             return gson.toJson("Invalid ID format.");
         }
+    }
+
+    private CategoryResponseDTO toResponse(Category category) {
+        if (category == null) {
+            return null;
+        }
+        return new CategoryResponseDTO(
+                category.getId(),
+                category.getUserId(),
+                category.getName(),
+                category.getImagePath(),
+                category.getMainCategoryId());
     }
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ti2cc.api.model.Category;
+import com.ti2cc.api.util.VectorUtils;
 
 public class CategoryDAO {
     private Connection connection;
@@ -31,6 +32,10 @@ public class CategoryDAO {
             sb.append(", main_category_id");
         }
 
+        if (category.getSearchEmbedding() != null) {
+            sb.append(", search_embedding");
+        }
+
         sb.append(") VALUES (");
         sb.append("?, ?, ?"); // parâmetros fixos: id, name e user_id
 
@@ -40,6 +45,10 @@ public class CategoryDAO {
 
         if (category.getMainCategoryId() != null) {
             sb.append(", ?");
+        }
+
+        if (category.getSearchEmbedding() != null) {
+            sb.append(", ?::vector");
         }
 
         sb.append(")");
@@ -65,6 +74,10 @@ public class CategoryDAO {
 
             if (category.getMainCategoryId() != null) {
                 pstmt.setObject(paramIndex++, category.getMainCategoryId());
+            }
+
+            if (category.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(category.getSearchEmbedding()));
             }
 
             int rowsAffected = pstmt.executeUpdate();
@@ -95,6 +108,13 @@ public class CategoryDAO {
             if (hasPrev)
                 query.append(", ");
             query.append("main_category_id = ?");
+            hasPrev = true;
+        }
+
+        if (category.getSearchEmbedding() != null) {
+            if (hasPrev)
+                query.append(", ");
+            query.append("search_embedding = ?::vector");
         }
 
         query.append(" WHERE id = ?");
@@ -110,6 +130,10 @@ public class CategoryDAO {
 
             if (category.getMainCategoryId() != null)
                 pstmt.setObject(paramIndex++, category.getMainCategoryId());
+
+            if (category.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(category.getSearchEmbedding()));
+            }
 
             pstmt.setObject(paramIndex, category.getId());
 
@@ -146,7 +170,8 @@ public class CategoryDAO {
                         (UUID) rs.getObject("user_id"),
                         rs.getString("name"),
                         rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"));
+                        (UUID) rs.getObject("main_category_id"),
+                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
             }
         } catch (SQLException e) {
             System.err.println("Fail to get category by id: " + e.getMessage());
@@ -187,11 +212,55 @@ public class CategoryDAO {
                         (UUID) rs.getObject("user_id"),
                         rs.getString("name"),
                         rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"));
+                        (UUID) rs.getObject("main_category_id"),
+                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
                 list.add(c);
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by filters: " + e.getMessage());
+        }
+
+        return list;
+    }
+
+    public List<Category> getBySemanticSearch(UUID userId, float[] embedding, UUID mainCategoryId) {
+        List<Category> list = new ArrayList<>();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return list;
+        }
+
+        StringBuilder query = new StringBuilder(
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        query.append(" ORDER BY distance ASC");
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setString(paramIndex++, vectorLiteral);
+            pstmt.setObject(paramIndex++, userId);
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex++, mainCategoryId);
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Category c = new Category(
+                        (UUID) rs.getObject("id"),
+                        (UUID) rs.getObject("user_id"),
+                        rs.getString("name"),
+                        rs.getString("image_path"),
+                        (UUID) rs.getObject("main_category_id"),
+                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list categories by semantic search: " + e.getMessage());
         }
 
         return list;
@@ -235,11 +304,58 @@ public class CategoryDAO {
                         (UUID) rs.getObject("user_id"),
                         rs.getString("name"),
                         rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"));
+                        (UUID) rs.getObject("main_category_id"),
+                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
                 list.add(c);
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by filters paginated: " + e.getMessage());
+        }
+
+        return list;
+    }
+
+    public List<Category> getBySemanticSearchPaginated(UUID userId, float[] embedding, UUID mainCategoryId, int offset, int limit) {
+        List<Category> list = new ArrayList<>();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return list;
+        }
+
+        StringBuilder query = new StringBuilder(
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        query.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setString(paramIndex++, vectorLiteral);
+            pstmt.setObject(paramIndex++, userId);
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex++, mainCategoryId);
+            }
+
+            pstmt.setInt(paramIndex++, limit);
+            pstmt.setInt(paramIndex, offset);
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Category c = new Category(
+                        (UUID) rs.getObject("id"),
+                        (UUID) rs.getObject("user_id"),
+                        rs.getString("name"),
+                        rs.getString("image_path"),
+                        (UUID) rs.getObject("main_category_id"),
+                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list categories by semantic search paginated: " + e.getMessage());
         }
 
         return list;
@@ -280,4 +396,31 @@ public class CategoryDAO {
 
         return 0;
     }
+
+    public long countWithEmbedding(UUID userId, UUID mainCategoryId) {
+        StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+
+        if (mainCategoryId != null) {
+            query.append(" AND main_category_id = ?");
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+            int paramIndex = 1;
+            pstmt.setObject(paramIndex++, userId);
+
+            if (mainCategoryId != null) {
+                pstmt.setObject(paramIndex, mainCategoryId);
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count categories with embeddings: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
 }

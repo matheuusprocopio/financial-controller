@@ -35,3 +35,21 @@ export const createMessages = async (
 
   return resp;
 };
+
+export const updateMessageParts = async (
+  chatId: string,
+  messageId: string,
+  sessionId: string,
+  parts: any[]
+) => {
+  const resp = await provider.patch(`chats/${chatId}/messages/${messageId}`, {
+    body: {
+      parts,
+    },
+    headers: {
+      "X-Session-Id": sessionId,
+    },
+  });
+
+  return resp;
+};

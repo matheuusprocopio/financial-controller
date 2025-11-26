@@ -3,6 +3,7 @@ package com.ti2cc.api.service;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import com.google.gson.JsonElement;
 import com.ti2cc.api.dao.ChatDAO;
@@ -20,7 +21,7 @@ public class MessageService {
         this.chatDAO = chatDAO;
     }
 
-    public UUID createMessage(UUID chatId, UUID userId, String role, JsonElement parts) {
+    public UUID createMessage(UUID chatId, UUID userId, String messageId, String role, JsonElement parts) {
         if (chatId == null) {
             System.err.println("Chat ID cannot be null when creating a message.");
             return null;
@@ -54,7 +55,7 @@ public class MessageService {
         }
 
         Message message = new Message();
-        message.setId(UUID.randomUUID());
+        message.setId(resolveMessageId(messageId));
         message.setChatId(chatId);
         message.setRole(normalizedRole);
         message.setParts(parts.deepCopy());
@@ -88,6 +89,37 @@ public class MessageService {
         return messageDAO.listByChatId(chatId);
     }
 
+    public boolean updateMessageParts(UUID chatId, String messageId, UUID userId, JsonElement parts) {
+        if (chatId == null || messageId == null || messageId.isBlank()) {
+            System.err.println("Chat ID and Message ID cannot be null when updating parts.");
+            return false;
+        }
+
+        if (userId == null) {
+            System.err.println("User ID cannot be null when updating message parts.");
+            return false;
+        }
+
+        Chat chat = chatDAO.getById(chatId);
+        if (chat == null) {
+            System.err.println("Chat not found for message update.");
+            return false;
+        }
+
+        if (chat.getUserId() == null || !chat.getUserId().equals(userId)) {
+            System.err.println("User not allowed to update messages for this chat.");
+            return false;
+        }
+
+        if (parts == null || !parts.isJsonArray()) {
+            System.err.println("Parts payload must be a JSON array for updates.");
+            return false;
+        }
+
+        UUID resolvedMessageId = resolveMessageId(messageId);
+        return messageDAO.updateParts(resolvedMessageId, chatId, parts.deepCopy());
+    }
+
     private String normalizeRole(String role) {
         if (role == null) {
             return null;
@@ -98,5 +130,17 @@ public class MessageService {
             case "assistant", "user", "system" -> value;
             default -> null;
         };
+    }
+
+    private UUID resolveMessageId(String messageId) {
+        if (messageId == null || messageId.isBlank()) {
+            return UUID.randomUUID();
+        }
+
+        try {
+            return UUID.fromString(messageId);
+        } catch (IllegalArgumentException ex) {
+            return UUID.nameUUIDFromBytes(messageId.getBytes(StandardCharsets.UTF_8));
+        }
     }
 }

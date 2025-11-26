@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface FormField {
@@ -49,6 +50,7 @@ interface IFormCard {
   fields: FormField[];
   submitLabel?: string;
   alreadySubmitted?: boolean;
+  onSubmitted?: () => void;
   onSubmit: (
     data: Record<string, string>
   ) => void | boolean | Promise<void | boolean>;
@@ -65,9 +67,11 @@ const FormCard = ({
   className,
   alreadySubmitted,
   defaultFormData,
+  onSubmitted,
 }: IFormCard) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const formatCurrencyMask = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "");
@@ -83,15 +87,20 @@ const FormCard = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || isSubmitted) return;
+    setIsSubmitting(true);
     try {
       const result = onSubmit(formData);
       const resolved = result instanceof Promise ? await result : result;
 
       if (resolved !== false) {
         setIsSubmitted(true);
+        onSubmitted?.();
       }
     } catch (error) {
       console.error("Erro ao enviar formulário:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -200,8 +209,14 @@ const FormCard = ({
       </CardContent>
 
         <CardFooter>
-          <Button type="submit" className="w-full mt-4">
-            {submitLabel}
+          <Button
+            type="submit"
+            className="w-full mt-4"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? "Enviando..." : submitLabel}
           </Button>
         </CardFooter>
       </form>

@@ -9,11 +9,13 @@ interface IEditAccountForm {
     name?: string;
     financialInstitution?: string;
     balance?: number;
+    alreadySubmitted?: boolean;
   };
-  onError(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const EditAccountForm = ({ data, onError }: IEditAccountForm) => {
+const EditAccountForm = ({ data, onError, onSubmitted }: IEditAccountForm) => {
   const accountId = data?.accountId ?? "";
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
@@ -49,32 +51,51 @@ const EditAccountForm = ({ data, onError }: IEditAccountForm) => {
         financialInstitution: financialInstitution,
         balance: balance.toString(),
       }}
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onSubmit={async (formData) => {
-        if (accountId) {
-          const updatePayload: any = {};
-          
-          if (formData["name"]) {
-            updatePayload.name = formData["name"];
-          }
-          if (formData["financialInstitution"]) {
-            updatePayload.financialInstitution = formData["financialInstitution"];
-          }
-          if (formData["balance"] !== undefined && formData["balance"] !== "") {
-            updatePayload.balance = parseFloat(formData["balance"]);
-          }
-          
-          if (Object.keys(updatePayload).length > 0) {
-            const resp = await updateAccountAction(accountId, updatePayload);
-
-            if ("error" in resp) {
-              const message =
-                typeof resp.error?.message === "string"
-                  ? resp.error.message
-                  : "Erro ao atualizar conta.";
-              onError(message);
-            }
-          }
+        if (!accountId) {
+          onError?.("Conta não encontrada para atualizar.", data);
+          return false;
         }
+
+        const updatePayload: any = {};
+        
+        if (formData["name"]) {
+          updatePayload.name = formData["name"];
+        }
+        if (formData["financialInstitution"]) {
+          updatePayload.financialInstitution = formData["financialInstitution"];
+        }
+        if (formData["balance"] !== undefined && formData["balance"] !== "") {
+          updatePayload.balance = parseFloat(formData["balance"]);
+        }
+        
+        if (Object.keys(updatePayload).length === 0) {
+          return false;
+        }
+
+        try {
+          const resp = await updateAccountAction(accountId, updatePayload);
+
+          if (resp && typeof resp === "object" && "error" in resp) {
+            const message =
+              typeof resp.error?.message === "string"
+                ? resp.error.message
+                : "Erro ao atualizar conta.";
+            onError?.(message, resp);
+            return false;
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Erro ao atualizar conta.";
+          onError?.(message, error);
+          return false;
+        }
+
+        return true;
       }}
     />
   );

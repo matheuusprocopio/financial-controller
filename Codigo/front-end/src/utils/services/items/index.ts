@@ -44,6 +44,7 @@ export const listItems = async (
     endDate?: string;
     page?: number;
     pageLimit?: number;
+    semanticalSearch?: string;
   }
 ): Promise<PaginatedResponse<ItemType> | RequestError> => {
   const params = new URLSearchParams();
@@ -57,6 +58,8 @@ export const listItems = async (
   if (options?.endDate) params.append("end_date", options.endDate);
   if (options?.page) params.append("page", options.page.toString());
   if (options?.pageLimit) params.append("pageLimit", options.pageLimit.toString());
+  if (options?.semanticalSearch)
+    params.append("semantical_search", options.semanticalSearch);
 
   const response = await provider.get<PaginatedResponse<ItemType>>(
     `items?${params.toString()}`,

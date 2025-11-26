@@ -21,6 +21,7 @@ export const convertUIMessageToServerMessage = (
   message: UIMessage
 ): ServerMessageType => {
   return {
+    id: message.id,
     parts: message.parts,
     role: message.role,
   } as ServerMessageType;

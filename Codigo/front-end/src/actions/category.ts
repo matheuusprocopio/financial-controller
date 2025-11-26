@@ -13,8 +13,6 @@ export const createCategoryAction = async (payload: CreateCategoryType) => {
   }
 
   const resp = await createCategory(sessionId, payload);
-
-  console.log(resp);
   
   return resp;
 };

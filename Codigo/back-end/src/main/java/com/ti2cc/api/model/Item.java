@@ -13,6 +13,7 @@ public class Item {
     private Double amount; 
     private LocalDate date;
     private ItemType type;
+    private transient float[] searchEmbedding;
 
     public Item() {
         this(null, null, null, null, null, null, null, null, null);
@@ -101,6 +102,14 @@ public class Item {
 
     public void setType(ItemType type) {
         this.type = type;
+    }
+
+    public float[] getSearchEmbedding() {
+        return searchEmbedding;
+    }
+
+    public void setSearchEmbedding(float[] searchEmbedding) {
+        this.searchEmbedding = searchEmbedding;
     }
 
     public enum ItemType {

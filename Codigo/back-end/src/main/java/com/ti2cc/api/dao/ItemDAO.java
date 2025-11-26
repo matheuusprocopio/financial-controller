@@ -14,6 +14,7 @@ import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.model.Item.ItemType;
+import com.ti2cc.api.util.VectorUtils;
 
 public class ItemDAO {
     private final Connection connection;
@@ -27,8 +28,15 @@ public class ItemDAO {
 
         sb.append("INSERT INTO items (");
         sb.append("id, category_id, user_id, account_id, name, description, amount, date, type");
+        if (item.getSearchEmbedding() != null) {
+            sb.append(", search_embedding");
+        }
         sb.append(") VALUES (");
-        sb.append("?, ?, ?, ?, ?, ?, ?, ?, ?::item_type)");
+        sb.append("?, ?, ?, ?, ?, ?, ?, ?, ?::item_type");
+        if (item.getSearchEmbedding() != null) {
+            sb.append(", ?::vector");
+        }
+        sb.append(")");
 
         String query = sb.toString();
 
@@ -48,6 +56,9 @@ public class ItemDAO {
             pstmt.setDouble(paramIndex++, item.getAmount());
             pstmt.setDate(paramIndex++, Date.valueOf(item.getDate()));
             pstmt.setString(paramIndex++, item.getType().name());
+            if (item.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(item.getSearchEmbedding()));
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -106,6 +117,12 @@ public class ItemDAO {
         if (item.getType() != null) {
             if (hasPrev) query.append(", ");
             query.append("type = ?::item_type");
+            hasPrev = true;
+        }
+
+        if (item.getSearchEmbedding() != null) {
+            if (hasPrev) query.append(", ");
+            query.append("search_embedding = ?::vector");
         }
 
         query.append(" WHERE id = ?");
@@ -137,6 +154,9 @@ public class ItemDAO {
             if (item.getType() != null)
                 pstmt.setString(paramIndex++, item.getType().name());
 
+            if (item.getSearchEmbedding() != null)
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(item.getSearchEmbedding()));
+
             pstmt.setObject(paramIndex, item.getId());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -167,17 +187,7 @@ public class ItemDAO {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return new Item(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("user_id"),
-                        (UUID) rs.getObject("account_id"),
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        ItemType.valueOf(rs.getString("type"))
-                );
+                return mapItem(rs);
             }
         } catch (SQLException e) {
             System.err.println("Fail to get item by id: " + e.getMessage());
@@ -252,21 +262,74 @@ public class ItemDAO {
             ResultSet rs = dataStmt.executeQuery();
 
             while (rs.next()) {
-                Item item = new Item(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("user_id"),
-                        (UUID) rs.getObject("account_id"),
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        ItemType.valueOf(rs.getString("type"))
-                );
-                list.add(item);
+                list.add(mapItem(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list items by user: " + e.getMessage());
+        }
+
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    public PaginatedResponseDTO<Item> getByUserIdSemantic(UUID userId, float[] embedding, String typeFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        List<Item> list = new ArrayList<>();
+        long totalItems = 0;
+        boolean hasTypeFilter = typeFilter != null && !typeFilter.isBlank();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            countQuery.append(" AND type = ?::item_type");
+        }
+
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            dataQuery.append(" AND type = ?::item_type");
+        }
+        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                countStmt.setString(index++, typeFilter);
+            }
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by semantic search: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setString(index++, vectorLiteral);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                dataStmt.setString(index++, typeFilter);
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list items by semantic search: " + e.getMessage());
         }
 
         return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
@@ -341,21 +404,228 @@ public class ItemDAO {
             ResultSet rs = dataStmt.executeQuery();
 
             while (rs.next()) {
-                Item item = new Item(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("user_id"),
-                        (UUID) rs.getObject("account_id"),
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        ItemType.valueOf(rs.getString("type"))
-                );
-                list.add(item);
+                list.add(mapItem(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list items by category: " + e.getMessage());
+        }
+
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    public PaginatedResponseDTO<Item> getByCategoryAndAccount(UUID categoryId, UUID accountId, UUID userId, String nameFilter, String typeFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        List<Item> list = new ArrayList<>();
+        long totalItems = 0;
+        boolean hasNameFilter = nameFilter != null && !nameFilter.isBlank();
+        boolean hasTypeFilter = typeFilter != null && !typeFilter.isBlank();
+
+        StringBuilder countQuery = new StringBuilder(
+                "SELECT COUNT(*) FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            countQuery.append(" AND (LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?))");
+        }
+        if (hasTypeFilter) {
+            countQuery.append(" AND type = ?::item_type");
+        }
+
+        StringBuilder dataQuery = new StringBuilder(
+                "SELECT * FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
+        if (hasNameFilter) {
+            dataQuery.append(" AND (LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?))");
+        }
+        if (hasTypeFilter) {
+            dataQuery.append(" AND type = ?::item_type");
+        }
+        dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, categoryId);
+            countStmt.setObject(index++, accountId);
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                countStmt.setString(index++, "%" + nameFilter + "%");
+                countStmt.setString(index++, "%" + nameFilter + "%");
+            }
+
+            if (hasTypeFilter) {
+                countStmt.setString(index++, typeFilter);
+            }
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by category and account: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setObject(index++, categoryId);
+            dataStmt.setObject(index++, accountId);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasNameFilter) {
+                dataStmt.setString(index++, "%" + nameFilter + "%");
+                dataStmt.setString(index++, "%" + nameFilter + "%");
+            }
+
+            if (hasTypeFilter) {
+                dataStmt.setString(index++, typeFilter);
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list items by category and account: " + e.getMessage());
+        }
+
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    public PaginatedResponseDTO<Item> getByCategoryIdSemantic(UUID categoryId, UUID userId, float[] embedding, String typeFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        List<Item> list = new ArrayList<>();
+        long totalItems = 0;
+        boolean hasTypeFilter = typeFilter != null && !typeFilter.isBlank();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            countQuery.append(" AND type = ?::item_type");
+        }
+
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            dataQuery.append(" AND type = ?::item_type");
+        }
+        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, categoryId);
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                countStmt.setString(index++, typeFilter);
+            }
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by semantic search within category: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setString(index++, vectorLiteral);
+            dataStmt.setObject(index++, categoryId);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                dataStmt.setString(index++, typeFilter);
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list items by semantic search within category: " + e.getMessage());
+        }
+
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    public PaginatedResponseDTO<Item> getByCategoryAndAccountSemantic(UUID categoryId, UUID accountId, UUID userId, float[] embedding, String typeFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        List<Item> list = new ArrayList<>();
+        long totalItems = 0;
+        boolean hasTypeFilter = typeFilter != null && !typeFilter.isBlank();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        StringBuilder countQuery = new StringBuilder(
+                "SELECT COUNT(*) FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            countQuery.append(" AND type = ?::item_type");
+        }
+
+        StringBuilder dataQuery = new StringBuilder(
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            dataQuery.append(" AND type = ?::item_type");
+        }
+        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, categoryId);
+            countStmt.setObject(index++, accountId);
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                countStmt.setString(index++, typeFilter);
+            }
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by semantic search within category and account: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setString(index++, vectorLiteral);
+            dataStmt.setObject(index++, categoryId);
+            dataStmt.setObject(index++, accountId);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                dataStmt.setString(index++, typeFilter);
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list items by semantic search within category and account: " + e.getMessage());
         }
 
         return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
@@ -430,23 +700,94 @@ public class ItemDAO {
             ResultSet rs = dataStmt.executeQuery();
 
             while (rs.next()) {
-                Item item = new Item(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("category_id"),
-                        (UUID) rs.getObject("user_id"),
-                        (UUID) rs.getObject("account_id"),
-                        rs.getString("name"),
-                        rs.getString("description"),
-                        rs.getDouble("amount"),
-                        rs.getDate("date").toLocalDate(),
-                        ItemType.valueOf(rs.getString("type"))
-                );
-                list.add(item);
+                list.add(mapItem(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list items by account: " + e.getMessage());
         }
 
         return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    public PaginatedResponseDTO<Item> getByAccountIdSemantic(UUID accountId, UUID userId, float[] embedding, String typeFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        List<Item> list = new ArrayList<>();
+        long totalItems = 0;
+        boolean hasTypeFilter = typeFilter != null && !typeFilter.isBlank();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            countQuery.append(" AND type = ?::item_type");
+        }
+
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        if (hasTypeFilter) {
+            dataQuery.append(" AND type = ?::item_type");
+        }
+        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+
+        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+            int index = 1;
+            countStmt.setObject(index++, accountId);
+            countStmt.setObject(index++, userId);
+            countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            countStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                countStmt.setString(index++, typeFilter);
+            }
+
+            ResultSet rs = countStmt.executeQuery();
+            if (rs.next()) {
+                totalItems = rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count items by semantic search within account: " + e.getMessage());
+        }
+
+        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+            int index = 1;
+            dataStmt.setString(index++, vectorLiteral);
+            dataStmt.setObject(index++, accountId);
+            dataStmt.setObject(index++, userId);
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
+            dataStmt.setDate(index++, Date.valueOf(dateRange.getEndDate()));
+
+            if (hasTypeFilter) {
+                dataStmt.setString(index++, typeFilter);
+            }
+
+            dataStmt.setInt(index++, pagination.getPageLimit());
+            dataStmt.setInt(index, pagination.getOffset());
+
+            ResultSet rs = dataStmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list items by semantic search within account: " + e.getMessage());
+        }
+
+        return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
+    }
+
+    private Item mapItem(ResultSet rs) throws SQLException {
+        Item item = new Item(
+                (UUID) rs.getObject("id"),
+                (UUID) rs.getObject("category_id"),
+                (UUID) rs.getObject("user_id"),
+                (UUID) rs.getObject("account_id"),
+                rs.getString("name"),
+                rs.getString("description"),
+                rs.getDouble("amount"),
+                rs.getDate("date").toLocalDate(),
+                ItemType.valueOf(rs.getString("type"))
+        );
+        item.setSearchEmbedding(VectorUtils.parsePgVector(rs.getObject("search_embedding")));
+        return item;
     }
 }

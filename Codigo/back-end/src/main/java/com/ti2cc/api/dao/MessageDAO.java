@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.ti2cc.api.model.Message;
 
@@ -60,6 +61,26 @@ public class MessageDAO {
         } catch (SQLException e) {
             System.err.println("Fail to list messages: " + e.getMessage());
             return List.of();
+        }
+    }
+
+    public boolean updateParts(UUID messageId, UUID chatId, JsonElement parts) {
+        String query = "UPDATE messages SET parts = ?::jsonb WHERE id = ? AND chat_id = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            if (parts != null) {
+                pstmt.setString(1, parts.toString());
+            } else {
+                pstmt.setNull(1, Types.OTHER);
+            }
+
+            pstmt.setObject(2, messageId);
+            pstmt.setObject(3, chatId);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Fail to update message parts: " + e.getMessage());
+            return false;
         }
     }
 

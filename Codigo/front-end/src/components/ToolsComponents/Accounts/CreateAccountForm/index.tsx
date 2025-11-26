@@ -8,11 +8,13 @@ interface ICreateAccountForm {
     name?: string;
     financialInstitution?: string;
     balance?: number;
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const CreateAccountForm = ({ data, onError }: ICreateAccountForm) => {
+const CreateAccountForm = ({ data, onError, onSubmitted }: ICreateAccountForm) => {
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
   const initialBalance = data?.balance ?? 0;
@@ -47,6 +49,8 @@ const CreateAccountForm = ({ data, onError }: ICreateAccountForm) => {
         financialInstitution: financialInstitution,
         balance: initialBalance.toString(),
       }}
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onSubmit={async (data) => {
         try {
           const resp = await createAccountAction({
@@ -60,12 +64,14 @@ const CreateAccountForm = ({ data, onError }: ICreateAccountForm) => {
               typeof resp.error?.message === "string"
                 ? resp.error.message
                 : "Erro ao criar conta.";
-            onError?.(message);
+            onError?.(message, resp);
+            return false;
           }
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Erro ao criar conta.";
-          onError?.(message);
+          onError?.(message, error);
+          return false;
         }
       }}
     />

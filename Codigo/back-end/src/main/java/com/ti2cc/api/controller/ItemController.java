@@ -6,17 +6,16 @@ import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.CreateItemDTO;
 import com.ti2cc.api.dto.DateRangeDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.dto.UpdateItemDTO;
+import com.ti2cc.api.dto.ItemResponseDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -24,26 +23,11 @@ import spark.Response;
 public class ItemController {
 
     private final ItemService itemService;
-    private final Gson gson;
+    private final Gson gson = GsonUtil.getGson();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public ItemController(ItemService itemService) {
         this.itemService = itemService;
-
-        this.gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class,
-                        (JsonDeserializer<LocalDate>) (json, type, context) -> {
-                            String dateStr = json.getAsString();
-                            if (dateStr.contains("T")) {
-                                return LocalDate.parse(dateStr.substring(0, 10));
-                            } else {
-                                return LocalDate.parse(dateStr);
-                            }
-                        })
-                .registerTypeAdapter(LocalDate.class,
-                        (JsonSerializer<LocalDate>) (date, type, context) ->
-                                context.serialize(date.toString()))
-                .create();
     }
 
     public Object create(Request req, Response res) {
@@ -74,7 +58,7 @@ public class ItemController {
 
             if (created) {
                 res.status(201);
-                return gson.toJson(item);
+                return gson.toJson(toResponse(item));
             } else {
                 res.status(400);
                 return gson.toJson("Failed to create item.");
@@ -101,22 +85,35 @@ public class ItemController {
             String accountIdParam = req.queryParams("account_id");
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
+            String semanticQuery = req.queryParams("semantical_search");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
             PaginatedResponseDTO<Item> items;
 
-            if (categoryIdParam != null && !categoryIdParam.isBlank()) {
-                UUID categoryId = UUID.fromString(categoryIdParam);
-                items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, dateRange, pagination);
-            } else if (accountIdParam != null && !accountIdParam.isBlank()) {
-                UUID accountId = UUID.fromString(accountIdParam);
-                items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, dateRange, pagination);
+            UUID categoryId = categoryIdParam != null && !categoryIdParam.isBlank() ? UUID.fromString(categoryIdParam) : null;
+            UUID accountId = accountIdParam != null && !accountIdParam.isBlank() ? UUID.fromString(accountIdParam) : null;
+            boolean hasCategoryFilter = categoryId != null;
+            boolean hasAccountFilter = accountId != null;
+
+            if (hasCategoryFilter && hasAccountFilter) {
+                items = itemService.listItemsByCategoryAndAccount(categoryId, accountId, userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
+            } else if (hasCategoryFilter) {
+                items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
+            } else if (hasAccountFilter) {
+                items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
             } else {
-                items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, dateRange, pagination);
+                items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
             }
 
+            PaginatedResponseDTO<ItemResponseDTO> response = new PaginatedResponseDTO<>(
+                    items.getData().stream().map(this::toResponse).toList(),
+                    items.getTotalItems(),
+                    items.getCurrentPage(),
+                    items.getPageLimit()
+            );
+
             res.status(200);
-            return gson.toJson(items);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson(e.getMessage());
@@ -131,7 +128,7 @@ public class ItemController {
 
             if (item != null) {
                 res.status(200);
-                return gson.toJson(item);
+                return gson.toJson(toResponse(item));
             } else {
                 res.status(404);
                 return gson.toJson("Item not found.");
@@ -152,11 +149,18 @@ public class ItemController {
             }
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
+            String semanticQuery = req.queryParams("semantical_search");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByUserId(userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
+            PaginatedResponseDTO<ItemResponseDTO> response = new PaginatedResponseDTO<>(
+                    items.getData().stream().map(this::toResponse).toList(),
+                    items.getTotalItems(),
+                    items.getCurrentPage(),
+                    items.getPageLimit()
+            );
             res.status(200);
-            return gson.toJson(items);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson(e.getMessage());
@@ -175,11 +179,18 @@ public class ItemController {
             UUID categoryId = UUID.fromString(req.params(":categoryId"));
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
+            String semanticQuery = req.queryParams("semantical_search");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByCategoryId(categoryId, userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
+            PaginatedResponseDTO<ItemResponseDTO> response = new PaginatedResponseDTO<>(
+                    items.getData().stream().map(this::toResponse).toList(),
+                    items.getTotalItems(),
+                    items.getCurrentPage(),
+                    items.getPageLimit()
+            );
             res.status(200);
-            return gson.toJson(items);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson(e.getMessage());
@@ -198,11 +209,18 @@ public class ItemController {
             UUID accountId = UUID.fromString(req.params(":accountId"));
             String nameFilter = req.queryParams("name");
             String typeFilter = req.queryParams("type");
+            String semanticQuery = req.queryParams("semantical_search");
             PaginationRequestDTO pagination = buildPagination(req);
             DateRangeDTO dateRange = buildDateRange(req);
-            PaginatedResponseDTO<Item> items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, dateRange, pagination);
+            PaginatedResponseDTO<Item> items = itemService.listItemsByAccountId(accountId, userId, nameFilter, typeFilter, semanticQuery, dateRange, pagination);
+            PaginatedResponseDTO<ItemResponseDTO> response = new PaginatedResponseDTO<>(
+                    items.getData().stream().map(this::toResponse).toList(),
+                    items.getTotalItems(),
+                    items.getCurrentPage(),
+                    items.getPageLimit()
+            );
             res.status(200);
-            return gson.toJson(items);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson(e.getMessage());
@@ -354,5 +372,22 @@ public class ItemController {
             }
         }
         return null;
+    }
+
+    private ItemResponseDTO toResponse(Item item) {
+        if (item == null) {
+            return null;
+        }
+        return new ItemResponseDTO(
+                item.getId(),
+                item.getCategoryId(),
+                item.getUserId(),
+                item.getAccountId(),
+                item.getName(),
+                item.getDescription(),
+                item.getAmount(),
+                item.getDate(),
+                item.getType()
+        );
     }
 }

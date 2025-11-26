@@ -1,66 +1,53 @@
 "use client";
 
-import CreateCategoryForm from "@/components/ToolsComponents/Categories/CreateCategoryForm";
-import DeleteCategoryForm from "@/components/ToolsComponents/Categories/DeleteCategoryForm";
-import EditCategoryForm from "@/components/ToolsComponents/Categories/EditCategoryForm";
-import CategoriesList from "@/components/ToolsComponents/Categories/ListCategories";
-import ListCategoryActions from "@/components/ToolsComponents/Categories/ListCategoryActions";
-
-import CreateCreditCardForm from "@/components/ToolsComponents/CreditCards/CreateCreditCardForm";
-import DeleteCreditCardForm from "@/components/ToolsComponents/CreditCards/DeleteCreditCardForm";
-import CreditCardsList from "@/components/ToolsComponents/CreditCards/ListCreditCards";
-import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/ListCreditCardActions";
-
-import CreateAccountForm from "@/components/ToolsComponents/Accounts/CreateAccountForm";
-import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccountForm";
-import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountForm";
-import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
-import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
-
-import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
-import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
-import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
-import ItemsList from "@/components/ToolsComponents/Items/ListItems";
-
-import CreateGoalForm from "@/components/ToolsComponents/Goals/CreateGoalForm";
-import EditGoalForm from "@/components/ToolsComponents/Goals/EditGoalForm";
-import DeleteGoalForm from "@/components/ToolsComponents/Goals/DeleteGoalForm";
-import GoalsList from "@/components/ToolsComponents/Goals/ListGoals";
-import ListGoalActions from "@/components/ToolsComponents/Goals/ListGoalActions";
-
 import { cn } from "@/lib/utils";
 import { DynamicToolUIPart, UIMessage } from "ai";
 import ActionWrapper from "../gen-ui/ActionWrapper";
 import ReasoningState from "../gen-ui/ReasoningState";
 import { useEffect, useState } from "react";
 import { getErrorMessage } from "@/utils/errors";
+import { updateMessagePartsAction } from "@/actions/message";
+import { NewToolsMap } from "./ToolsMap";
 
 interface IMessageComponentContent {
   message: UIMessage;
   timestamp: Date;
   onSendMessage: (message: string) => Promise<void>;
+  chatId: string;
 }
 
-type ToolRendererType = (part: any) => React.ReactNode;
+type PartUpdatePayload = {
+  alreadySubmitted?: boolean;
+  error?: unknown | null;
+};
 
 const MessageComponentContent = ({
   onSendMessage,
   message,
   timestamp,
+  chatId,
 }: IMessageComponentContent) => {
   const [actionError, setActionError] = useState<string | null>(null);
+  const [localParts, setLocalParts] = useState<UIMessage["parts"]>(
+    message.parts
+  );
 
-  const handleActionErrorChange = (errMsg: string) => {
-    setActionError(errMsg);
-  };
+  const toolsMap = NewToolsMap({ handleSendMessage: onSendMessage });
+
+  useEffect(() => {
+    setLocalParts(message.parts);
+    setActionError(null);
+  }, [message.id, message.parts]);
 
   useEffect(() => {
     const firstToolErrorMessage =
-      message.parts
+      localParts
         .map((part) => {
           if (!part.type.includes("tool")) return null;
 
-          const outputError = (part as DynamicToolUIPart).output as unknown as { error?: unknown };
+          const outputError = (part as DynamicToolUIPart).output as unknown as {
+            error?: unknown;
+          };
           return getErrorMessage(outputError?.error);
         })
         .find(Boolean) ?? null;
@@ -68,67 +55,77 @@ const MessageComponentContent = ({
     if (!actionError && firstToolErrorMessage) {
       setActionError(firstToolErrorMessage);
     }
-  }, [message.parts, actionError]);
+  }, [localParts, actionError]);
 
-  const toolRenderers: Record<string, ToolRendererType> = {
-    "tool-createNewCategory": (p) => (
-      <CreateCategoryForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-editCategory": (p) => <EditCategoryForm data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-listCategoryActions": () => (
-      <ListCategoryActions onSendMessage={onSendMessage} />
-    ),
-    "tool-deleteCategory": (p) => <DeleteCategoryForm data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-listCategories": (p) => <CategoriesList data={p.output as any} onError={handleActionErrorChange} />,
+  const persistPartUpdate = async (
+    partIndex: number,
+    update: PartUpdatePayload
+  ) => {
+    let updatedParts: UIMessage["parts"] = [];
 
-    "tool-createNewCreditCard": (p) => (
-      <CreateCreditCardForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-listCreditCardActions": () => (
-      <ListCreditCardActions onSendMessage={onSendMessage} />
-    ),
-    "tool-deleteCreditCard": (p) => (
-      <DeleteCreditCardForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-listCreditCards": (p) => <CreditCardsList data={p.output as any} onError={handleActionErrorChange} />,
+    setLocalParts((prevParts) => {
+      const nextParts = prevParts.map((part, idx) => {
+        if (idx !== partIndex || !part.type.includes("tool")) return part;
 
-    "tool-createNewAccount": (p) => (
-      <CreateAccountForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-editAccount": (p) => <EditAccountForm data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-listAccountActions": () => (
-      <ListAccountActions onSendMessage={onSendMessage} />
-    ),
-    "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-listAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-filterAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
+        const castedPart = part as DynamicToolUIPart;
+        const currentOutput = (castedPart.output ?? {}) as Record<
+          string,
+          unknown
+        >;
+        const nextOutput: Record<string, unknown> = { ...currentOutput };
 
-    "tool-createNewItem": (p) => (
-      <CreateItemForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-editItem": (p) => (
-      <EditItemForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-deleteItem": (p) => <DeleteItemForm data={p.output as any} onError={handleActionErrorChange} />,
-    "tool-listItems": (p) => <ItemsList data={p.output as any} />,
+        if (
+          "alreadySubmitted" in update &&
+          update.alreadySubmitted !== undefined
+        ) {
+          nextOutput.alreadySubmitted = update.alreadySubmitted;
+        }
 
-    "tool-createNewGoal": (p) => (
-      <CreateGoalForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-editGoal": (p) => (
-      <EditGoalForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-listGoalActions": () => (
-      <ListGoalActions onSendMessage={onSendMessage} />
-    ),
-    "tool-deleteGoal": (p) => (
-      <DeleteGoalForm data={p.output as any} onError={handleActionErrorChange} />
-    ),
-    "tool-listGoals": (p) => <GoalsList data={p.output as any} onError={handleActionErrorChange} />,
+        if ("error" in update) {
+          if (update.error === null) {
+            delete nextOutput.error;
+          } else {
+            nextOutput.error = update.error;
+          }
+        }
+
+        return {
+          ...castedPart,
+          output: nextOutput,
+        } as DynamicToolUIPart;
+      }) as UIMessage["parts"];
+
+      updatedParts = nextParts;
+      return nextParts;
+    });
+
+    if (!chatId || !message.id || updatedParts.length === 0) {
+      return;
+    }
+
+    try {
+      const resp = await updateMessagePartsAction(
+        chatId,
+        message.id,
+        updatedParts
+      );
+
+      if (resp && typeof resp === "object" && "error" in resp) {
+        const persistedErrorMessage = getErrorMessage(resp);
+        if (persistedErrorMessage) {
+          setActionError(persistedErrorMessage);
+        }
+      }
+    } catch (error) {
+      const persistedErrorMessage = getErrorMessage(error);
+      if (persistedErrorMessage) {
+        setActionError(persistedErrorMessage);
+      }
+    }
   };
 
   const renderParts = () =>
-    message.parts.map((part, i) => {
+    localParts.map((part, i) => {
       const partKey = `${i}-${part.type}`;
 
       if (part.type == "reasoning" && part.state == "streaming") {
@@ -153,17 +150,37 @@ const MessageComponentContent = ({
         );
       }
 
-      const renderer = toolRenderers[part.type];
+      const renderer = toolsMap[part.type];
 
       if (!renderer || !part.type.includes("tool")) return null;
 
       const castedPart = part as DynamicToolUIPart;
+
+      const handleToolError = (errMsg: string, errorPayload?: unknown) => {
+        setActionError(errMsg);
+        void persistPartUpdate(i, {
+          error: errorPayload ?? { error: { message: errMsg } },
+        });
+      };
+
+      const handleToolSubmitted = () => {
+        setActionError(null);
+        void persistPartUpdate(i, { alreadySubmitted: true, error: null });
+      };
+
       const toolErrorMessage = getErrorMessage(
         (castedPart.output as { error?: unknown })?.error
       );
-      const content = toolErrorMessage ? null : renderer(castedPart);
+      const content = toolErrorMessage
+        ? null
+        : renderer(castedPart, {
+            onError: handleToolError,
+            onSubmitted: handleToolSubmitted,
+          });
       const errorMessage = actionError ?? toolErrorMessage;
-      const actionState = errorMessage ? "output-error" : castedPart.state;
+      const actionState = errorMessage
+        ? "output-error"
+        : (castedPart.state as any);
 
       return (
         <ActionWrapper

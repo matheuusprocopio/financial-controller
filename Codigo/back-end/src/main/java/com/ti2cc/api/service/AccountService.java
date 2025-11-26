@@ -1,5 +1,6 @@
 package com.ti2cc.api.service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,14 +12,11 @@ import com.ti2cc.api.model.Account;
 public class AccountService {
 
     private final AccountDAO accountDAO;
-    private GoalService goalService;
+    private final EmbeddingService embeddingService;
 
-    public AccountService(AccountDAO accountDAO) {
+    public AccountService(AccountDAO accountDAO, EmbeddingService embeddingService) {
         this.accountDAO = accountDAO;
-    }
-
-    public void setGoalService(GoalService goalService) {
-        this.goalService = goalService;
+        this.embeddingService = embeddingService;
     }
 
     public boolean createAccount(Account account) {
@@ -35,6 +33,18 @@ public class AccountService {
             account.setId(UUID.randomUUID());
         }
 
+        if (account.getCreatedAt() == null) {
+            account.setCreatedAt(OffsetDateTime.now());
+        }
+
+        String searchText = buildSearchText(account.getName(), account.getFinancialInstitution());
+        float[] embedding = embeddingService.generateEmbedding(searchText);
+        if (embedding == null) {
+            System.err.println("Failed to generate embedding for account creation.");
+            return false;
+        }
+        account.setSearchEmbedding(embedding);
+
         return accountDAO.create(account);
     }
 
@@ -47,6 +57,27 @@ public class AccountService {
         if (account.getName() == null && account.getFinancialInstitution() == null && account.getBalance() == null) {
             System.err.println("No fields to update for account: " + account.getId());
             return false;
+        }
+
+        if (account.getName() != null || account.getFinancialInstitution() != null) {
+            Account existing = accountDAO.getById(account.getId());
+            if (existing == null) {
+                System.err.println("Account not found for embedding update: " + account.getId());
+                return false;
+            }
+
+            String nameForEmbedding = account.getName() != null ? account.getName() : existing.getName();
+            String institutionForEmbedding = account.getFinancialInstitution() != null
+                    ? account.getFinancialInstitution()
+                    : existing.getFinancialInstitution();
+            String searchText = buildSearchText(nameForEmbedding, institutionForEmbedding);
+
+            float[] embedding = embeddingService.generateEmbedding(searchText);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for account update.");
+                return false;
+            }
+            account.setSearchEmbedding(embedding);
         }
 
         return accountDAO.update(account);
@@ -70,10 +101,41 @@ public class AccountService {
         return accountDAO.getByUserId(userId);
     }
 
-    public PaginatedResponseDTO<Account> findByUserIdPaginated(UUID userId, PaginationRequestDTO pagination) {
+    public List<Account> findByUserId(UUID userId, String semanticQuery) {
+        if (userId == null) {
+            System.err.println("User ID cannot be null.");
+            return List.of();
+        }
+
+        if (semanticQuery != null && !semanticQuery.isBlank()) {
+            float[] embedding = embeddingService.generateEmbedding(semanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic account search.");
+                return List.of();
+            }
+
+            return accountDAO.getBySemanticSearch(userId, embedding);
+        }
+
+        return accountDAO.getByUserId(userId);
+    }
+
+    public PaginatedResponseDTO<Account> findByUserIdPaginated(UUID userId, PaginationRequestDTO pagination, String semanticQuery) {
         if (userId == null) {
             System.err.println("User ID cannot be null.");
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        if (semanticQuery != null && !semanticQuery.isBlank()) {
+            float[] embedding = embeddingService.generateEmbedding(semanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic account search (paginated).");
+                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            }
+
+            List<Account> accounts = accountDAO.getBySemanticSearchPaginated(userId, embedding, pagination.getOffset(), pagination.getPageLimit());
+            long totalItems = accountDAO.countWithEmbedding(userId);
+            return new PaginatedResponseDTO<>(accounts, totalItems, pagination.getPage(), pagination.getPageLimit());
         }
 
         List<Account> accounts = accountDAO.getByUserIdPaginated(userId, pagination.getOffset(), pagination.getPageLimit());
@@ -96,11 +158,7 @@ public class AccountService {
             return false;
         }
 
-        boolean updated = accountDAO.increaseBalance(accountId, amount);
-        if (updated) {
-            notifyGoalsAboutBalanceChange(accountId, amount);
-        }
-        return updated;
+        return accountDAO.increaseBalance(accountId, amount);
     }
 
     public boolean decreaseBalance(UUID accountId, double amount) {
@@ -108,11 +166,7 @@ public class AccountService {
             return false;
         }
 
-        boolean updated = accountDAO.decreaseBalance(accountId, amount);
-        if (updated) {
-            notifyGoalsAboutBalanceChange(accountId, -amount);
-        }
-        return updated;
+        return accountDAO.decreaseBalance(accountId, amount);
     }
 
     private boolean isValidBalanceOperation(UUID accountId, double amount) {
@@ -127,19 +181,6 @@ public class AccountService {
         }
 
         return true;
-    }
-
-    private void notifyGoalsAboutBalanceChange(UUID accountId, double delta) {
-        if (goalService == null || accountId == null || delta == 0) {
-            return;
-        }
-
-        Account account = accountDAO.getById(accountId);
-        if (account == null || account.getUserId() == null) {
-            return;
-        }
-
-        goalService.applyAccountDelta(account.getUserId(), accountId, delta);
     }
 
     private boolean isAccountValidForCreation(Account account) {
@@ -159,5 +200,19 @@ public class AccountService {
         }
 
         return true;
+    }
+
+    private String buildSearchText(String name, String financialInstitution) {
+        StringBuilder sb = new StringBuilder();
+        if (name != null && !name.isBlank()) {
+            sb.append(name.trim());
+        }
+        if (financialInstitution != null && !financialInstitution.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(financialInstitution.trim());
+        }
+        return sb.toString();
     }
 }

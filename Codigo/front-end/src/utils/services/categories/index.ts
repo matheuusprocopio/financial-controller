@@ -15,10 +15,22 @@ const withSession = (sessionId: string | undefined) =>
 
 export const listCategories = async (
   sessionId: string,
-  categoryName?: string
+  categoryName?: string,
+  semanticalSearch?: string
 ) => {
+  const params = new URLSearchParams();
+
+  if (categoryName) {
+    params.append("name", categoryName);
+  }
+
+  if (semanticalSearch) {
+    params.append("semantical_search", semanticalSearch);
+  }
+
+  const query = params.toString();
   return await provider.get<CategorieType[]>(
-    `categories${categoryName ? `?name=${categoryName}` : ""}`,
+    `categories${query ? `?${query}` : ""}`,
     {
       ...withSession(sessionId),
     }
@@ -28,11 +40,24 @@ export const listCategories = async (
 export const listCategoriesPaginated = async (
   sessionId: string,
   pagination: PaginationParams,
-  categoryName?: string
+  categoryName?: string,
+  semanticalSearch?: string
 ): Promise<PaginatedResponse<CategorieType> | RequestError> => {
-  const nameParam = categoryName ? `&name=${categoryName}` : "";
+  const params = new URLSearchParams({
+    page: `${pagination.page}`,
+    size: `${pagination.size}`,
+  });
+
+  if (categoryName) {
+    params.append("name", categoryName);
+  }
+
+  if (semanticalSearch) {
+    params.append("semantical_search", semanticalSearch);
+  }
+
   const response = await provider.get<PaginatedResponse<CategorieType>>(
-    `categories/paginated?page=${pagination.page}&size=${pagination.size}${nameParam}`,
+    `categories/paginated?${params.toString()}`,
     {
       ...withSession(sessionId),
     }

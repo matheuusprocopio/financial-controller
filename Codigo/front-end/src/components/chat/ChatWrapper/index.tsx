@@ -9,6 +9,7 @@ import {
   convertServerMessageToUIMessage,
   getFrontMessages,
 } from "@/utils/convertServerMessageToUiMessage";
+import { generateMessageId } from "@/utils/messageId";
 
 export default function ChatWrapper({
   serverMessages,
@@ -19,6 +20,7 @@ export default function ChatWrapper({
 }) {
   const { messages, sendMessage } = useChat({
     id: chatId,
+    generateId: generateMessageId,
     messages: serverMessages.map((m) => convertServerMessageToUIMessage(m)),
     transport: new DefaultChatTransport({
       api: "/api/chat",
@@ -36,6 +38,7 @@ export default function ChatWrapper({
     <div className="flex h-full flex-1 flex-col overflow-hidden min-h-0">
       <MessagesContainer
         messages={frontMessages}
+        chatId={chatId}
         onSendMessage={handleSendMessage}
       />
       <ChatInput onSendMessage={handleSendMessage} />

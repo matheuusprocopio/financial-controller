@@ -147,7 +147,12 @@ export const NewToolsMap = (
         onSubmitted={helpers.onSubmitted}
       />
     ),
-    "tool-listItems": (p, _helpers) => <ItemsList data={p.output as any} />,
+    "tool-listItems": (p, helpers) => (
+      <ItemsList
+        data={p.output as any}
+        onError={(msg, payload) => helpers.onError(msg, payload)}
+      />
+    ),
   };
 
   return ToolsMap;

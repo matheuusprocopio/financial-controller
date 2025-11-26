@@ -1,6 +1,7 @@
 import { tools } from "@/lib/tools";
 import { convertUIMessageToServerMessage } from "@/utils/convertServerMessageToUiMessage";
 import { createMessages } from "@/utils/services/messages";
+import { generateMessageId } from "@/utils/messageId";
 import { openai } from "@ai-sdk/openai";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { revalidateTag } from "next/cache";
@@ -56,6 +57,7 @@ Your goal is to help the user gain clarity over their financial life, by support
 
   return result.toUIMessageStreamResponse({
     originalMessages: messages,
+    generateMessageId,
     async onFinish({ messages }) {
       const serverMessages = messages.map((m) =>
         convertUIMessageToServerMessage(m)

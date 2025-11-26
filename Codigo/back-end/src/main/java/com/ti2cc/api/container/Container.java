@@ -51,7 +51,7 @@ public class Container {
 
         EmbeddingService embeddingService = new EmbeddingService();
         CategoryService categoryService = new CategoryService(categoryDAO, embeddingService);
-        AccountService accountService = new AccountService(accountDAO);
+        AccountService accountService = new AccountService(accountDAO, embeddingService);
         ChatService chatService = new ChatService(chatDAO);
         UserService userService = new UserService(userDAO, chatService);
         ItemService itemService = new ItemService(itemDAO, accountDAO);

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ti2cc.api.model.Account;
+import com.ti2cc.api.util.VectorUtils;
 
 public class AccountDAO {
     private final Connection connection;
@@ -19,7 +20,18 @@ public class AccountDAO {
     }
 
     public boolean create(Account account) {
-        String query = "INSERT INTO accounts (id, name, user_id, financial_institution, balance) VALUES (?, ?, ?, ?, ?)";
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO accounts (id, name, user_id, financial_institution, balance");
+        if (account.getSearchEmbedding() != null) {
+            sb.append(", search_embedding");
+        }
+        sb.append(") VALUES (?, ?, ?, ?, ?");
+        if (account.getSearchEmbedding() != null) {
+            sb.append(", ?::vector");
+        }
+        sb.append(")");
+
+        String query = sb.toString();
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             if (account.getId() == null) {
@@ -35,6 +47,9 @@ public class AccountDAO {
                 pstmt.setNull(4, Types.VARCHAR);
             }
             pstmt.setDouble(5, account.getBalance());
+            if (account.getSearchEmbedding() != null) {
+                pstmt.setString(6, VectorUtils.toPgVectorLiteral(account.getSearchEmbedding()));
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -43,7 +58,7 @@ public class AccountDAO {
             return false;
         }
     }
-        public boolean update(Account account) {
+    public boolean update(Account account) {
         StringBuilder sb = new StringBuilder("UPDATE accounts SET ");
         boolean hasPrev = false;
 
@@ -64,6 +79,12 @@ public class AccountDAO {
             hasPrev = true;
         }
 
+        if (account.getSearchEmbedding() != null) {
+            if (hasPrev) sb.append(", ");
+            sb.append("search_embedding = ?::vector");
+            hasPrev = true;
+        }
+
         sb.append(" WHERE id = ?");
 
         try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
@@ -79,6 +100,10 @@ public class AccountDAO {
 
             if (account.getBalance() != null) {
                 pstmt.setDouble(paramIndex++, account.getBalance());
+            }
+
+            if (account.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(account.getSearchEmbedding()));
             }
 
             pstmt.setObject(paramIndex, account.getId());
@@ -157,6 +182,58 @@ public class AccountDAO {
         return accounts;
     }
 
+    public List<Account> getBySemanticSearch(UUID userId, float[] embedding) {
+        List<Account> accounts = new ArrayList<>();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return accounts;
+        }
+
+        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, vectorLiteral);
+            pstmt.setObject(2, userId);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                accounts.add(mapAccount(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list user accounts by semantic search: " + e.getMessage());
+        }
+
+        return accounts;
+    }
+
+    public List<Account> getBySemanticSearchPaginated(UUID userId, float[] embedding, int offset, int limit) {
+        List<Account> accounts = new ArrayList<>();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return accounts;
+        }
+
+        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC LIMIT ? OFFSET ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, vectorLiteral);
+            pstmt.setObject(2, userId);
+            pstmt.setInt(3, limit);
+            pstmt.setInt(4, offset);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                accounts.add(mapAccount(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list user accounts by semantic search paginated: " + e.getMessage());
+        }
+
+        return accounts;
+    }
+
     public long countByUserId(UUID userId) {
         String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -168,6 +245,23 @@ public class AccountDAO {
             }
         } catch (SQLException e) {
             System.err.println("Fail to count user accounts: " + e.getMessage());
+        }
+
+        return 0;
+    }
+
+    public long countWithEmbedding(UUID userId) {
+        String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setObject(1, userId);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to count user accounts with embeddings: " + e.getMessage());
         }
 
         return 0;
@@ -201,7 +295,8 @@ public class AccountDAO {
                 rs.getString("name"),
                 (UUID) rs.getObject("user_id"),
                 rs.getString("financial_institution"),
-                rs.getDouble("balance")
+                rs.getDouble("balance"),
+                VectorUtils.parsePgVector(rs.getObject("search_embedding"))
         );
     }
 }

@@ -94,7 +94,10 @@ public class AccountController {
                 return gson.toJson("Usuário não autenticado.");
             }
 
-            List<Account> accounts = accountService.findByUserId(sessionUser.getId());
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
+
+            List<Account> accounts = accountService.findByUserId(sessionUser.getId(), semanticQuery);
             res.status(200);
             return gson.toJson(accounts);
         } catch (IllegalArgumentException e) {
@@ -111,12 +114,15 @@ public class AccountController {
                 res.status(401);
                 return gson.toJson("Usuário não autenticado.");
             }
+
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
             
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : PaginationRequestDTO.DEFAULT_PAGE;
             int size = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
             
             PaginationRequestDTO pagination = new PaginationRequestDTO(page, size);
-            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(sessionUser.getId(), pagination);
+            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(sessionUser.getId(), pagination, semanticQuery);
             
             res.status(200);
             return gson.toJson(paginatedAccounts);

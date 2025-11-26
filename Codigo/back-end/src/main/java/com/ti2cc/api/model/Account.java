@@ -8,17 +8,19 @@ public class Account {
     private UUID userId;
     private String financialInstitution;
     private Double balance;
+    private transient float[] searchEmbedding;
 
     public Account() {
-        this(null, null, null, null, 0.0);
+        this(null, null, null, null, 0.0, null);
     }
 
-    public Account(UUID id, String name, UUID userId, String financialInstitution, double balance) {
+    public Account(UUID id, String name, UUID userId, String financialInstitution, double balance, float[] searchEmbedding) {
         this.id = id;
         this.name = name;
         this.userId = userId;
         this.financialInstitution = financialInstitution;
         this.balance = balance;
+        this.searchEmbedding = searchEmbedding;
     }
 
     public UUID getId() {
@@ -59,5 +61,13 @@ public class Account {
 
     public void setBalance(Double balance) {
         this.balance = balance;
+    }
+
+    public float[] getSearchEmbedding() {
+        return searchEmbedding;
+    }
+
+    public void setSearchEmbedding(float[] searchEmbedding) {
+        this.searchEmbedding = searchEmbedding;
     }
 }

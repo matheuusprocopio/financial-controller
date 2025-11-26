@@ -14,10 +14,12 @@ public class GoalService {
 
     private final GoalDAO goalDAO;
     private final AccountService accountService;
+    private final EmbeddingService embeddingService;
 
-    public GoalService(GoalDAO goalDAO, AccountService accountService) {
+    public GoalService(GoalDAO goalDAO, AccountService accountService, EmbeddingService embeddingService) {
         this.goalDAO = goalDAO;
         this.accountService = accountService;
+        this.embeddingService = embeddingService;
     }
 
     public UUID createGoal(UUID userId, CreateGoalDTO dto) {
@@ -66,14 +68,35 @@ public class GoalService {
         goal.setCreatedAt(now);
         goal.setUpdatedAt(now);
 
+        String searchText = buildSearchText(goal.getTitle(), goal.getDescription());
+        float[] embedding = embeddingService.generateEmbedding(searchText);
+        if (embedding == null) {
+            System.err.println("Failed to generate embedding for goal creation.");
+            return null;
+        }
+        goal.setSearchEmbedding(embedding);
+
         boolean created = goalDAO.create(goal);
         return created ? goal.getId() : null;
     }
 
     public List<Goal> listByUser(UUID userId) {
+        return listByUser(userId, null);
+    }
+
+    public List<Goal> listByUser(UUID userId, String semanticQuery) {
         if (userId == null) {
             System.err.println("User ID is required to list goals.");
             return Collections.emptyList();
+        }
+
+        if (semanticQuery != null && !semanticQuery.isBlank()) {
+            float[] embedding = embeddingService.generateEmbedding(semanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic goal search.");
+                return Collections.emptyList();
+            }
+            return goalDAO.listBySemantic(userId, embedding);
         }
 
         return goalDAO.listByUser(userId);
@@ -117,6 +140,14 @@ public class GoalService {
         goal.setCurrentAmount(currentAmount);
         goal.setAchieved(currentAmount >= goal.getTargetAmount());
 
+        String searchText = buildSearchText(goal.getTitle(), goal.getDescription());
+        float[] embedding = embeddingService.generateEmbedding(searchText);
+        if (embedding == null) {
+            System.err.println("Failed to generate embedding for goal update.");
+            return false;
+        }
+        goal.setSearchEmbedding(embedding);
+
         return goalDAO.update(goal);
     }
 
@@ -143,5 +174,19 @@ public class GoalService {
             boolean achieved = updatedAmount >= goal.getTargetAmount();
             goalDAO.updateProgress(goal.getId(), updatedAmount, achieved);
         }
+    }
+
+    private String buildSearchText(String title, String description) {
+        StringBuilder sb = new StringBuilder();
+        if (title != null && !title.isBlank()) {
+            sb.append(title.trim());
+        }
+        if (description != null && !description.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(description.trim());
+        }
+        return sb.toString();
     }
 }

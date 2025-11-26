@@ -88,7 +88,10 @@ public class GoalController {
             return gson.toJson("Usuário não autenticado.");
         }
 
-        List<Goal> goals = goalService.listByUser(sessionUser.getId());
+        String semanticQueryParam = req.queryParams("semantical_search");
+        String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
+
+        List<Goal> goals = goalService.listByUser(sessionUser.getId(), semanticQuery);
         res.status(200);
         return gson.toJson(goals);
     }

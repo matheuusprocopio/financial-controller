@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.ti2cc.api.model.Goal;
+import com.ti2cc.api.util.VectorUtils;
 
 public class GoalDAO {
 
@@ -22,37 +23,50 @@ public class GoalDAO {
     }
 
     public boolean create(Goal goal) {
-        String sql = "INSERT INTO goals (id, user_id, account_id, title, description, target_amount, current_amount, deadline, achieved) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        StringBuilder sb = new StringBuilder();
+        sb.append("INSERT INTO goals (id, user_id, account_id, title, description, target_amount, current_amount, deadline, achieved");
+        if (goal.getSearchEmbedding() != null) {
+            sb.append(", search_embedding");
+        }
+        sb.append(") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?");
+        if (goal.getSearchEmbedding() != null) {
+            sb.append(", ?::vector");
+        }
+        sb.append(")");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, goal.getId());
-            pstmt.setObject(2, goal.getUserId());
+        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+            int paramIndex = 1;
+            pstmt.setObject(paramIndex++, goal.getId());
+            pstmt.setObject(paramIndex++, goal.getUserId());
 
             if (goal.getAccountId() != null) {
-                pstmt.setObject(3, goal.getAccountId());
+                pstmt.setObject(paramIndex++, goal.getAccountId());
             } else {
-                pstmt.setNull(3, Types.OTHER);
+                pstmt.setNull(paramIndex++, Types.OTHER);
             }
 
-            pstmt.setString(4, goal.getTitle());
+            pstmt.setString(paramIndex++, goal.getTitle());
 
             if (goal.getDescription() != null) {
-                pstmt.setString(5, goal.getDescription());
+                pstmt.setString(paramIndex++, goal.getDescription());
             } else {
-                pstmt.setNull(5, Types.VARCHAR);
+                pstmt.setNull(paramIndex++, Types.VARCHAR);
             }
 
-            pstmt.setDouble(6, goal.getTargetAmount());
-            pstmt.setDouble(7, goal.getCurrentAmount() != null ? goal.getCurrentAmount() : 0.0);
+            pstmt.setDouble(paramIndex++, goal.getTargetAmount());
+            pstmt.setDouble(paramIndex++, goal.getCurrentAmount() != null ? goal.getCurrentAmount() : 0.0);
 
             if (goal.getDeadline() != null) {
-                pstmt.setDate(8, Date.valueOf(goal.getDeadline()));
+                pstmt.setDate(paramIndex++, Date.valueOf(goal.getDeadline()));
             } else {
-                pstmt.setNull(8, Types.DATE);
+                pstmt.setNull(paramIndex++, Types.DATE);
             }
 
-            pstmt.setBoolean(9, goal.isAchieved());
+            pstmt.setBoolean(paramIndex++, goal.isAchieved());
+
+            if (goal.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex, VectorUtils.toPgVectorLiteral(goal.getSearchEmbedding()));
+            }
 
             int rows = pstmt.executeUpdate();
             return rows > 0;
@@ -93,6 +107,29 @@ public class GoalDAO {
         return goals;
     }
 
+    public List<Goal> listBySemantic(UUID userId, float[] embedding) {
+        List<Goal> goals = new ArrayList<>();
+        String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
+        if (vectorLiteral == null) {
+            return goals;
+        }
+
+        String sql = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM goals WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, vectorLiteral);
+            pstmt.setObject(2, userId);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                goals.add(mapGoal(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to list goals by semantic search: " + e.getMessage());
+        }
+
+        return goals;
+    }
+
     public List<Goal> listRelevantForAccount(UUID userId, UUID accountId) {
         String sql = "SELECT * FROM goals WHERE user_id = ? AND (account_id IS NULL OR account_id = ?)";
         List<Goal> goals = new ArrayList<>();
@@ -117,34 +154,44 @@ public class GoalDAO {
     }
 
     public boolean update(Goal goal) {
-        String sql = "UPDATE goals SET title = ?, description = ?, target_amount = ?, current_amount = ?, deadline = ?, account_id = ?, achieved = ?, updated_at = NOW() WHERE id = ?";
+        StringBuilder sb = new StringBuilder("UPDATE goals SET title = ?, description = ?, target_amount = ?, current_amount = ?, deadline = ?, account_id = ?, achieved = ?, updated_at = NOW()");
+        if (goal.getSearchEmbedding() != null) {
+            sb.append(", search_embedding = ?::vector");
+        }
+        sb.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, goal.getTitle());
+        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+            int paramIndex = 1;
+            pstmt.setString(paramIndex++, goal.getTitle());
 
             if (goal.getDescription() != null) {
-                pstmt.setString(2, goal.getDescription());
+                pstmt.setString(paramIndex++, goal.getDescription());
             } else {
-                pstmt.setNull(2, Types.VARCHAR);
+                pstmt.setNull(paramIndex++, Types.VARCHAR);
             }
 
-            pstmt.setDouble(3, goal.getTargetAmount());
-            pstmt.setDouble(4, goal.getCurrentAmount());
+            pstmt.setDouble(paramIndex++, goal.getTargetAmount());
+            pstmt.setDouble(paramIndex++, goal.getCurrentAmount());
 
             if (goal.getDeadline() != null) {
-                pstmt.setDate(5, Date.valueOf(goal.getDeadline()));
+                pstmt.setDate(paramIndex++, Date.valueOf(goal.getDeadline()));
             } else {
-                pstmt.setNull(5, Types.DATE);
+                pstmt.setNull(paramIndex++, Types.DATE);
             }
 
             if (goal.getAccountId() != null) {
-                pstmt.setObject(6, goal.getAccountId());
+                pstmt.setObject(paramIndex++, goal.getAccountId());
             } else {
-                pstmt.setNull(6, Types.OTHER);
+                pstmt.setNull(paramIndex++, Types.OTHER);
             }
 
-            pstmt.setBoolean(7, goal.isAchieved());
-            pstmt.setObject(8, goal.getId());
+            pstmt.setBoolean(paramIndex++, goal.isAchieved());
+
+            if (goal.getSearchEmbedding() != null) {
+                pstmt.setString(paramIndex++, VectorUtils.toPgVectorLiteral(goal.getSearchEmbedding()));
+            }
+
+            pstmt.setObject(paramIndex, goal.getId());
 
             int rows = pstmt.executeUpdate();
             return rows > 0;
@@ -197,7 +244,8 @@ public class GoalDAO {
                 rs.getDate("deadline") != null ? rs.getDate("deadline").toLocalDate() : null,
                 rs.getBoolean("achieved"),
                 createdAt,
-                updatedAt
+                updatedAt,
+                VectorUtils.parsePgVector(rs.getObject("search_embedding"))
         );
     }
 }

@@ -16,14 +16,15 @@ public class Goal {
     private boolean achieved;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private transient float[] searchEmbedding;
 
     public Goal() {
-        this(null, null, null, null, null, null, null, null, false, null, null);
+        this(null, null, null, null, null, null, null, null, false, null, null, null);
     }
 
     public Goal(UUID id, UUID userId, UUID accountId, String title, String description,
                 Double targetAmount, Double currentAmount, LocalDate deadline, boolean achieved,
-                OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+                OffsetDateTime createdAt, OffsetDateTime updatedAt, float[] searchEmbedding) {
         this.id = id;
         this.userId = userId;
         this.accountId = accountId;
@@ -35,6 +36,7 @@ public class Goal {
         this.achieved = achieved;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.searchEmbedding = searchEmbedding;
     }
 
     public UUID getId() {
@@ -123,5 +125,13 @@ public class Goal {
 
     public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public float[] getSearchEmbedding() {
+        return searchEmbedding;
+    }
+
+    public void setSearchEmbedding(float[] searchEmbedding) {
+        this.searchEmbedding = searchEmbedding;
     }
 }

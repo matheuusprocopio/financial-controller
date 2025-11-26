@@ -21,11 +21,11 @@ public class AccountDAO {
 
     public boolean create(Account account) {
         StringBuilder sb = new StringBuilder();
-        sb.append("INSERT INTO accounts (id, name, user_id, financial_institution, balance");
+        sb.append("INSERT INTO accounts (id, name, user_id, financial_institution, balance, created_at");
         if (account.getSearchEmbedding() != null) {
             sb.append(", search_embedding");
         }
-        sb.append(") VALUES (?, ?, ?, ?, ?");
+        sb.append(") VALUES (?, ?, ?, ?, ?, ?");
         if (account.getSearchEmbedding() != null) {
             sb.append(", ?::vector");
         }
@@ -38,6 +38,10 @@ public class AccountDAO {
                 account.setId(UUID.randomUUID());
             }
 
+            if (account.getCreatedAt() == null) {
+                account.setCreatedAt(java.time.OffsetDateTime.now());
+            }
+
             pstmt.setObject(1, account.getId());
             pstmt.setString(2, account.getName());
             pstmt.setObject(3, account.getUserId());
@@ -47,8 +51,9 @@ public class AccountDAO {
                 pstmt.setNull(4, Types.VARCHAR);
             }
             pstmt.setDouble(5, account.getBalance());
+            pstmt.setObject(6, account.getCreatedAt());
             if (account.getSearchEmbedding() != null) {
-                pstmt.setString(6, VectorUtils.toPgVectorLiteral(account.getSearchEmbedding()));
+                pstmt.setString(7, VectorUtils.toPgVectorLiteral(account.getSearchEmbedding()));
             }
 
             int rowsAffected = pstmt.executeUpdate();
@@ -296,6 +301,7 @@ public class AccountDAO {
                 (UUID) rs.getObject("user_id"),
                 rs.getString("financial_institution"),
                 rs.getDouble("balance"),
+                rs.getObject("created_at", java.time.OffsetDateTime.class),
                 VectorUtils.parsePgVector(rs.getObject("search_embedding"))
         );
     }

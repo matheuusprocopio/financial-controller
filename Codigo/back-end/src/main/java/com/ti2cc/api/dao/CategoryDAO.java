@@ -22,7 +22,7 @@ public class CategoryDAO {
         StringBuilder sb = new StringBuilder();
 
         sb.append("INSERT INTO categories (");
-        sb.append("id, name, user_id"); // user_id é obrigatório
+        sb.append("id, name, user_id, created_at"); // user_id é obrigatório
 
         if (category.getImagePath() != null) {
             sb.append(", image_path");
@@ -37,7 +37,7 @@ public class CategoryDAO {
         }
 
         sb.append(") VALUES (");
-        sb.append("?, ?, ?"); // parâmetros fixos: id, name e user_id
+        sb.append("?, ?, ?, ?"); // parâmetros fixos: id, name, user_id e created_at
 
         if (category.getImagePath() != null) {
             sb.append(", ?");
@@ -62,10 +62,15 @@ public class CategoryDAO {
                 category.setId(UUID.randomUUID());
             }
 
+            if (category.getCreatedAt() == null) {
+                category.setCreatedAt(java.time.OffsetDateTime.now());
+            }
+
             // parâmetros fixos
             pstmt.setObject(paramIndex++, category.getId());
             pstmt.setString(paramIndex++, category.getName());
             pstmt.setObject(paramIndex++, category.getUserId());
+            pstmt.setObject(paramIndex++, category.getCreatedAt());
 
             // opcionais
             if (category.getImagePath() != null) {
@@ -165,13 +170,7 @@ public class CategoryDAO {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return new Category(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("user_id"),
-                        rs.getString("name"),
-                        rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"),
-                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
+                return mapCategory(rs);
             }
         } catch (SQLException e) {
             System.err.println("Fail to get category by id: " + e.getMessage());
@@ -207,14 +206,7 @@ public class CategoryDAO {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Category c = new Category(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("user_id"),
-                        rs.getString("name"),
-                        rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"),
-                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
-                list.add(c);
+                list.add(mapCategory(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by filters: " + e.getMessage());
@@ -250,14 +242,7 @@ public class CategoryDAO {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Category c = new Category(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("user_id"),
-                        rs.getString("name"),
-                        rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"),
-                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
-                list.add(c);
+                list.add(mapCategory(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by semantic search: " + e.getMessage());
@@ -299,14 +284,7 @@ public class CategoryDAO {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Category c = new Category(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("user_id"),
-                        rs.getString("name"),
-                        rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"),
-                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
-                list.add(c);
+                list.add(mapCategory(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by filters paginated: " + e.getMessage());
@@ -345,14 +323,7 @@ public class CategoryDAO {
 
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                Category c = new Category(
-                        (UUID) rs.getObject("id"),
-                        (UUID) rs.getObject("user_id"),
-                        rs.getString("name"),
-                        rs.getString("image_path"),
-                        (UUID) rs.getObject("main_category_id"),
-                        VectorUtils.parsePgVector(rs.getObject("search_embedding")));
-                list.add(c);
+                list.add(mapCategory(rs));
             }
         } catch (SQLException e) {
             System.err.println("Fail to list categories by semantic search paginated: " + e.getMessage());
@@ -421,6 +392,18 @@ public class CategoryDAO {
         }
 
         return 0;
+    }
+
+    private Category mapCategory(ResultSet rs) throws SQLException {
+        return new Category(
+                (UUID) rs.getObject("id"),
+                (UUID) rs.getObject("user_id"),
+                rs.getString("name"),
+                rs.getString("image_path"),
+                (UUID) rs.getObject("main_category_id"),
+                rs.getObject("created_at", java.time.OffsetDateTime.class),
+                VectorUtils.parsePgVector(rs.getObject("search_embedding"))
+        );
     }
 
 }

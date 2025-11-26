@@ -54,7 +54,7 @@ public class Container {
         AccountService accountService = new AccountService(accountDAO, embeddingService);
         ChatService chatService = new ChatService(chatDAO);
         UserService userService = new UserService(userDAO, chatService);
-        ItemService itemService = new ItemService(itemDAO, accountDAO);
+        ItemService itemService = new ItemService(itemDAO, accountDAO, embeddingService);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
 
         // Serviços de autenticação

@@ -1,5 +1,6 @@
 package com.ti2cc.api.service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,10 @@ public class CategoryService {
 
         if (category.getId() == null) {
             category.setId(UUID.randomUUID());
+        }
+
+        if (category.getCreatedAt() == null) {
+            category.setCreatedAt(OffsetDateTime.now());
         }
 
         float[] embedding = embeddingService.generateEmbedding(category.getName());

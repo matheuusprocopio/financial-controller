@@ -241,6 +241,7 @@ public class CategoryController {
                 category.getUserId(),
                 category.getName(),
                 category.getImagePath(),
-                category.getMainCategoryId());
+                category.getMainCategoryId(),
+                category.getCreatedAt() != null ? category.getCreatedAt().toString() : null);
     }
 }

@@ -1,5 +1,6 @@
 package com.ti2cc.api.service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +31,10 @@ public class AccountService {
 
         if (account.getId() == null) {
             account.setId(UUID.randomUUID());
+        }
+
+        if (account.getCreatedAt() == null) {
+            account.setCreatedAt(OffsetDateTime.now());
         }
 
         String searchText = buildSearchText(account.getName(), account.getFinancialInstitution());

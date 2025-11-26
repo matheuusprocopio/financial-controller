@@ -16,6 +16,12 @@ import DeleteAccountForm from "@/components/ToolsComponents/Accounts/DeleteAccou
 import EditAccountForm from "@/components/ToolsComponents/Accounts/EditAccountForm";
 import AccountsList from "@/components/ToolsComponents/Accounts/ListAccounts";
 import ListAccountActions from "@/components/ToolsComponents/Accounts/ListAccountActions";
+
+import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
+import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
+import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
+import ItemsList from "@/components/ToolsComponents/Items/ListItems";
+
 import CreateGoalForm from "@/components/ToolsComponents/Goals/CreateGoalForm";
 import EditGoalForm from "@/components/ToolsComponents/Goals/EditGoalForm";
 import DeleteGoalForm from "@/components/ToolsComponents/Goals/DeleteGoalForm";
@@ -96,6 +102,15 @@ const MessageComponentContent = ({
     "tool-deleteAccount": (p) => <DeleteAccountForm data={p.output as any} onError={handleActionErrorChange} />,
     "tool-listAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
     "tool-filterAccounts": (p) => <AccountsList data={p.output as any} onError={handleActionErrorChange} />,
+
+    "tool-createNewItem": (p) => (
+      <CreateItemForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-editItem": (p) => (
+      <EditItemForm data={p.output as any} onError={handleActionErrorChange} />
+    ),
+    "tool-deleteItem": (p) => <DeleteItemForm data={p.output as any} onError={handleActionErrorChange} />,
+    "tool-listItems": (p) => <ItemsList data={p.output as any} />,
 
     "tool-createNewGoal": (p) => (
       <CreateGoalForm data={p.output as any} onError={handleActionErrorChange} />

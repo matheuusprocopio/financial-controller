@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-interface FormField {
+export interface FormField {
   name: string;
   label: string;
   type:
@@ -34,11 +34,13 @@ interface FormField {
     | "textarea"
     | "date"
     | "month"
-    | "select";
+    | "select"
+    | "currency";
   placeholder?: string;
   required?: boolean;
   min?: string;
-  options?: { label: string; value: string }[];
+  options?: { value: string; label: string }[];
+  description?: string;
 }
 
 interface IFormCard {
@@ -47,7 +49,9 @@ interface IFormCard {
   fields: FormField[];
   submitLabel?: string;
   alreadySubmitted?: boolean;
-  onSubmit: (data: Record<string, string>) => void;
+  onSubmit: (
+    data: Record<string, string>
+  ) => void | boolean | Promise<void | boolean>;
   className?: string;
   defaultFormData: Record<string, string>;
 }
@@ -65,10 +69,30 @@ const FormCard = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const formatCurrencyMask = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "");
+    if (!digitsOnly) return "";
+
+    const numberValue = Number(digitsOnly) / 100;
+    const [integerPart, decimalPart] = numberValue
+      .toFixed(2)
+      .split(".");
+    const withSeparators = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `R$ ${withSeparators},${decimalPart}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    onSubmit(formData);
+    try {
+      const result = onSubmit(formData);
+      const resolved = result instanceof Promise ? await result : result;
+
+      if (resolved !== false) {
+        setIsSubmitted(true);
+      }
+    } catch (error) {
+      console.error("Erro ao enviar formulário:", error);
+    }
   };
 
   const handleChange = (name: string, value: string) => {
@@ -112,11 +136,16 @@ const FormCard = ({
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           {fields.map((field) => (
-            <div key={field.name} className="space-y-2">
-              <Label htmlFor={field.name} className="text-sm font-medium">
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </Label>
+          <div key={field.name} className="space-y-2">
+            <Label htmlFor={field.name} className="text-sm font-medium">
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+              {field.description && (
+                <p className="text-xs text-muted-foreground">
+                  {field.description}
+                </p>
+              )}
               {field.type === "textarea" ? (
                 <Textarea
                   id={field.name}
@@ -126,21 +155,31 @@ const FormCard = ({
                   onChange={(e) => handleChange(field.name, e.target.value)}
                   className="min-h-[80px]"
                 />
+              ) : field.type === "currency" ? (
+                <Input
+                  id={field.name}
+                  inputMode="numeric"
+                  placeholder={field.placeholder}
+                  required={field.required}
+                  value={formData[field.name] || ""}
+                  onChange={(e) =>
+                    handleChange(field.name, formatCurrencyMask(e.target.value))
+                  }
+                />
               ) : field.type === "select" ? (
                 <Select
-                  value={formData[field.name] ?? ""}
+                  value={formData[field.name] || ""}
                   onValueChange={(value) => handleChange(field.name, value)}
                 >
-                  <SelectTrigger className="w-full" aria-required={field.required}>
-                    <SelectValue placeholder={field.placeholder} />
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={field.placeholder || "Selecione uma opção"}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {(field.options ?? []).map((option, index) => (
-                      <SelectItem
-                        key={`${option.value || "empty"}-${index}`}
-                        value={option.value}
-                      >
-                        {option.label}
+                    {field.options?.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -156,9 +195,9 @@ const FormCard = ({
                   min={field.min}
                 />
               )}
-            </div>
-          ))}
-        </CardContent>
+          </div>
+        ))}
+      </CardContent>
 
         <CardFooter>
           <Button type="submit" className="w-full mt-4">

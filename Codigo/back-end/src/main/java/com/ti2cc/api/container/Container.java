@@ -59,7 +59,7 @@ public class Container {
         UserService userService = new UserService(userDAO, chatService);
         GoalService goalService = new GoalService(goalDAO, accountService);
         accountService.setGoalService(goalService);
-        ItemService itemService = new ItemService(itemDAO);
+        ItemService itemService = new ItemService(itemDAO, accountDAO);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
 
         // Serviços de autenticação
@@ -122,6 +122,15 @@ public class Container {
             authMiddleware.requireValidSession(req, res);
         });
         before("/goals/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+
+        before("/items", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/items/*", (req, res) -> {
             if (isPreflight(req)) return;
             authMiddleware.requireValidSession(req, res);
         });

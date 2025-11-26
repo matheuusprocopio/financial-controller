@@ -16,6 +16,11 @@ import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
 import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
 import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
 import ItemsList from "@/components/ToolsComponents/Items/ListItems";
+import CreateGoalForm from "@/components/ToolsComponents/Goals/CreateGoalForm";
+import DeleteGoalForm from "@/components/ToolsComponents/Goals/DeleteGoalForm";
+import EditGoalForm from "@/components/ToolsComponents/Goals/EditGoalForm";
+import ListGoalActions from "@/components/ToolsComponents/Goals/ListGoalActions";
+import GoalsList from "@/components/ToolsComponents/Goals/ListGoals";
 import { DynamicToolUIPart } from "ai";
 
 type ToolRendererType = (
@@ -151,6 +156,37 @@ export const NewToolsMap = (
       <ItemsList
         data={p.output as any}
         onError={(msg, payload) => helpers.onError(msg, payload)}
+      />
+    ),
+
+    "tool-createNewGoal": (p, helpers) => (
+      <CreateGoalForm
+        data={p.output as any}
+        onError={(msg) => helpers.onError(msg)}
+        onSubmitted={helpers.onSubmitted}
+      />
+    ),
+    "tool-editGoal": (p, helpers) => (
+      <EditGoalForm
+        data={p.output as any}
+        onError={(msg) => helpers.onError(msg)}
+        onSubmitted={helpers.onSubmitted}
+      />
+    ),
+    "tool-listGoalActions": (_p, _helpers) => (
+      <ListGoalActions onSendMessage={params.handleSendMessage} />
+    ),
+    "tool-deleteGoal": (p, helpers) => (
+      <DeleteGoalForm
+        data={p.output as any}
+        onError={(msg) => helpers.onError(msg)}
+        onSubmitted={helpers.onSubmitted}
+      />
+    ),
+    "tool-listGoals": (p, helpers) => (
+      <GoalsList
+        data={p.output as any}
+        onError={(msg) => helpers.onError(msg)}
       />
     ),
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
     nickname: "",
     financial_institution: "",
   });
+  const hasMounted = useRef(false);
 
   const pagination = usePagination({
     totalItems,
@@ -179,10 +180,13 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
     const newPage = page ?? pagination.currentPage;
     const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
     const targetPage = itemsPerPage ? 1 : newPage;
+    const semanticalSearch = searchTerm.trim()
+      ? `&semantical_search=${encodeURIComponent(searchTerm.trim())}`
+      : "";
 
     try {
       const response = await fetch(
-        `/api/pagination/accounts?page=${targetPage}&size=${newItemsPerPage}`
+        `/api/pagination/accounts?page=${targetPage}&size=${newItemsPerPage}${semanticalSearch}`
       );
 
       const result = await response.json();
@@ -208,6 +212,20 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
       onError?.("Erro ao buscar contas. Tente novamente.", error);
     }
   };
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handlePaginationChange(1);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   return (
     <Card className={cn("w-full max-w-none")}>

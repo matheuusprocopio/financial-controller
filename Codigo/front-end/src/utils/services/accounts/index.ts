@@ -13,20 +13,42 @@ const provider = newRequestProvider(`${BASE_URL}`);
 const withSession = (sessionId: string | undefined) =>
   sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
 
-export const listAccounts = async (sessionId: string) => {
-  const response = await provider.get<AccountType[]>(`accounts`, {
-    ...withSession(sessionId),
-  });
+export const listAccounts = async (
+  sessionId: string,
+  semanticalSearch?: string
+) => {
+  const params = new URLSearchParams();
+
+  if (semanticalSearch) {
+    params.append("semantical_search", semanticalSearch);
+  }
+
+  const response = await provider.get<AccountType[]>(
+    `accounts${params.toString() ? `?${params.toString()}` : ""}`,
+    {
+      ...withSession(sessionId),
+    }
+  );
 
   return response;
 };
 
 export const listAccountsPaginated = async (
   sessionId: string,
-  pagination: PaginationParams
+  pagination: PaginationParams,
+  semanticalSearch?: string
 ) => {
+  const params = new URLSearchParams({
+    page: `${pagination.page}`,
+    size: `${pagination.size}`,
+  });
+
+  if (semanticalSearch) {
+    params.append("semantical_search", semanticalSearch);
+  }
+
   const response = await provider.get<PaginatedResponse<AccountType>>(
-    `accounts/paginated?page=${pagination.page}&size=${pagination.size}`,
+    `accounts/paginated?${params.toString()}`,
     {
       ...withSession(sessionId),
     }

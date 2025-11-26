@@ -305,7 +305,7 @@ export const createNewAccountTool = tool({
 export const editAccountTool = tool({
   description: "Edit an existing account",
   inputSchema: z.object({
-    accountId: z.string(),
+    accountId: z.string().optional(),
     name: z.string().optional(),
     financialInstitution: z.string().optional(),
     balance: z.number().optional(),
@@ -316,7 +316,7 @@ export const editAccountTool = tool({
       const sessionId = await getSessionId();
       if (!sessionId) {
         return {
-          accountId,
+          accountId: accountId ?? "",
           name: name ?? "",
           financialInstitution: financialInstitution ?? "",
           balance: balance ?? 0,
@@ -330,31 +330,71 @@ export const editAccountTool = tool({
         };
       }
 
-      const resp = await getAccountById(accountId, sessionId);
+      let account: AccountType | null = null;
 
-      if (isRequestError(resp)) {
-        return {
-          accountId,
-          name: name ?? "",
-          financialInstitution: financialInstitution ?? "",
-          balance: balance ?? 0,
-          error: resp,
-        };
+      if (accountId) {
+        const resp = await getAccountById(accountId, sessionId);
+
+        if (isRequestError(resp)) {
+          return {
+            accountId,
+            name: name ?? "",
+            financialInstitution: financialInstitution ?? "",
+            balance: balance ?? 0,
+            error: resp,
+          };
+        }
+
+        if (resp) {
+          account = resp;
+        }
       }
 
-      if (resp) {
-        const account = resp;
+      if (!account && name && name.trim()) {
+        const searchTerm = name.trim();
+        const resp = await listAccountsPaginated(sessionId, { page: 1, size: 1 }, searchTerm);
+
+        if (isRequestError(resp)) {
+          return {
+            accountId: accountId ?? "",
+            name: name ?? "",
+            financialInstitution: financialInstitution ?? "",
+            balance: balance ?? 0,
+            error: resp,
+          };
+        }
+
+        const [bestMatch] = resp.data ?? [];
+        if (!bestMatch) {
+          return {
+            accountId: accountId ?? "",
+            name: name ?? "",
+            financialInstitution: financialInstitution ?? "",
+            balance: balance ?? 0,
+            error: createRequestError(
+              404,
+              "Nenhuma conta encontrada para editar. Tente especificar melhor o nome.",
+              "accounts/paginated"
+            ),
+          };
+        }
+
+        account = bestMatch;
+      }
+
+      if (account) {
         return {
           accountId: account.id,
           name: name ?? account.name,
           financialInstitution:
             financialInstitution ?? account.financialInstitution,
           balance: balance ?? account.balance,
+          semanticalSearch: accountId ? undefined : name?.trim() ?? account.name,
         };
       }
-
+      
       return {
-        accountId,
+        accountId: accountId ?? "",
         name: name ?? "",
         financialInstitution: financialInstitution ?? "",
         balance: balance ?? 0,
@@ -362,7 +402,7 @@ export const editAccountTool = tool({
     } catch (error) {
       if (isRequestError(error)) {
         return {
-          accountId,
+          accountId: accountId ?? "",
           name: name ?? "",
           financialInstitution: financialInstitution ?? "",
           balance: balance ?? 0,
@@ -371,7 +411,7 @@ export const editAccountTool = tool({
       }
 
       return {
-        accountId,
+        accountId: accountId ?? "",
         name: name ?? "",
         financialInstitution: financialInstitution ?? "",
         balance: balance ?? 0,
@@ -392,17 +432,93 @@ export const editAccountTool = tool({
 export const deleteAccountTool = tool({
   description: "Excludes an account",
   inputSchema: z.object({
-    accountId: z.string(),
+    accountId: z.string().optional(),
     name: z.string(),
-    financialInstitution: z.string(),
+    financialInstitution: z.string().optional(),
   }),
 
   execute: async ({ accountId, name, financialInstitution }) => {
-    return {
-      accountId,
-      name,
-      financialInstitution,
-    };
+    try {
+      const sessionId = await getSessionId();
+
+      if (!sessionId) {
+        return {
+          accountId: "",
+          name,
+          financialInstitution: financialInstitution ?? "",
+          error: createRequestError(
+            401,
+            "Não foi possível obter a sessão do usuário.",
+            "accounts/paginated"
+          ),
+        };
+      }
+
+      if (accountId) {
+        const resp = await getAccountById(accountId, sessionId);
+        if (isRequestError(resp)) {
+          return {
+            accountId,
+            name,
+            financialInstitution: financialInstitution ?? "",
+            error: resp,
+          };
+        }
+
+        if (resp) {
+          return {
+            accountId: resp.id,
+            name: resp.name,
+            financialInstitution: resp.financialInstitution,
+            balance: resp.balance,
+          };
+        }
+      }
+
+      const searchTerm = `${name} ${financialInstitution ?? ""}`.trim();
+      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 5 }, searchTerm || undefined);
+
+      if (isRequestError(resp)) {
+        return {
+          accountId: "",
+          name,
+          financialInstitution: financialInstitution ?? "",
+          error: resp,
+        };
+      }
+
+      const [bestMatch] = resp.data ?? [];
+
+      if (!bestMatch) {
+        return {
+          accountId: "",
+          name,
+          financialInstitution: financialInstitution ?? "",
+          error: createRequestError(
+            404,
+            "Nenhuma conta encontrada para deletar. Tente especificar melhor o nome ou a instituição.",
+            "accounts/paginated"
+          ),
+        };
+      }
+
+      return {
+        accountId: bestMatch.id,
+        name: bestMatch.name,
+        financialInstitution: bestMatch.financialInstitution,
+        balance: bestMatch.balance,
+        semanticalSearch: searchTerm,
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erro ao localizar conta.";
+      return {
+        accountId: accountId ?? "",
+        name,
+        financialInstitution: financialInstitution ?? "",
+        error: createRequestError(500, message, "accounts/paginated"),
+      };
+    }
   },
 });
 
@@ -440,7 +556,11 @@ export const listAccountsTool = tool({
         };
       }
 
-      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
+      const resp = await listAccountsPaginated(
+        sessionId,
+        { page: 1, size: 10 },
+        name || undefined
+      );
 
       if (isRequestError(resp)) {
         return {
@@ -451,15 +571,9 @@ export const listAccountsTool = tool({
         };
       }
 
-      const filteredAccounts = name
-        ? resp.data.filter((account: AccountType) =>
-            account.name.toLowerCase().includes(name.toLowerCase())
-          )
-        : resp.data;
-
       return {
         nickname: name,
-        accounts: filteredAccounts,
+        accounts: resp.data,
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
@@ -511,7 +625,12 @@ export const filterAccountsTool = tool({
         };
       }
 
-      const resp = await listAccountsPaginated(sessionId, { page: 1, size: 10 });
+      const semanticalSearchTerm = `${name ?? ""} ${financialInstitution ?? ""}`.trim() || undefined;
+      const resp = await listAccountsPaginated(
+        sessionId,
+        { page: 1, size: 10 },
+        semanticalSearchTerm
+      );
 
       if (isRequestError(resp)) {
         return {
@@ -522,27 +641,9 @@ export const filterAccountsTool = tool({
         };
       }
 
-      let filteredAccounts = [...resp.data];
-
-      if (name && name.trim()) {
-        const nameFilter = name.toLowerCase().trim();
-        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
-          account.name.toLowerCase().includes(nameFilter)
-        );
-      }
-
-      if (financialInstitution && financialInstitution.trim()) {
-        const institutionFilter = financialInstitution.toLowerCase().trim();
-        filteredAccounts = filteredAccounts.filter((account: AccountType) =>
-          account.financialInstitution
-            .toLowerCase()
-            .includes(institutionFilter)
-        );
-      }
-
       return {
         nickname: name || "",
-        accounts: filteredAccounts,
+        accounts: resp.data,
         totalOfAccounts: resp.totalItems,
         currentPage: resp.currentPage,
         pageLimit: resp.pageLimit,
@@ -627,10 +728,15 @@ export const createNewItemTool = tool({
       name?.trim() ||
       description?.trim() ||
       "";
+    const accountSearchTerm =
+      suggestedAccountName?.trim() ||
+      name?.trim() ||
+      description?.trim() ||
+      "";
 
     const [categoriesResp, accountsResp] = await Promise.all([
       listCategoriesPaginated(sessionId, { page: 1, size: 5 }, undefined, categorySearchTerm || undefined),
-      listAccountsPaginated(sessionId, { page: 1, size: 10 }),
+      listAccountsPaginated(sessionId, { page: 1, size: 10 }, accountSearchTerm || undefined),
     ]);
 
     if (isRequestError(categoriesResp)) {

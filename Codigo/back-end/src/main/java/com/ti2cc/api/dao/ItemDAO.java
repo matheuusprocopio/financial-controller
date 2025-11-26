@@ -333,4 +333,132 @@ public class ItemDAO {
 
         return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
     }
+        public ItemAnalyticsResponseDTO getAnalytics(ItemAnalyticsRequestDTO req) {
+        List<ItemAnalyticsPointDTO> result = new ArrayList<>();
+
+        List<String> selectParts = new ArrayList<>();
+        List<String> groupParts = new ArrayList<>();
+
+        for (GroupBy gb : req.getGroupBy()) {
+            switch (gb) {
+                case month:
+                    selectParts.add("to_char(i.date, 'YYYY-MM') AS month");
+                    groupParts.add("to_char(i.date, 'YYYY-MM')");
+                    break;
+                case category:
+                    selectParts.add("c.name AS category_name");
+                    groupParts.add("c.name");
+                    break;
+                case account:
+                    selectParts.add("a.name AS account_name");
+                    groupParts.add("a.name");
+                    break;
+                case type:
+                    selectParts.add("i.type AS item_type");
+                    groupParts.add("i.type");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        String metricExpr;
+        Metric metric = req.getMetric() != null ? req.getMetric() : Metric.total_expenses;
+
+        switch (metric) {
+            case total_incomes:
+                metricExpr = "SUM(CASE WHEN i.type = 'income' THEN i.amount ELSE 0 END)";
+                break;
+            case balance:
+                metricExpr = "SUM(CASE WHEN i.type = 'income' THEN i.amount ELSE 0 END) - " +
+                             "SUM(CASE WHEN i.type = 'expense' THEN i.amount ELSE 0 END)";
+                break;
+            case count_items:
+                metricExpr = "COUNT(*)";
+                break;
+            case total_expenses:
+            default:
+                metricExpr = "SUM(CASE WHEN i.type = 'expense' THEN i.amount ELSE 0 END)";
+                break;
+        }
+
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ");
+        if (!selectParts.isEmpty()) {
+            sql.append(String.join(", ", selectParts));
+            sql.append(", ");
+        }
+        sql.append(metricExpr).append(" AS value ");
+        sql.append("FROM items i ");
+        sql.append("LEFT JOIN categories c ON c.id = i.category_id ");
+        sql.append("LEFT JOIN accounts a ON a.id = i.account_id ");
+        sql.append("WHERE i.user_id = ? ");
+        sql.append("AND i.date BETWEEN ? AND ? ");
+
+        if (req.getCategoryId() != null) {
+            sql.append("AND i.category_id = ? ");
+        }
+        if (req.getAccountId() != null) {
+            sql.append("AND i.account_id = ? ");
+        }
+
+        if (!groupParts.isEmpty()) {
+            sql.append("GROUP BY ").append(String.join(", ", groupParts)).append(" ");
+            sql.append("ORDER BY ").append(String.join(", ", groupParts)).append(" ");
+        }
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            pstmt.setObject(idx++, req.getUserId());
+            pstmt.setDate(idx++, Date.valueOf(req.getStartDate()));
+            pstmt.setDate(idx++, Date.valueOf(req.getEndDate()));
+
+            if (req.getCategoryId() != null) {
+                pstmt.setObject(idx++, req.getCategoryId());
+            }
+            if (req.getAccountId() != null) {
+                pstmt.setObject(idx++, req.getAccountId());
+            }
+
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                ItemAnalyticsPointDTO point = new ItemAnalyticsPointDTO();
+
+                for (GroupBy gb : req.getGroupBy()) {
+                    switch (gb) {
+                        case month:
+                            point.setMonth(rs.getString("month"));
+                            break;
+                        case category:
+                            point.setCategoryName(rs.getString("category_name"));
+                            break;
+                        case account:
+                            point.setAccountName(rs.getString("account_name"));
+                            break;
+                        case type:
+                            point.setType(rs.getString("item_type"));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                point.setValue(rs.getDouble("value"));
+                result.add(point);
+            }
+        } catch (SQLException e) {
+            System.err.println("Fail to run analytics query: " + e.getMessage());
+        }
+
+        ItemAnalyticsResponseDTO resp = new ItemAnalyticsResponseDTO();
+        resp.setMetric(metric.name());
+        resp.setGroupBy(req.getGroupBy()
+                .stream()
+                .map(Enum::name)
+                .toArray(String[]::new));
+        resp.setPoints(result);
+
+        return resp;
+    }
+
 }

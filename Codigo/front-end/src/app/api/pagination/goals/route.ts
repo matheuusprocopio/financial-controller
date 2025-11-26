@@ -24,11 +24,12 @@ const filterGoals = (
     title?: string | null;
     status?: string | null;
     accountId?: string | null;
-  }
+  },
+  options?: { skipTitleFilter?: boolean }
 ) => {
   let filtered = [...goals];
 
-  if (filters.title && filters.title.trim()) {
+  if (!options?.skipTitleFilter && filters.title && filters.title.trim()) {
     const titleFilter = filters.title.toLowerCase().trim();
     filtered = filtered.filter((goal) =>
       goal.title.toLowerCase().includes(titleFilter)
@@ -74,20 +75,26 @@ export async function GET(request: NextRequest) {
   const pageParam = Number(searchParams.get("page"));
   const sizeParam = Number(searchParams.get("size"));
   const title = searchParams.get("title");
+  const semanticalSearch = searchParams.get("semantical_search") ?? undefined;
   const status = searchParams.get("status");
   const accountId = searchParams.get("accountId");
 
   const page = normalizeNumber(pageParam, defaultPagination.page);
   const size = normalizeNumber(sizeParam, defaultPagination.size);
 
-  const response = await listGoals(sessionId);
+  const searchTerm = semanticalSearch ?? title ?? undefined;
+  const response = await listGoals(sessionId, searchTerm);
 
   if (isRequestError(response)) {
     const statusCode = response.error.status || 500;
     return NextResponse.json({ error: response.error }, { status: statusCode });
   }
 
-  const filteredGoals = filterGoals(response, { title, status, accountId });
+  const filteredGoals = filterGoals(
+    response,
+    { title, status, accountId },
+    { skipTitleFilter: !!semanticalSearch }
+  );
   const totalItems = filteredGoals.length;
   const start = (page - 1) * size;
   const data = filteredGoals.slice(start, start + size);

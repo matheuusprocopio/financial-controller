@@ -1219,11 +1219,12 @@ export const listItemActionsTool = tool({
 
 const filterGoalsByParams = (
   goals: GoalType[],
-  filters: { title?: string; accountId?: string; status?: "achieved" | "pending" }
+  filters: { title?: string; accountId?: string; status?: "achieved" | "pending" },
+  options?: { skipTitleFilter?: boolean }
 ) => {
   let filtered = [...goals];
 
-  if (filters.title && filters.title.trim()) {
+  if (!options?.skipTitleFilter && filters.title && filters.title.trim()) {
     const query = filters.title.toLowerCase().trim();
     filtered = filtered.filter((goal) => goal.title.toLowerCase().includes(query));
   }
@@ -1329,7 +1330,7 @@ export const createNewGoalTool = tool({
 export const editGoalTool = tool({
   description: "Edit an existing financial goal",
   inputSchema: z.object({
-    goalId: z.string(),
+    goalId: z.string().optional(),
     title: z.string().optional(),
     description: z.string().optional(),
     accountId: z.string().optional(),
@@ -1358,13 +1359,57 @@ export const editGoalTool = tool({
         };
       }
 
-      const goalResp = await getGoalById(goalId, sessionId);
+      let goal: GoalType | null = null;
 
-      if (isRequestError(goalResp)) {
-        return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
+      if (goalId) {
+        const goalResp = await getGoalById(goalId, sessionId);
+
+        if (isRequestError(goalResp)) {
+          return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
+        }
+
+        goal = goalResp;
       }
 
-      const goal = goalResp;
+      if (!goal && title && title.trim()) {
+        const goalResp = await listGoals(sessionId, title);
+        if (isRequestError(goalResp)) {
+          return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
+        }
+
+        const [bestMatch] = goalResp;
+        if (!bestMatch) {
+          return {
+            goalId: goalId ?? "",
+            title: title ?? "",
+            description,
+            accountId,
+            targetAmount,
+            deadline,
+            accounts: [],
+            error: createRequestError(
+              404,
+              "Nenhuma meta encontrada para editar. Tente especificar melhor o título.",
+              "goals"
+            ),
+          };
+        }
+
+        goal = bestMatch;
+      }
+
+      if (!goal) {
+        return {
+          goalId: goalId ?? "",
+          title: title ?? "",
+          description,
+          accountId,
+          targetAmount,
+          deadline,
+          accounts: [],
+          error: createRequestError(404, "Meta não encontrada.", "goals"),
+        };
+      }
 
       const baseGoalData = {
         goalId: goal.id,
@@ -1394,6 +1439,7 @@ export const editGoalTool = tool({
       return {
         ...baseGoalData,
         accounts,
+        semanticalSearch: goalId ? undefined : title?.trim() ?? goal.title,
       };
     } catch (error) {
       return {
@@ -1419,46 +1465,82 @@ export const editGoalTool = tool({
 export const deleteGoalTool = tool({
   description: "Delete an existing goal",
   inputSchema: z.object({
-    goalId: z.string(),
+    goalId: z.string().optional(),
+    title: z.string(),
   }),
-  execute: async ({ goalId }) => {
+  execute: async ({ goalId, title }) => {
     try {
       const sessionId = await getSessionId();
       if (!sessionId) {
         return {
-          goalId,
+          goalId: goalId ?? "",
+          title,
           error: {
             error: {
               status: 401,
               message: "Não foi possível obter os dados do usuário.",
-              resource: `goals/${goalId}`,
+              resource: `goals/${goalId ?? ""}`,
             },
           },
         };
       }
 
-      const goalResp = await getGoalById(goalId, sessionId);
+      if (goalId) {
+        const goalResp = await getGoalById(goalId, sessionId);
 
-      if (isRequestError(goalResp)) {
-        return { goalId, error: goalResp };
+        if (isRequestError(goalResp)) {
+          return { goalId, title, error: goalResp };
+        }
+
+        return {
+          goalId: goalResp.id,
+          title: goalResp.title,
+          targetAmount: goalResp.targetAmount,
+          currentAmount: goalResp.currentAmount,
+          achieved: goalResp.achieved,
+          deadline: goalResp.deadline,
+        };
+      }
+
+      const searchTerm = title.trim();
+      const goalsResp = await listGoals(sessionId, searchTerm);
+
+      if (isRequestError(goalsResp)) {
+        return { goalId: goalId ?? "", title, error: goalsResp };
+      }
+
+      const [bestMatch] = goalsResp ?? [];
+
+      if (!bestMatch) {
+        return {
+          goalId: goalId ?? "",
+          title,
+          error: createRequestError(
+            404,
+            "Nenhuma meta encontrada para deletar. Tente especificar melhor o título.",
+            "goals"
+          ),
+        };
       }
 
       return {
-        goalId: goalResp.id,
-        title: goalResp.title,
-        targetAmount: goalResp.targetAmount,
-        currentAmount: goalResp.currentAmount,
-        achieved: goalResp.achieved,
-        deadline: goalResp.deadline,
+        goalId: bestMatch.id,
+        title: bestMatch.title,
+        targetAmount: bestMatch.targetAmount,
+        currentAmount: bestMatch.currentAmount,
+        achieved: bestMatch.achieved,
+        deadline: bestMatch.deadline,
+        semanticalSearch: searchTerm,
       };
     } catch (error) {
       return {
-        goalId,
+        goalId: goalId ?? "",
+        title,
         error: {
           error: {
             status: 500,
             message: error instanceof Error ? error.message : "Erro desconhecido",
-            resource: `goals/${goalId}`,
+            resource: `goals/${goalId ?? ""}`,
           },
         },
       };
@@ -1482,16 +1564,21 @@ export const listGoalsTool = tool({
     status: z.enum(["achieved", "pending"]).optional(),
   }),
   execute: async ({ title = "", accountId = "", status }) => {
+    const trimmedAccountId = accountId.trim();
+    const accountFilterValue =
+      trimmedAccountId.length > 0 ? trimmedAccountId : undefined;
+
     try {
       const sessionId = await getSessionId();
 
       if (!sessionId) {
         return {
           title,
-          accountId,
-          status,
+          accountId: accountFilterValue,
+          status: status ?? "all",
           goals: [],
           totalOfGoals: 0,
+          accounts: [],
           error: {
             error: {
               status: 401,
@@ -1502,42 +1589,61 @@ export const listGoalsTool = tool({
         };
       }
 
-      const resp = await listGoals(sessionId);
+      const semanticalSearch = title.trim() ? title.trim() : undefined;
+      const [goalsResponse, accountsResponse] = await Promise.all([
+        listGoals(sessionId, semanticalSearch),
+        listAccounts(sessionId),
+      ]);
 
-      if (isRequestError(resp)) {
+      const accounts = isRequestError(accountsResponse)
+        ? []
+        : accountsResponse.map((account) => ({
+            id: account.id,
+            name: account.name,
+            financialInstitution: account.financialInstitution,
+          }));
+
+      if (isRequestError(goalsResponse)) {
         return {
           title,
-          accountId,
-          status,
+          accountId: accountFilterValue,
+          status: status ?? "all",
           goals: [],
           totalOfGoals: 0,
-          error: resp,
+          accounts,
+          error: goalsResponse,
         };
       }
 
-      const filteredGoals = filterGoalsByParams(resp, {
-        title,
-        accountId,
-        status,
-      });
+      const filteredGoals = filterGoalsByParams(
+        goalsResponse,
+        {
+          title,
+          accountId: accountFilterValue,
+          status,
+        },
+        { skipTitleFilter: !!semanticalSearch }
+      );
 
       return {
         title,
-        accountId,
-        status,
+        accountId: accountFilterValue,
+        status: status ?? "all",
         goals: filteredGoals,
         totalOfGoals: filteredGoals.length,
         currentPage: 1,
         pageLimit: filteredGoals.length || 10,
+        accounts,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro desconhecido";
       return {
         title,
-        accountId,
-        status,
+        accountId: accountFilterValue,
+        status: status ?? "all",
         goals: [],
         totalOfGoals: 0,
+        accounts: [],
         error: {
           error: {
             status: 500,

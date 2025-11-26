@@ -9,11 +9,13 @@ interface IDeleteGoalForm {
   data: {
     goalId?: string;
     title?: string;
+    alreadySubmitted?: boolean;
   };
   onError?(errMsg: string): void;
+  onSubmitted?(): void;
 }
 
-const DeleteGoalForm = ({ data, onError }: IDeleteGoalForm) => {
+const DeleteGoalForm = ({ data, onError, onSubmitted }: IDeleteGoalForm) => {
   const goalId = data?.goalId ?? "";
   const title = data?.title ?? "Meta sem título";
 
@@ -24,6 +26,8 @@ const DeleteGoalForm = ({ data, onError }: IDeleteGoalForm) => {
       confirmLabel="Excluir"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onConfirm={async () => {
         if (!goalId) {
           onError?.("Meta inválida");

@@ -19,9 +19,10 @@ interface ICreateGoalForm {
     accounts?: GoalFormAccount[];
   };
   onError?(errMsg: string): void;
+  onSubmitted?(): void;
 }
 
-const CreateGoalForm = ({ data, onError }: ICreateGoalForm) => {
+const CreateGoalForm = ({ data, onError, onSubmitted }: ICreateGoalForm) => {
   const GLOBAL_ACCOUNT_VALUE = "__goal_global__";
   const [availableAccounts, setAvailableAccounts] = useState<GoalFormAccount[]>(
     data?.accounts ?? []
@@ -146,6 +147,7 @@ const CreateGoalForm = ({ data, onError }: ICreateGoalForm) => {
         deadline: normalizeDateInput(data?.deadline),
       }}
       alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onSubmit={async (formData) => {
         try {
           const parsedAmount = parseFloat(formData["targetAmount"] ?? "0");

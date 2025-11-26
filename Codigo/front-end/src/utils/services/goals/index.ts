@@ -9,9 +9,18 @@ const withSession = (sessionId: string | undefined) =>
   sessionId ? { headers: { "X-Session-Id": sessionId } } : {};
 
 export const listGoals = async (
-  sessionId: string
+  sessionId: string,
+  semanticalSearch?: string
 ): Promise<GoalType[] | RequestError> => {
-  return provider.get<GoalType[]>("goals", {
+  const params = new URLSearchParams();
+
+  if (semanticalSearch) {
+    params.append("semantical_search", semanticalSearch);
+  }
+
+  const query = params.toString();
+
+  return provider.get<GoalType[]>(`goals${query ? `?${query}` : ""}`, {
     ...withSession(sessionId),
   });
 };

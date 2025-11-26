@@ -17,11 +17,13 @@ interface IEditGoalForm {
     targetAmount?: number;
     deadline?: string | null;
     accounts?: GoalFormAccount[];
+    alreadySubmitted?: boolean;
   };
   onError(errMsg: string): void;
+  onSubmitted?(): void;
 }
 
-const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
+const EditGoalForm = ({ data, onError, onSubmitted }: IEditGoalForm) => {
   const GLOBAL_ACCOUNT_VALUE = "__goal_global__";
   const goalId = data?.goalId ?? "";
   const title = data?.title ?? "";
@@ -149,6 +151,8 @@ const EditGoalForm = ({ data, onError }: IEditGoalForm) => {
         targetAmount: targetAmount.toString(),
         deadline: normalizeDateInput(deadline),
       }}
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onSubmit={async (formData) => {
         if (!goalId) {
           onError("Meta inválida");

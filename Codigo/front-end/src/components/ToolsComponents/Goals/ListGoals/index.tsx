@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,26 @@ import { Progress } from "@/components/ui/progress";
 import { Trophy, Search, FilterX, RefreshCw } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { GoalType } from "@/types/goal.types";
+import { AccountType } from "@/types/account.type";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationNumbers from "@/components/ToolsComponents/Base/Pagination/PaginationNumbers";
 import PaginationControls from "@/components/ToolsComponents/Base/Pagination/PaginationControls";
 import type { RequestError } from "@/utils/requestProvider";
+
+type StatusFilter = "all" | "achieved" | "pending";
+type GoalFilterAccount = Pick<AccountType, "id" | "name" | "financialInstitution">;
+
+const ALL_ACCOUNTS_VALUE = "all";
+const GLOBAL_ACCOUNT_VALUE = "global";
+
+const normalizeAccountFilterValue = (value?: string | null) => {
+  if (!value) {
+    return ALL_ACCOUNTS_VALUE;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : ALL_ACCOUNTS_VALUE;
+};
 
 interface IGoalsList {
   data: {
@@ -36,23 +52,39 @@ interface IGoalsList {
     totalOfGoals?: number;
     currentPage?: number;
     pageLimit?: number;
+    accountId?: string | null;
+    status?: StatusFilter;
+    accounts?: GoalFilterAccount[];
     error?: string | RequestError;
   };
   onError?(errMsg: string): void;
 }
 
-type StatusFilter = "all" | "achieved" | "pending";
-
 const GoalsList = ({ data, onError }: IGoalsList) => {
   const initialGoals = useMemo(() => data?.goals ?? [], [data?.goals]);
+  const normalizedAccounts = useMemo<GoalFilterAccount[]>(() => {
+    return (data?.accounts ?? []).map((account) => ({
+      id: account.id,
+      name: account.name,
+      financialInstitution: account.financialInstitution,
+    }));
+  }, [data?.accounts]);
   const [goalsData, setGoalsData] = useState<GoalType[]>(initialGoals);
+  const [availableAccounts, setAvailableAccounts] =
+    useState<GoalFilterAccount[]>(normalizedAccounts);
   const [totalItems, setTotalItems] = useState<number>(
     data?.totalOfGoals ?? initialGoals.length
   );
   const [searchInput, setSearchInput] = useState(data?.title ?? "");
-  const [accountFilter, setAccountFilter] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [accountFilter, setAccountFilter] = useState<string>(
+    normalizeAccountFilterValue(data?.accountId)
+  );
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    data?.status ?? "all"
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const hasRequestedAccountsFallback = useRef(false);
+  const hasProvidedAccounts = normalizedAccounts.length > 0;
 
   const paginationState = usePagination({
     totalItems,
@@ -74,6 +106,18 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
   }, [initialGoals, data?.totalOfGoals]);
 
   useEffect(() => {
+    setAvailableAccounts(normalizedAccounts);
+  }, [normalizedAccounts]);
+
+  useEffect(() => {
+    setAccountFilter(normalizeAccountFilterValue(data?.accountId));
+  }, [data?.accountId]);
+
+  useEffect(() => {
+    setStatusFilter(data?.status ?? "all");
+  }, [data?.status]);
+
+  useEffect(() => {
     if (data?.error) {
       const message =
         typeof data.error === "string"
@@ -83,6 +127,62 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
     }
   }, [data?.error, onError]);
 
+  useEffect(() => {
+    if (hasProvidedAccounts || hasRequestedAccountsFallback.current) {
+      return;
+    }
+
+    let isMounted = true;
+    hasRequestedAccountsFallback.current = true;
+
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch("/api/pagination/accounts?page=1&size=50");
+        const payload = await response.json();
+
+        if (!response.ok || "error" in payload) {
+          const message =
+            (payload as RequestError)?.error?.message ||
+            "Erro ao carregar contas.";
+          onError?.(message);
+          hasRequestedAccountsFallback.current = false;
+          return;
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        const normalized = (payload?.data ?? []).map((account: AccountType) => ({
+          id: account.id,
+          name: account.name,
+          financialInstitution: account.financialInstitution,
+        }));
+
+        setAvailableAccounts(normalized);
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            "Erro ao buscar contas para o filtro de metas.",
+            error
+          );
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao carregar contas.";
+        onError?.(message);
+        hasRequestedAccountsFallback.current = false;
+      }
+    };
+
+    void fetchAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasProvidedAccounts, onError]);
+
   const buildQueryParams = useCallback(
     (page: number, size: number) => {
       const params = new URLSearchParams();
@@ -90,11 +190,11 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
       params.set("size", String(size));
 
       if (searchInput.trim()) {
-        params.set("title", searchInput.trim());
+        params.set("semantical_search", searchInput.trim());
       }
 
-      if (accountFilter.trim()) {
-        params.set("accountId", accountFilter.trim());
+      if (accountFilter !== ALL_ACCOUNTS_VALUE) {
+        params.set("accountId", accountFilter);
       }
 
       if (statusFilter !== "all") {
@@ -116,8 +216,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
 
         if (!response.ok || "error" in result) {
           const message =
-            (result as RequestError)?.error?.message ||
-            "Erro ao buscar metas.";
+            (result as RequestError)?.error?.message || "Erro ao buscar metas.";
           onError?.(message);
           return;
         }
@@ -145,7 +244,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
 
   const handleClearFilters = async () => {
     setSearchInput("");
-    setAccountFilter("");
+    setAccountFilter(ALL_ACCOUNTS_VALUE);
     setStatusFilter("all");
     await fetchGoals(1, itemsPerPage);
   };
@@ -160,9 +259,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
   };
 
   const hasActiveFilters =
-    !!searchInput.trim() ||
-    !!accountFilter.trim() ||
-    statusFilter !== "all";
+    !!searchInput.trim() || accountFilter !== ALL_ACCOUNTS_VALUE || statusFilter !== "all";
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -176,8 +273,46 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
     return Math.min(100, Math.max(0, Number(percentage.toFixed(2))));
   };
 
+  const accountOptions = useMemo(
+    () => [
+      { value: ALL_ACCOUNTS_VALUE, label: "Todas as contas" },
+      { value: GLOBAL_ACCOUNT_VALUE, label: "Meta global (sem conta)" },
+      ...availableAccounts
+        .filter((account) => account.id !== GLOBAL_ACCOUNT_VALUE)
+        .map((account) => ({
+          value: account.id,
+          label: account.financialInstitution
+            ? `${account.name} - ${account.financialInstitution}`
+            : account.name,
+        })),
+    ],
+    [availableAccounts]
+  );
+
+  const resolveAccountLabel = useCallback(
+    (value: string) => {
+      if (value === ALL_ACCOUNTS_VALUE) {
+        return "Todas as contas";
+      }
+
+      if (value === GLOBAL_ACCOUNT_VALUE) {
+        return "Meta global (sem conta)";
+      }
+
+      const match = availableAccounts.find((account) => account.id === value);
+      if (!match) {
+        return value;
+      }
+
+      return match.financialInstitution
+        ? `${match.name} - ${match.financialInstitution}`
+        : match.name;
+    },
+    [availableAccounts]
+  );
+
   return (
-    <Card className={cn("w-full max-w-none")}> 
+    <Card className={cn("w-full max-w-none")}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Trophy className="h-5 w-5" />
@@ -211,11 +346,21 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
               </SelectContent>
             </Select>
           </div>
-          <Input
-            placeholder="Filtrar por ID da conta"
+          <Select
             value={accountFilter}
-            onChange={(e) => setAccountFilter(e.target.value)}
-          />
+            onValueChange={(value) => setAccountFilter(value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Filtrar por conta" />
+            </SelectTrigger>
+            <SelectContent>
+              {accountOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -247,12 +392,12 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
           <div className="flex flex-wrap gap-2">
             {searchInput && (
               <Badge variant="secondary" className="text-xs">
-                Busca: "{searchInput}"
+                Busca: {`"${searchInput}"`}
               </Badge>
             )}
-            {accountFilter && (
+            {accountFilter !== ALL_ACCOUNTS_VALUE && (
               <Badge variant="secondary" className="text-xs">
-                Conta: "{accountFilter}"
+                Conta: {resolveAccountLabel(accountFilter)}
               </Badge>
             )}
             {statusFilter !== "all" && (
@@ -323,7 +468,9 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
                       <TableCell>
                         <Badge
                           variant={goal.achieved ? "default" : "outline"}
-                          className={goal.achieved ? "bg-green-600 text-white" : ""}
+                          className={
+                            goal.achieved ? "bg-green-600 text-white" : ""
+                          }
                         >
                           {goal.achieved ? "Concluída" : "Em andamento"}
                         </Badge>

@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -295,7 +296,7 @@ public class AccountDAO {
     }
 
     private Account mapAccount(ResultSet rs) throws SQLException {
-        return new Account(
+        Account account = new Account(
                 (UUID) rs.getObject("id"),
                 rs.getString("name"),
                 (UUID) rs.getObject("user_id"),
@@ -304,5 +305,7 @@ public class AccountDAO {
                 rs.getObject("created_at", java.time.OffsetDateTime.class),
                 VectorUtils.parsePgVector(rs.getObject("search_embedding"))
         );
+        account.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+        return account;
     }
 }

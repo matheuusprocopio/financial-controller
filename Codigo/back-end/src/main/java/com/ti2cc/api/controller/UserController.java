@@ -1,11 +1,12 @@
 package com.ti2cc.api.controller;
 
+import java.util.UUID;
+
 import com.google.gson.Gson;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.UserService;
+import com.ti2cc.api.util.GsonUtil;
 import com.ti2cc.api.util.UuidUtils;
-
-import java.util.UUID;
 
 import spark.Request;
 import spark.Response;
@@ -13,7 +14,7 @@ import spark.Response;
 public class UserController {
 
     private final UserService userService;
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getGson();
 
     public UserController(UserService userService) {
         this.userService = userService;

@@ -12,6 +12,7 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Category;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.CategoryService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -19,7 +20,7 @@ import spark.Response;
 public class CategoryController {
 
     private final CategoryService categoryService;
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getGson();
 
     public CategoryController(CategoryService categoryService) {
         this.categoryService = categoryService;

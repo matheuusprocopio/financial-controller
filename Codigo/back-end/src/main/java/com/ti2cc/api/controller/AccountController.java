@@ -13,6 +13,7 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Account;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.AccountService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -20,7 +21,7 @@ import spark.Response;
 public class AccountController {
 
     private final AccountService accountService;
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getGson();
 
     public AccountController(AccountService accountService) {
         this.accountService = accountService;

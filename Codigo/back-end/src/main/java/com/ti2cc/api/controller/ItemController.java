@@ -6,9 +6,6 @@ import java.time.format.DateTimeParseException;
 import java.util.UUID;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.CreateItemDTO;
 import com.ti2cc.api.dto.DateRangeDTO;
@@ -18,6 +15,7 @@ import com.ti2cc.api.dto.UpdateItemDTO;
 import com.ti2cc.api.dto.ItemResponseDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -25,26 +23,11 @@ import spark.Response;
 public class ItemController {
 
     private final ItemService itemService;
-    private final Gson gson;
+    private final Gson gson = GsonUtil.getGson();
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public ItemController(ItemService itemService) {
         this.itemService = itemService;
-
-        this.gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDate.class,
-                        (JsonDeserializer<LocalDate>) (json, type, context) -> {
-                            String dateStr = json.getAsString();
-                            if (dateStr.contains("T")) {
-                                return LocalDate.parse(dateStr.substring(0, 10));
-                            } else {
-                                return LocalDate.parse(dateStr);
-                            }
-                        })
-                .registerTypeAdapter(LocalDate.class,
-                        (JsonSerializer<LocalDate>) (date, type, context) ->
-                                context.serialize(date.toString()))
-                .create();
     }
 
     public Object create(Request req, Response res) {

@@ -1,5 +1,7 @@
 package com.ti2cc.api.controller;
 
+import java.util.UUID;
+
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.gson.Gson;
@@ -9,9 +11,8 @@ import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.FirebaseAuthService;
 import com.ti2cc.api.service.SessionService;
 import com.ti2cc.api.service.UserService;
+import com.ti2cc.api.util.GsonUtil;
 import com.ti2cc.api.util.UuidUtils;
-
-import java.util.UUID;
 
 import spark.Request;
 import spark.Response;
@@ -21,7 +22,7 @@ public class AuthController {
     private final FirebaseAuthService firebaseAuthService;
     private final UserService userService;
     private final SessionService sessionService;
-    private final Gson gson = new Gson();
+    private final Gson gson = GsonUtil.getGson();
 
     public AuthController(FirebaseAuthService firebaseAuthService, UserService userService, SessionService sessionService) {
         this.firebaseAuthService = firebaseAuthService;

@@ -1,14 +1,15 @@
 package com.ti2cc.api.dao;
 
-import com.ti2cc.api.model.User;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import com.ti2cc.api.model.User;
 
 public class UserDAO {
     private Connection connection;
@@ -46,11 +47,13 @@ public class UserDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                users.add(new User(
+                User user = new User(
                         (UUID) rs.getObject("id"),
                         rs.getString("name"),
                         rs.getString("email")
-                ));
+                );
+                user.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+                users.add(user);
             }
         } catch (SQLException e) {
             System.err.println("Fail to retrieve users: " + e.getMessage());
@@ -66,11 +69,13 @@ public class UserDAO {
 
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return new User(
+                User user = new User(
                         (UUID) rs.getObject("id"),
                         rs.getString("name"),
                         rs.getString("email")
                 );
+                user.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+                return user;
             }
         } catch (SQLException e) {
             System.err.println("Fail to retrieve user by ID: " + e.getMessage());
@@ -86,11 +91,13 @@ public class UserDAO {
 
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                return new User(
+                User user = new User(
                         (UUID) rs.getObject("id"),
                         rs.getString("name"),
                         rs.getString("email")
                 );
+                user.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+                return user;
             }
         } catch (SQLException e) {
             System.err.println("Fail to retrieve user by email: " + e.getMessage());

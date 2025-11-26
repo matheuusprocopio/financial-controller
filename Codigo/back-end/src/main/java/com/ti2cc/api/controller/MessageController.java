@@ -1,13 +1,9 @@
 package com.ti2cc.api.controller;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.MessageCreateDTO;
 import com.ti2cc.api.dto.MessageIdResponseDTO;
@@ -15,6 +11,7 @@ import com.ti2cc.api.dto.MessageUpdateDTO;
 import com.ti2cc.api.model.Message;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.MessageService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -22,20 +19,10 @@ import spark.Response;
 public class MessageController {
 
     private final MessageService messageService;
-    private final Gson gson;
+    private final Gson gson = GsonUtil.getGson();
 
     public MessageController(MessageService messageService) {
         this.messageService = messageService;
-        this.gson = new GsonBuilder()
-                .registerTypeAdapter(OffsetDateTime.class,
-                        (JsonSerializer<OffsetDateTime>) (value, type, context) ->
-                                context.serialize(value != null ? value.toString() : null))
-                .registerTypeAdapter(OffsetDateTime.class,
-                        (JsonDeserializer<OffsetDateTime>) (json, type, context) ->
-                                (json == null || json.isJsonNull())
-                                        ? null
-                                        : OffsetDateTime.parse(json.getAsString()))
-                .create();
     }
 
     public Object create(Request req, Response res) {

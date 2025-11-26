@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -141,12 +142,14 @@ public class CategoryDAO {
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
-                return new Category(
+                Category category = new Category(
                         (UUID) rs.getObject("id"),
                         (UUID) rs.getObject("user_id"),
                         rs.getString("name"),
                         rs.getString("image_path"),
                         (UUID) rs.getObject("main_category_id"));
+                category.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
+                return category;
             }
         } catch (SQLException e) {
             System.err.println("Fail to get category by id: " + e.getMessage());
@@ -188,6 +191,7 @@ public class CategoryDAO {
                         rs.getString("name"),
                         rs.getString("image_path"),
                         (UUID) rs.getObject("main_category_id"));
+                c.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
                 list.add(c);
             }
         } catch (SQLException e) {
@@ -236,6 +240,7 @@ public class CategoryDAO {
                         rs.getString("name"),
                         rs.getString("image_path"),
                         (UUID) rs.getObject("main_category_id"));
+                c.setCreatedAt(rs.getObject("created_at", OffsetDateTime.class));
                 list.add(c);
             }
         } catch (SQLException e) {

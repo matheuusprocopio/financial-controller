@@ -1,5 +1,6 @@
 package com.ti2cc.api.model;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class Account {
@@ -8,6 +9,7 @@ public class Account {
     private UUID userId;
     private String financialInstitution;
     private Double balance;
+    private OffsetDateTime createdAt;
 
     public Account() {
         this(null, null, null, null, 0.0);
@@ -59,5 +61,13 @@ public class Account {
 
     public void setBalance(Double balance) {
         this.balance = balance;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

@@ -1,5 +1,6 @@
 package com.ti2cc.api.model;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public class Category {
@@ -8,6 +9,7 @@ public class Category {
     private String name;
     private String imagePath;
     private UUID mainCategoryId;
+    private OffsetDateTime createdAt;
 
     public Category() {
         this(null, null, null, null, null);
@@ -59,5 +61,13 @@ public class Category {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

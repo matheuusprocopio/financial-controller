@@ -9,11 +9,13 @@ interface IEditCategoryForm {
     name?: string;
     imagePath?: string;
     mainCategoryId?: string;
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const EditCategoryForm = ({ data, onError }: IEditCategoryForm) => {
+const EditCategoryForm = ({ data, onError, onSubmitted }: IEditCategoryForm) => {
   const categoryId = data?.categoryId ?? "";
   const categoryName = data?.name ?? "";
   const imagePath = data?.imagePath ?? "";
@@ -49,6 +51,8 @@ const EditCategoryForm = ({ data, onError }: IEditCategoryForm) => {
         imagePath: imagePath,
         mainCategoryId: mainCategoryId,
       }}
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onSubmit={async (formData) => {
         if (categoryId) {
           const updatePayload: any = {};
@@ -63,24 +67,28 @@ const EditCategoryForm = ({ data, onError }: IEditCategoryForm) => {
             updatePayload.mainCategoryId = formData["mainCategoryId"];
           }
           
-          if (Object.keys(updatePayload).length > 0) {
-            try {
-              const resp = await updateCategoryAction(categoryId, updatePayload);
+          if (Object.keys(updatePayload).length === 0) {
+            return false;
+          }
 
-              if (resp && typeof resp === "object" && "error" in resp) {
-                const message =
-                  typeof (resp as any).error?.message === "string"
-                    ? (resp as any).error.message
-                    : "Erro ao atualizar categoria.";
-                onError?.(message);
-              }
-            } catch (error) {
+          try {
+            const resp = await updateCategoryAction(categoryId, updatePayload);
+
+            if (resp && typeof resp === "object" && "error" in resp) {
               const message =
-                error instanceof Error
-                  ? error.message
+                typeof (resp as any).error?.message === "string"
+                  ? (resp as any).error.message
                   : "Erro ao atualizar categoria.";
-              onError?.(message);
+              onError?.(message, resp);
+              return false;
             }
+          } catch (error) {
+            const message =
+              error instanceof Error
+                ? error.message
+                : "Erro ao atualizar categoria.";
+            onError?.(message, error);
+            return false;
           }
         }
       }}

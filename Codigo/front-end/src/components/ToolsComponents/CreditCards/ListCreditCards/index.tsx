@@ -26,7 +26,7 @@ interface ICreditCardsList {
     status?: number | null;
     resource?: string | null;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
 }
 
 const CreditCardsList = ({ data, onError }: ICreditCardsList) => {

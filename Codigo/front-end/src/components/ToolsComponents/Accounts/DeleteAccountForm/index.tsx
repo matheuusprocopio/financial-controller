@@ -11,11 +11,13 @@ interface IDeleteAccountForm {
     name?: string;
     financialInstitution?: string;
     balance?: number;
+    alreadySubmitted?: boolean;
   };
-  onError(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const DeleteAccountForm = ({ data, onError }: IDeleteAccountForm) => {
+const DeleteAccountForm = ({ data, onError, onSubmitted }: IDeleteAccountForm) => {
   const accountId = data?.accountId ?? "";
   const accountName = data?.name ?? "";
   const financialInstitution = data?.financialInstitution ?? "";
@@ -28,13 +30,28 @@ const DeleteAccountForm = ({ data, onError }: IDeleteAccountForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
       onConfirm={async () => {
-        if (accountId) {
+        if (!accountId) {
+          onError?.("Conta não encontrada para exclusão.", data);
+          return false;
+        }
+
+        try {
           const resp = await deleteAccountAction(accountId);
 
-          if ("error" in resp) {
-            onError(resp.error.message);
+          if (resp && typeof resp === "object" && "error" in resp) {
+            onError?.(resp.error.message, resp);
+            return false;
           }
+
+          return true;
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Erro ao excluir conta.";
+          onError?.(message, error);
+          return false;
         }
       }}
     >

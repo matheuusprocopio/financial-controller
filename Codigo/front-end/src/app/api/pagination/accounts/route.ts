@@ -27,11 +27,12 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const pageParam = Number(searchParams.get("page"));
   const sizeParam = Number(searchParams.get("size"));
+  const semanticalSearch = searchParams.get("semantical_search") ?? undefined;
 
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : defaultPagination.page;
   const size = Number.isFinite(sizeParam) && sizeParam > 0 ? sizeParam : defaultPagination.size;
 
-  const response = await listAccountsPaginated(sessionId, { page, size });
+  const response = await listAccountsPaginated(sessionId, { page, size }, semanticalSearch);
 
   if ("error" in response) {
     const status = response.error.status || 500;

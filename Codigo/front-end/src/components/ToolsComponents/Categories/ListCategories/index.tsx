@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ interface ICategoriesList {
     pageLimit?: number;
     error?: string | RequestError;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
 }
 
 const CategoriesList = ({ data, onError }: ICategoriesList) => {
@@ -40,6 +40,7 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriesData, setCategoriesData] = useState<CategorieType[]>(categories);
   const [totalItems, setTotalItems] = useState<number>(totalOfCategories);
+  const hasMounted = useRef(false);
 
   const pagination = usePagination({
     totalItems,
@@ -79,14 +80,14 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
   const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
     const newPage = page ?? pagination.currentPage;
     const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
-    const nameParam = searchTerm.trim()
-      ? `&name=${encodeURIComponent(searchTerm.trim())}`
+    const semantialSearch = searchTerm.trim()
+      ? `&semantical_search=${encodeURIComponent(searchTerm.trim())}`
       : "";
     const targetPage = itemsPerPage ? 1 : newPage;
 
     try {
       const response = await fetch(
-        `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${nameParam}`
+        `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${semantialSearch}`
       );
       const result = await response.json();
 
@@ -115,6 +116,18 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
       onError?.(message);
     }
   };
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      handlePaginationChange(1);
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
 
   useEffect(() => {
     if (data?.error) {

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -27,8 +27,10 @@ interface IConfirmationCard {
     | "secondary"
     | "ghost"
     | "link";
-  onConfirm: () => void;
+  onConfirm: () => void | boolean | Promise<void | boolean>;
   onCancel?: () => void;
+  alreadySubmitted?: boolean;
+  onSubmitted?: () => void;
   children?: React.ReactNode;
   className?: string;
 }
@@ -41,16 +43,38 @@ const ConfirmationCard = ({
   confirmVariant = "default",
   onConfirm,
   onCancel,
+  alreadySubmitted,
+  onSubmitted,
   children,
   className,
 }: IConfirmationCard) => {
   const [status, setStatus] = useState<"pending" | "confirmed" | "cancelled">(
     "pending"
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleConfirm = () => {
-    setStatus("confirmed");
-    onConfirm();
+  useEffect(() => {
+    if (alreadySubmitted) {
+      setStatus("confirmed");
+    }
+  }, [alreadySubmitted]);
+
+  const handleConfirm = async () => {
+    if (status === "confirmed") return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await onConfirm();
+      if (result === false) {
+        return;
+      }
+      setStatus("confirmed");
+      onSubmitted?.();
+    } catch (error) {
+      setStatus("pending");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -60,11 +84,19 @@ const ConfirmationCard = ({
 
   if (status === "confirmed") {
     return (
-      <Card className={cn("border-green-200 bg-green-50", className)}>
+      <Card
+        className={cn(
+          "border-green-200 bg-green-50",
+          "dark:border-green-500/50 dark:bg-green-950/20",
+          className
+        )}
+      >
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="text-green-800 font-medium">Ação confirmada</span>
+            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-300" />
+            <span className="text-green-800 dark:text-green-100 font-medium">
+              Ação confirmada
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -73,11 +105,19 @@ const ConfirmationCard = ({
 
   if (status === "cancelled") {
     return (
-      <Card className={cn("border-gray-200 bg-gray-50", className)}>
+      <Card
+        className={cn(
+          "border-gray-300 bg-gray-100",
+          "dark:border-gray-700 dark:bg-gray-900/70",
+          className
+        )}
+      >
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
-            <XCircle className="h-5 w-5 text-gray-600" />
-            <span className="text-gray-800 font-medium">Ação cancelada</span>
+            <XCircle className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100 font-medium">
+              Ação cancelada
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -85,13 +125,21 @@ const ConfirmationCard = ({
   }
 
   return (
-    <Card className={cn("border-orange-200 bg-orange-50", className)}>
+    <Card
+      className={cn(
+        "border-orange-200 bg-orange-50",
+        "dark:border-orange-500/50 dark:bg-orange-950/20",
+        className
+      )}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-orange-600" />
+          <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-300" />
           <div>
-            <CardTitle className="text-base text-orange-900">{title}</CardTitle>
-            <CardDescription className="text-orange-700">
+            <CardTitle className="text-base text-orange-900 dark:text-orange-100">
+              {title}
+            </CardTitle>
+            <CardDescription className="text-orange-700 dark:text-orange-200">
               {description}
             </CardDescription>
           </div>
@@ -106,14 +154,15 @@ const ConfirmationCard = ({
           size="sm"
           onClick={handleConfirm}
           className="flex-1"
+          disabled={isSubmitting}
         >
-          {confirmLabel}
+          {isSubmitting ? "Processando..." : confirmLabel}
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={handleCancel}
-          className="flex-1 bg-transparent"
+          className="flex-1 bg-transparent dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800"
         >
           {cancelLabel}
         </Button>

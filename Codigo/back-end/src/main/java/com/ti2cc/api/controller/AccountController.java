@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.AccountUpdateDTO;
+import com.ti2cc.api.dto.AccountResponseDTO;
 import com.ti2cc.api.dto.CreateAccountDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
@@ -50,7 +51,7 @@ public class AccountController {
 
             if (created) {
                 res.status(201);
-                return gson.toJson(account);
+                return gson.toJson(toResponse(account));
             }
 
             res.status(400);
@@ -79,7 +80,7 @@ public class AccountController {
             }
 
             res.status(200);
-            return gson.toJson(account);
+            return gson.toJson(toResponse(account));
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid ID format.");
@@ -95,9 +96,15 @@ public class AccountController {
                 return gson.toJson("Usuário não autenticado.");
             }
 
-            List<Account> accounts = accountService.findByUserId(sessionUser.getId());
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
+
+            List<Account> accounts = accountService.findByUserId(sessionUser.getId(), semanticQuery);
+            List<AccountResponseDTO> response = accounts.stream()
+                    .map(this::toResponse)
+                    .toList();
             res.status(200);
-            return gson.toJson(accounts);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid user ID format.");
@@ -112,15 +119,24 @@ public class AccountController {
                 res.status(401);
                 return gson.toJson("Usuário não autenticado.");
             }
+
+            String semanticQueryParam = req.queryParams("semantical_search");
+            String semanticQuery = (semanticQueryParam == null || semanticQueryParam.isBlank()) ? null : semanticQueryParam;
             
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : PaginationRequestDTO.DEFAULT_PAGE;
             int size = req.queryParams("size") != null ? Integer.parseInt(req.queryParams("size")) : PaginationRequestDTO.DEFAULT_PAGE_LIMIT;
             
             PaginationRequestDTO pagination = new PaginationRequestDTO(page, size);
-            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(sessionUser.getId(), pagination);
+            PaginatedResponseDTO<Account> paginatedAccounts = accountService.findByUserIdPaginated(sessionUser.getId(), pagination, semanticQuery);
+            PaginatedResponseDTO<AccountResponseDTO> response = new PaginatedResponseDTO<>(
+                    paginatedAccounts.getData().stream().map(this::toResponse).toList(),
+                    paginatedAccounts.getTotalItems(),
+                    paginatedAccounts.getCurrentPage(),
+                    paginatedAccounts.getPageLimit()
+            );
             
             res.status(200);
-            return gson.toJson(paginatedAccounts);
+            return gson.toJson(response);
         } catch (IllegalArgumentException e) {
             res.status(400);
             return gson.toJson("Invalid parameters format.");
@@ -209,5 +225,19 @@ public class AccountController {
             res.status(400);
             return gson.toJson("Invalid ID format.");
         }
+    }
+
+    private AccountResponseDTO toResponse(Account account) {
+        if (account == null) {
+            return null;
+        }
+        return new AccountResponseDTO(
+                account.getId(),
+                account.getName(),
+                account.getUserId(),
+                account.getFinancialInstitution(),
+                account.getBalance(),
+                account.getCreatedAt() != null ? account.getCreatedAt().toString() : null
+        );
     }
 }

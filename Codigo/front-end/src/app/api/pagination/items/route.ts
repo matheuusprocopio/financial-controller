@@ -21,16 +21,33 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const name = searchParams.get("name") || undefined;
-  const categoryId = searchParams.get("categoryId") || undefined;
-  const accountId = searchParams.get("accountId") || undefined;
-  const startDate = searchParams.get("startDate") || undefined;
-  const endDate = searchParams.get("endDate") || undefined;
+  const categoryId =
+    searchParams.get("categoryId") ||
+    searchParams.get("category_id") ||
+    undefined;
+  const accountId =
+    searchParams.get("accountId") ||
+    searchParams.get("account_id") ||
+    undefined;
+  const startDate =
+    searchParams.get("startDate") ||
+    searchParams.get("start_date") ||
+    undefined;
+  const endDate =
+    searchParams.get("endDate") ||
+    searchParams.get("end_date") ||
+    undefined;
+  const semanticalSearch = searchParams.get("semantical_search") || undefined;
 
   const typeParam = searchParams.get("type");
   const type = typeParam === "income" || typeParam === "expense" ? typeParam : undefined;
 
   const pageParam = Number(searchParams.get("page"));
-  const pageLimitParam = Number(searchParams.get("pageLimit"));
+  const pageLimitParam = Number(
+    searchParams.get("pageLimit") ||
+      searchParams.get("size") ||
+      searchParams.get("page_limit")
+  );
 
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : undefined;
   const pageLimit = Number.isFinite(pageLimitParam) && pageLimitParam > 0 ? pageLimitParam : undefined;
@@ -44,6 +61,7 @@ export async function GET(request: NextRequest) {
     endDate,
     page,
     pageLimit,
+    semanticalSearch,
   });
 
   if ("error" in response) {

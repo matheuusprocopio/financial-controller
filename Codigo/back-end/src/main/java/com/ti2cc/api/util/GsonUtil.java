@@ -23,10 +23,16 @@ public class GsonUtil {
                     (JsonSerializer<LocalDate>) (value, type, context) ->
                             context.serialize(value != null ? value.toString() : null))
             .registerTypeAdapter(LocalDate.class,
-                    (JsonDeserializer<LocalDate>) (json, type, context) ->
-                            (json == null || json.isJsonNull())
-                                    ? null
-                                    : LocalDate.parse(json.getAsString()))
+                    (JsonDeserializer<LocalDate>) (json, type, context) -> {
+                            if (json == null || json.isJsonNull()) {
+                                return null;
+                            }
+                            String dateStr = json.getAsString();
+                            if (dateStr.contains("T")) {
+                                return LocalDate.parse(dateStr.substring(0, 10));
+                            }
+                            return LocalDate.parse(dateStr);
+                    })
             .create();
 
     private GsonUtil() {

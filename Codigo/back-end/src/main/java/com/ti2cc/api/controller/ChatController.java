@@ -4,9 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.ChatCreateDTO;
 import com.ti2cc.api.dto.ChatIdResponseDTO;
@@ -16,6 +13,7 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Chat;
 import com.ti2cc.api.model.User;
 import com.ti2cc.api.service.ChatService;
+import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
 import spark.Response;
@@ -23,20 +21,10 @@ import spark.Response;
 public class ChatController {
 
     private final ChatService chatService;
-    private final Gson gson;
+    private final Gson gson = GsonUtil.getGson();
 
     public ChatController(ChatService chatService) {
         this.chatService = chatService;
-        this.gson = new GsonBuilder()
-                .registerTypeAdapter(OffsetDateTime.class,
-                        (JsonSerializer<OffsetDateTime>) (value, type, context) ->
-                                context.serialize(value != null ? value.toString() : null))
-                .registerTypeAdapter(OffsetDateTime.class,
-                        (JsonDeserializer<OffsetDateTime>) (json, type, context) ->
-                                (json == null || json.isJsonNull())
-                                        ? null
-                                        : OffsetDateTime.parse(json.getAsString()))
-                .create();
     }
 
     public Object create(Request req, Response res) {

@@ -16,6 +16,8 @@ import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
 import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
 import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
 import ItemsList from "@/components/ToolsComponents/Items/ListItems";
+import UpdateUserForm from "@/components/ToolsComponents/User/UpdateUserForm";
+import DeleteUserForm from "@/components/ToolsComponents/User/DeleteUserForm";
 import { DynamicToolUIPart } from "ai";
 
 type ToolRendererType = (
@@ -151,6 +153,20 @@ export const NewToolsMap = (
       <ItemsList
         data={p.output as any}
         onError={(msg, payload) => helpers.onError(msg, payload)}
+      />
+    ),
+    "tool-updateUser": (p, helpers) => (
+      <UpdateUserForm
+        data={p.output as any}
+        onError={(msg, payload) => helpers.onError(msg, payload)}
+        onSubmitted={helpers.onSubmitted}
+      />
+    ),
+    "tool-deleteUser": (p, helpers) => (
+      <DeleteUserForm
+        data={p.output as any}
+        onError={(msg, payload) => helpers.onError(msg, payload)}
+        onSubmitted={helpers.onSubmitted}
       />
     ),
   };

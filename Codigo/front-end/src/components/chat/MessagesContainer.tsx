@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { UIMessage } from "@ai-sdk/react";
 
 import MessageComponent from "./MessageComponent";
@@ -19,10 +19,12 @@ const MessagesContainer = ({
   chatId,
 }: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, backendUser, loadBackendUser } = useAuth();
 
   const photoURL = user?.photoURL || "";
-  const displayName = user?.displayName || "";
+  const [displayName, setDisplayName] = useState<string>(
+    backendUser?.name || ""
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,6 +33,19 @@ const MessagesContainer = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if (!backendUser) {
+      void loadBackendUser();
+    }
+  }, [backendUser, loadBackendUser]);
+
+  useEffect(() => {
+    const nextName = backendUser?.name;
+    if (nextName) {
+      setDisplayName((prev) => (prev === nextName ? prev : nextName));
+    }
+  }, [backendUser?.name]);
 
   return (
     <div className="relative z-10 flex-1 overflow-hidden">

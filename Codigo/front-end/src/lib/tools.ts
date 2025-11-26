@@ -1215,6 +1215,38 @@ export const listItemActionsTool = tool({
 });
 //
 
+export const updateUserTool = tool({
+  description: "Atualiza os dados do usuário autenticado",
+  inputSchema: z.object({
+    userId: z.string().optional(),
+    name: z.string().optional()
+  }),
+
+  execute: async ({ userId = "", name = ""}) => {
+    return {
+      userId,
+      name
+
+    };
+  },
+});
+
+export const deleteUserTool = tool({
+  description: "Remove definitivamente o usuário autenticado",
+  inputSchema: z.object({
+    userId: z.string().optional(),
+    name: z.string().optional(),
+  }),
+
+  execute: async ({ userId = "", name = ""}) => {
+    return {
+      userId,
+      name
+    };
+  },
+});
+
+
 
 export const tools = {
   createNewCategory: createNewCategoryTool,
@@ -1240,4 +1272,7 @@ export const tools = {
   listItemActions: listItemActionsTool,
   deleteItem: deleteItemTool,
   listItems: listItemsTool,
+
+  updateUser: updateUserTool,
+  deleteUser: deleteUserTool,
 };

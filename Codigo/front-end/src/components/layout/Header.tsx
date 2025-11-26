@@ -11,29 +11,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, Menu, Wallet, LogOut, Settings } from "lucide-react";
+import { User, Menu, Wallet, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import UserManageModal from "@/components/ToolsComponents/User/UserManageModal";
-import type { UserType } from "@/types/user.type";
-import type { RequestError } from "@/utils/requestProvider";
-import { deleteUser, updateUser } from "@/utils/services/users";
-
 interface IHeader {
   onToggleSidebar?: () => void;
 }
-
-const isRequestError = (response: unknown): response is RequestError => {
-  return !!response && typeof response === "object" && "error" in response;
-};
 
 const Header = ({
   onToggleSidebar,
 }: IHeader) => {
   const router = useRouter();
-  const { logout, loading, user: firebaseUser, backendUser, loadBackendUser, sessionId } = useAuth();
-  const [userModalOpen, setUserModalOpen] = useState(false);
-  const [userData, setUserData] = useState<UserType | null>(null);
+  const { logout, loading, user: firebaseUser, backendUser, loadBackendUser } = useAuth();
   const [cookieChecked, setCookieChecked] = useState(false);
   const displayName = backendUser?.name || (loading ? "Carregando..." : "Usuário");
   const displayEmail = backendUser?.email || "";
@@ -72,50 +61,6 @@ const Header = ({
       router.push("/");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
-    }
-  };
-
-  const handleManageUser = async () => {
-    if (!backendUser) return;
-    setUserData(backendUser);
-    setUserModalOpen(true);
-  };
-
-  const handleUpdateUser = async (user: UserType) => {
-    try {
-      if (!sessionId) {
-        throw new Error("Sessão inválida");
-      }
-
-      const response = await updateUser(user.id, { name: user.name, email: user.email }, sessionId);
-      if (!response) {
-        throw new Error("Resposta inválida ao atualizar usuário");
-      }
-      if (isRequestError(response)) {
-        throw new Error(response.error.message || "Erro ao atualizar usuário");
-      }
-      setUserData(response);
-      await loadBackendUser();
-    } catch (error: any) {
-      throw new Error(error.message || "Erro ao atualizar usuário");
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      if (!sessionId) {
-        throw new Error("Sessão inválida");
-      }
-
-      const response = await deleteUser(userId, sessionId);
-      if (response && isRequestError(response)) {
-        throw new Error(response.error.message || "Erro ao deletar usuário");
-      }
-      setUserData(null);
-
-      await handleLogout();
-    } catch (error: any) {
-      throw new Error(error.message || "Erro ao deletar usuário");
     }
   };
 
@@ -172,14 +117,6 @@ const Header = ({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onClick={handleManageUser}
-                className="cursor-pointer"
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Gerenciar Conta</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
                 onClick={handleLogout} 
                 className="cursor-pointer"
                 disabled={loading}
@@ -200,14 +137,6 @@ const Header = ({
           </Button>
         )}
       </div>
-
-      <UserManageModal
-        open={userModalOpen}
-        onOpenChange={setUserModalOpen}
-        user={userData}
-        onUpdate={handleUpdateUser}
-        onDelete={handleDeleteUser}
-      />
     </header>
   );
 };

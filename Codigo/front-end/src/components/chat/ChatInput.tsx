@@ -57,6 +57,18 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
+    const handleFileUpload = () => {
+      setIsUploadModalOpen(true);
+    };
+
+    const handleFilesUploaded = (files: File[]) => {
+      files.forEach((file) => {
+        onSendMessage(
+          `Arquivo enviado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+        );
+      });
+    };
+
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,18 +116,6 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const handleFileUpload = () => {
-    setIsUploadModalOpen(true);
-  };
-
-  const handleFilesUploaded = (files: File[]) => {
-    files.forEach((file) => {
-      onSendMessage(
-        `Arquivo enviado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
-      );
-    });
   };
 
   const handleTranscription = async (file: File) => {
@@ -242,14 +242,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           </div>
         )}
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleFileUpload}
-            className="h-11 w-11 flex-shrink-0 rounded-lg border border-purple-400/30 bg-purple-500/10 text-white transition hover:border-purple-400/50 hover:bg-purple-500/20"
-          >
-            <Paperclip className="w-5 h-5" />
-          </Button>
+        
           <div className="flex-1 relative">
             <Textarea
               ref={textareaRef}

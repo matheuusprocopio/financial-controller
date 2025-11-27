@@ -1,31 +1,30 @@
 cff-version: 1.0.1
 message: Please cite this software using these metadata.
-title: 
+title: Financial Controller
 authors:
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names: 
-  - family-names: 
-    given-names:
+  - family-names: Lima
+    given-names: Arthur Mendes
+  - family-names: Moreira
+    given-names: Heitor Lima
+  - family-names: Duarte
+    given-names: Matheus Procopio
+  - family-names: Dias
+    given-names: Nicolas Alexandre
   - name-suffix: Professor
     affiliation: PUC Minas
-    family-names: 
-    given-names: 
+    family-names: Brandao
+    given-names: Wladimir Cardoso
   - name-suffix: Professor
     affiliation: PUC Minas
-    family-names: 
-    given-names: 
+    family-names: Almeida
+    given-names: Carolina Stephanie Jerônimo de
 keywords:
-  - 
-  - 
-repository-code: 
+  - financial management
+  - financial controller
+  - personal finance
+  - software
+  - budgeting
+repository-code: https://github.com/ICEI-PUC-Minas-CC-TI/ti1-2025-1-t2-manha-pullrequestgenerator.git
 license: CC-BY-4.0
 version: 1.0.0
 date-released: 2022-07-14

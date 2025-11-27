@@ -4,14 +4,14 @@ Estão reunidas nesse diretório as apresentações produzidas ao longo das spri
 
 ### Conteúdo
 
- • Sprint 1 - TI2 - FinancialController.pdf
-    Primeira entrega: definição do escopo inicial
+* Sprint 1 - TI2 - FinancialController.pdf
+   Primeira entrega: definição do escopo inicial
     
- • Sprint 2 - TI2 - FinancialController.pdf
-    Avanço das funcionalidades principais, requisitos, modelos do banco de dados e do front end
+* Sprint 2 - TI2 - FinancialController.pdf
+   Avanço das funcionalidades principais, requisitos, modelos do banco de dados e do front end
 
- • Sprint 3 - TI2 - FinancialController.pdf
-    Consolidação de módulos, implementação e integração do back end junto a especificações do sistema inteligente
+* Sprint 3 - TI2 - FinancialController.pdf
+   Consolidação de módulos, implementação e integração do back end junto a especificações do sistema inteligente
 
 
 

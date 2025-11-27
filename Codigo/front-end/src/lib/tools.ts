@@ -1,4 +1,3 @@
-import { creditCardsMock } from "@/data/creditCardsMock";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -269,12 +268,10 @@ export const listCreditCardsTool = tool({
   }),
 
   execute: async ({ cardName = "" }) => {
-    const creditCards = creditCardsMock;
-
     return {
       cardName,
-      creditCards,
-      totalOfCreditCards: creditCards.length,
+      creditCards: [],
+      totalOfCreditCards: 0,
     };
   },
 });

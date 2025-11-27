@@ -109,6 +109,46 @@ function useProvideAuth(): UseAuthReturn {
     }
   }, []);
 
+  const validateSession = useCallback(
+    async (
+      overrideSessionId?: string,
+      options?: ValidateSessionOptions
+    ): Promise<AuthResponse> => {
+      const activeSessionId = overrideSessionId ?? sessionId;
+      if (!activeSessionId) {
+        throw new Error("Nenhuma sessão ativa");
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_BASE}/auth/validate`, {
+          method: "GET",
+          headers: { "X-Session-Id": activeSessionId },
+        });
+
+        const data: AuthResponse = await response.json();
+
+        if (response.ok && data.success) {
+          setSessionId(activeSessionId);
+          await setCookie(SESSION_COOKIE, activeSessionId);
+          if (data.user && !options?.skipStateUpdate) {
+            setBackendUser(data.user);
+          }
+          return data;
+        } else {
+          setSessionId(null);
+          setBackendUser(null);
+          throw new Error(data.message || "Sessão inválida ou expirada");
+        }
+      } catch (error: any) {
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sessionId]
+  );
+
   const loadBackendUser = useCallback(async (): Promise<UserType | null> => {
     const storedSession = sessionId ?? (await getCookie(SESSION_COOKIE));
     if (!storedSession) {
@@ -150,7 +190,7 @@ function useProvideAuth(): UseAuthReturn {
     } finally {
       setLoadingBackendUser(false);
     }
-  }, [sessionId]);
+  }, [sessionId, validateSession]);
 
   useEffect(() => {
     loadBackendUser();
@@ -306,48 +346,6 @@ function useProvideAuth(): UseAuthReturn {
       setLoading(false);
     }
   }, []);
-
-
-  const validateSession = useCallback(
-    async (
-      overrideSessionId?: string,
-      options?: ValidateSessionOptions
-    ): Promise<AuthResponse> => {
-      const activeSessionId = overrideSessionId ?? sessionId;
-      if (!activeSessionId) {
-        throw new Error("Nenhuma sessão ativa");
-      }
-
-      setLoading(true);
-      try {
-        const response = await fetch(`${API_BASE}/auth/validate`, {
-          method: "GET",
-          headers: { "X-Session-Id": activeSessionId },
-        });
-
-        const data: AuthResponse = await response.json();
-
-        if (response.ok && data.success) {
-          setSessionId(activeSessionId);
-          await setCookie(SESSION_COOKIE, activeSessionId);
-          if (data.user && !options?.skipStateUpdate) {
-            setBackendUser(data.user);
-          }
-          return data;
-        } else {
-          setSessionId(null);
-          setBackendUser(null);
-          throw new Error(data.message || "Sessão inválida ou expirada");
-        }
-      } catch (error: any) {
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [sessionId]
-  );
-
   useEffect(() => {
     if (!sessionId || backendUser) {
       return;

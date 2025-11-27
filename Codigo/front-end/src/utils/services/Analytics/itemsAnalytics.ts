@@ -1,12 +1,12 @@
 import newRequestProvider from "@/utils/requestProvider";
 import { ItemAnalyticsResponse } from "@/types/analytics.types";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SERVICE_API_BASE_URL as string;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL as string;
 
 const provider = newRequestProvider(`${BASE_URL}`);
 
 export type ItemAnalyticsRequest = {
-  userId: string;
+  userId?: string;
   metric: "total_expenses" | "total_incomes" | "balance" | "count_items";
   groupBy: ("month" | "category" | "account" | "type")[];
   startDate: string; 
@@ -16,10 +16,11 @@ export type ItemAnalyticsRequest = {
 };
 
 export const calculateItemsAnalytics = async (
-  body: ItemAnalyticsRequest
+  body: ItemAnalyticsRequest,
+  sessionId: string
 ) => {
   return provider.post<ItemAnalyticsResponse, ItemAnalyticsRequest>(
     "items/analytics",
-    { body }
+    { body, headers: { "X-Session-Id": sessionId } }
   );
 };

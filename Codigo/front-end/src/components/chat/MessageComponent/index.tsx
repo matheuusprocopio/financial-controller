@@ -13,6 +13,7 @@ interface IMessageComponent {
   displayName: string;
   timestamp: Date;
   onSendMessage: (message: string) => Promise<void>;
+  chatId: string;
 }
 
 const MessageComponent = ({
@@ -21,6 +22,7 @@ const MessageComponent = ({
   onSendMessage,
   photoURL,
   displayName,
+  chatId,
 }: IMessageComponent) => {
   const isUserMessage = message.role === "user";
   const authorLabel =
@@ -62,6 +64,7 @@ const MessageComponent = ({
           message={message}
           timestamp={timestamp}
           onSendMessage={onSendMessage}
+          chatId={chatId}
         />
       </div>
     </div>

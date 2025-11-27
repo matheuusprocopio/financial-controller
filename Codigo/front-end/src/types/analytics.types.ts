@@ -1,3 +1,5 @@
+import type { RequestError } from "@/utils/requestProvider";
+
 export type ItemAnalyticsPoint = {
   month?: string;
   categoryName?: string;
@@ -10,4 +12,5 @@ export type ItemAnalyticsResponse = {
   metric: string;
   groupBy: string[];
   points: ItemAnalyticsPoint[];
+  error?: RequestError;
 };

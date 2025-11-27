@@ -1,7 +1,7 @@
 "use server";
 
-import { CreateAccountType, UpdateAccountType } from "@/types/account.type";
-import { RequestError } from "@/utils/requestProvider";
+import { UpdateAccountType } from "@/types/account.type";
+import { RequestError, createRequestError } from "@/utils/requestProvider";
 import { getSessionId } from "@/utils/server-cookies";
 import {
   createAccount,
@@ -17,11 +17,7 @@ export const createAccountAction = async (payload: {
   const sessionId = await getSessionId();
 
   if (!sessionId) {
-    return {
-      error: {
-        message: "Invalid session",
-      },
-    };
+    return createRequestError(401, "Invalid session", "accounts");
   }
 
   const resp = await createAccount(sessionId, {
@@ -37,11 +33,7 @@ export const updateAccountAction = async (
 ): Promise<RequestError | any> => {
   const sessionId = await getSessionId();
   if (!sessionId) {
-    return {
-      error: {
-        message: "Invalid session",
-      },
-    } as RequestError;
+    return createRequestError(401, "Invalid session", `accounts/${accountId}`);
   }
 
   const resp = await updateAccount(accountId, sessionId, payload);
@@ -51,11 +43,7 @@ export const updateAccountAction = async (
 export const deleteAccountAction = async (accountId: string) => {
   const sessionId = await getSessionId();
   if (!sessionId) {
-    return {
-      error: {
-        message: "Invalid session",
-      },
-    } as RequestError;
+    return createRequestError(401, "Invalid session", `accounts/${accountId}`);
   }
 
   const resp = await deleteAccount(accountId, sessionId);

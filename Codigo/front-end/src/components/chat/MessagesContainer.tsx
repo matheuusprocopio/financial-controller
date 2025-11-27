@@ -10,11 +10,13 @@ import { useAuth } from "@/hooks/use-auth";
 interface MessageContainerProps {
   messages: FrontMessageType[];
   onSendMessage: (message: string) => Promise<void>;
+  chatId: string;
 }
 
 const MessagesContainer = ({
   messages,
   onSendMessage,
+  chatId,
 }: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -39,6 +41,7 @@ const MessagesContainer = ({
             key={message.message.id}
             message={message.message}
             timestamp={message.createdAt}
+            chatId={chatId}
             photoURL={photoURL}
             displayName={displayName}
           />

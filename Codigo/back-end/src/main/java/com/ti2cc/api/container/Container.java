@@ -9,9 +9,11 @@ import com.ti2cc.api.controller.ChatController;
 import com.ti2cc.api.controller.ItemController;
 import com.ti2cc.api.controller.MessageController;
 import com.ti2cc.api.controller.UserController;
+import com.ti2cc.api.controller.GoalController;
 import com.ti2cc.api.dao.AccountDAO;
 import com.ti2cc.api.dao.CategoryDAO;
 import com.ti2cc.api.dao.ChatDAO;
+import com.ti2cc.api.dao.GoalDAO;
 import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.dao.MessageDAO;
 import com.ti2cc.api.dao.UserDAO;
@@ -21,17 +23,20 @@ import com.ti2cc.api.routes.AccountRoutes;
 import com.ti2cc.api.routes.AuthRoutes;
 import com.ti2cc.api.routes.CategoryRoutes;
 import com.ti2cc.api.routes.ChatRoutes;
+import com.ti2cc.api.routes.GoalRoutes;
 import com.ti2cc.api.routes.ItemRoutes;
 import com.ti2cc.api.routes.MessageRoutes;
 import com.ti2cc.api.routes.UserRoutes;
 import com.ti2cc.api.service.AccountService;
 import com.ti2cc.api.service.CategoryService;
 import com.ti2cc.api.service.ChatService;
+import com.ti2cc.api.service.EmbeddingService;
 import com.ti2cc.api.service.FirebaseAuthService;
 import com.ti2cc.api.service.ItemService;
 import com.ti2cc.api.service.MessageService;
 import com.ti2cc.api.service.SessionService;
 import com.ti2cc.api.service.UserService;
+import com.ti2cc.api.service.GoalService;
 
 import static spark.Spark.before;
 import spark.Request;
@@ -46,13 +51,16 @@ public class Container {
         ItemDAO itemDAO = new ItemDAO(postgresConn);
         ChatDAO chatDAO = new ChatDAO(postgresConn);
         MessageDAO messageDAO = new MessageDAO(postgresConn);
+        GoalDAO goalDAO = new GoalDAO(postgresConn);
 
 
-        CategoryService categoryService = new CategoryService(categoryDAO);
-        AccountService accountService = new AccountService(accountDAO);
+        EmbeddingService embeddingService = new EmbeddingService();
+        CategoryService categoryService = new CategoryService(categoryDAO, embeddingService);
+        AccountService accountService = new AccountService(accountDAO, embeddingService);
+        GoalService goalService = new GoalService(goalDAO, accountService, embeddingService);
         ChatService chatService = new ChatService(chatDAO);
         UserService userService = new UserService(userDAO, chatService);
-        ItemService itemService = new ItemService(itemDAO);
+        ItemService itemService = new ItemService(itemDAO, accountDAO, embeddingService);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
 
         // Serviços de autenticação
@@ -67,6 +75,7 @@ public class Container {
         AuthController authController = new AuthController(firebaseAuthService, userService, sessionService);
         ChatController chatController = new ChatController(chatService);
         MessageController messageController = new MessageController(messageService);
+        GoalController goalController = new GoalController(goalService);
 
 
         CategoryRoutes categoryRoutes = new CategoryRoutes(categoryController);
@@ -76,6 +85,7 @@ public class Container {
         AuthRoutes authRoutes = new AuthRoutes(authController);
         ChatRoutes chatRoutes = new ChatRoutes(chatController);
         MessageRoutes messageRoutes = new MessageRoutes(messageController);
+        GoalRoutes goalRoutes = new GoalRoutes(goalController);
 
         registerAuthGuards(authMiddleware);
         
@@ -86,6 +96,7 @@ public class Container {
         authRoutes.register();
         chatRoutes.register();
         messageRoutes.register();
+        goalRoutes.register();
     }
 
     private static void registerAuthGuards(AuthMiddleware authMiddleware) {
@@ -103,6 +114,23 @@ public class Container {
             authMiddleware.requireValidSession(req, res);
         });
         before("/accounts/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+
+        before("/items", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/items/*", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/goals", (req, res) -> {
+            if (isPreflight(req)) return;
+            authMiddleware.requireValidSession(req, res);
+        });
+        before("/goals/*", (req, res) -> {
             if (isPreflight(req)) return;
             authMiddleware.requireValidSession(req, res);
         });

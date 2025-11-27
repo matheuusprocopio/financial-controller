@@ -1,5 +1,13 @@
 export type RequestError = { error: { status: number; message: string; resource: string } };
 
+export const createRequestError = (
+  status: number,
+  message: string,
+  resource: string,
+): RequestError => ({
+  error: { status, message, resource },
+});
+
 export type RequestHeaders = { [key: string]: string };
 
 const respValidation = async (resp: Response): Promise<RequestError | null> => {
@@ -8,11 +16,9 @@ const respValidation = async (resp: Response): Promise<RequestError | null> => {
 
     const data = await resp.json();
 
-    return { error: { status: resp.status, message: JSON.stringify(data), resource: resp.url } };
+    return createRequestError(resp.status, JSON.stringify(data), resp.url);
   } catch (err) {
-    return {
-      error: { status: resp.status, message: "Invalid response", resource: resp.url },
-    };
+    return createRequestError(resp.status, "Invalid response", resp.url);
   }
 };
 
@@ -36,7 +42,7 @@ export default function newRequestProvider(baseUrl: string, defaultHeaders?: Req
       return await parser(resp);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unexpected error";
-      return { error: { status: 500, message, resource: buildResource(endpoint) } };
+      return createRequestError(500, message, buildResource(endpoint));
     }
   };
 

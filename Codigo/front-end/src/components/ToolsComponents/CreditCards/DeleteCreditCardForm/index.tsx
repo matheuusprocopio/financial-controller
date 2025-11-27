@@ -9,11 +9,13 @@ interface IDeleteCreditCardForm {
     cardName?: string;
     cardId?: string;
     financialInstitution?: string;
+    alreadySubmitted?: boolean;
   };
-  onError?(errMsg: string): void;
+  onError?(errMsg: string, payload?: unknown): void;
+  onSubmitted?(): void;
 }
 
-const DeleteCreditCardForm = ({ data, onError }: IDeleteCreditCardForm) => {
+const DeleteCreditCardForm = ({ data, onError, onSubmitted }: IDeleteCreditCardForm) => {
   const cardName = data?.cardName ?? "Cartão não encontrado";
   const financialInstitution = data?.financialInstitution;
   const cardId = data?.cardId;
@@ -25,11 +27,16 @@ const DeleteCreditCardForm = ({ data, onError }: IDeleteCreditCardForm) => {
       confirmLabel="Sim, deletar"
       cancelLabel="Cancelar"
       confirmVariant="destructive"
-      onConfirm={() => {
+      alreadySubmitted={data?.alreadySubmitted}
+      onSubmitted={onSubmitted}
+      onConfirm={async () => {
         if (!cardId) {
           onError?.("Cartão não encontrado para exclusão.");
+          return false;
         }
+
         // Integração pendente: ao implementar, propague possíveis erros via onError.
+        return true;
       }}
     >
       <Card className="p-3 border-destructive/20 bg-destructive/5">

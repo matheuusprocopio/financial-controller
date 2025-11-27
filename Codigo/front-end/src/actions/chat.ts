@@ -2,6 +2,7 @@
 
 import { getSessionId } from "@/utils/server-cookies";
 import { createChat, deleteChat } from "@/utils/services/chat";
+import { createRequestError } from "@/utils/requestProvider";
 import { revalidateTag } from "next/cache";
 
 export const createChatAction = async (payload: {
@@ -10,11 +11,7 @@ export const createChatAction = async (payload: {
   const sessionId = await getSessionId();
 
   if (!sessionId) {
-    return {
-      error: {
-        messsage: "Invalid session"
-      }
-    };
+    return createRequestError(401, "Invalid session", "chats");
   }
 
   const resp = await createChat(sessionId, payload.name);
@@ -27,11 +24,7 @@ export const createChatAction = async (payload: {
 export const deleteChatAction = async (chatId: string) => {
   const sessionId = await getSessionId();
   if (!sessionId) {
-    return {
-      error: {
-        message: "Invalid session",
-      },
-    };
+    return createRequestError(401, "Invalid session", `chats/${chatId}`);
   }
   const resp = await deleteChat(chatId, sessionId);
 

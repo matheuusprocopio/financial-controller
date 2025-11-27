@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
   const pageParam = Number(searchParams.get("page"));
   const sizeParam = Number(searchParams.get("size"));
   const nameParam = searchParams.get("name") ?? undefined;
+  const semanticalSearch = searchParams.get("semantical_search") ?? undefined;
 
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : defaultPagination.page;
   const size = Number.isFinite(sizeParam) && sizeParam > 0 ? sizeParam : defaultPagination.size;
@@ -35,7 +36,8 @@ export async function GET(request: NextRequest) {
   const response = await listCategoriesPaginated(
     sessionId,
     { page, size },
-    nameParam
+    nameParam,
+    semanticalSearch
   );
 
   if ("error" in (response as Record<string, unknown>)) {

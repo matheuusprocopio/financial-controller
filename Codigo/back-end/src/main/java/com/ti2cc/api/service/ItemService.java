@@ -1,23 +1,28 @@
 package com.ti2cc.api.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import com.ti2cc.api.dto.DateRangeDTO;
-import com.ti2cc.api.dto.PaginatedResponseDTO;
-import com.ti2cc.api.dto.PaginationRequestDTO;
+import com.ti2cc.api.dao.AccountDAO;
 import com.ti2cc.api.dao.ItemDAO;
-import com.ti2cc.api.model.Item;
-
+import com.ti2cc.api.dto.DateRangeDTO;
 import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
 import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
-import java.time.LocalDate;
+import com.ti2cc.api.dto.PaginatedResponseDTO;
+import com.ti2cc.api.dto.PaginationRequestDTO;
+import com.ti2cc.api.model.Item;
+import com.ti2cc.api.model.Item.ItemType;
 
 public class ItemService {
     private final ItemDAO itemDAO;
+    private final AccountDAO accountDAO;
+    private final EmbeddingService embeddingService;
 
-    public ItemService(ItemDAO itemDAO) {
+    public ItemService(ItemDAO itemDAO, AccountDAO accountDAO, EmbeddingService embeddingService) {
         this.itemDAO = itemDAO;
+        this.accountDAO = accountDAO;
+        this.embeddingService = embeddingService;
     }
 
     public boolean createItem(Item item) {
@@ -70,7 +75,25 @@ public class ItemService {
             item.setId(UUID.randomUUID());
         }
 
-        return itemDAO.create(item);
+        String searchTerm = buildSearchTerm(item.getName(), item.getDescription());
+        float[] embedding = embeddingService.generateEmbedding(searchTerm);
+        if (embedding == null) {
+            System.err.println("Failed to generate embedding for item creation.");
+            return false;
+        }
+        item.setSearchEmbedding(embedding);
+
+        boolean created = itemDAO.create(item);
+        
+        if (created) {
+            if (item.getType() == ItemType.income) {
+                accountDAO.increaseBalance(item.getAccountId(), item.getAmount());
+            } else if (item.getType() == ItemType.expense) {
+                accountDAO.decreaseBalance(item.getAccountId(), item.getAmount());
+            }
+        }
+        
+        return created;
     }
 
     public boolean updateItem(Item item) {
@@ -91,7 +114,45 @@ public class ItemService {
             return false;
         }
 
-        return itemDAO.update(item);
+        Item oldItem = itemDAO.getById(item.getId());
+        if (oldItem == null) {
+            System.err.println("Item not found for update: " + item.getId());
+            return false;
+        }
+
+        if (item.getName() != null || item.getDescription() != null) {
+            String newName = item.getName() != null ? item.getName() : oldItem.getName();
+            String newDescription = item.getDescription() != null ? item.getDescription() : oldItem.getDescription();
+            String searchTerm = buildSearchTerm(newName, newDescription);
+            float[] embedding = embeddingService.generateEmbedding(searchTerm);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for item update.");
+                return false;
+            }
+            item.setSearchEmbedding(embedding);
+        }
+
+        boolean updated = itemDAO.update(item);
+        
+        if (updated) {
+            if (oldItem.getType() == ItemType.income) {
+                accountDAO.decreaseBalance(oldItem.getAccountId(), oldItem.getAmount());
+            } else if (oldItem.getType() == ItemType.expense) {
+                accountDAO.increaseBalance(oldItem.getAccountId(), oldItem.getAmount());
+            }
+            
+            UUID newAccountId = item.getAccountId() != null ? item.getAccountId() : oldItem.getAccountId();
+            Double newAmount = item.getAmount() != null ? item.getAmount() : oldItem.getAmount();
+            ItemType newType = item.getType() != null ? item.getType() : oldItem.getType();
+            
+            if (newType == ItemType.income) {
+                accountDAO.increaseBalance(newAccountId, newAmount);
+            } else if (newType == ItemType.expense) {
+                accountDAO.decreaseBalance(newAccountId, newAmount);
+            }
+        }
+        
+        return updated;
     }
 
     public boolean deleteItem(UUID id) {
@@ -100,7 +161,23 @@ public class ItemService {
             return false;
         }
 
-        return itemDAO.delete(id);
+        Item item = itemDAO.getById(id);
+        if (item == null) {
+            System.err.println("Item not found for deletion: " + id);
+            return false;
+        }
+
+        boolean deleted = itemDAO.delete(id);
+        
+        if (deleted) {
+            if (item.getType() == ItemType.income) {
+                accountDAO.decreaseBalance(item.getAccountId(), item.getAmount());
+            } else if (item.getType() == ItemType.expense) {
+                accountDAO.increaseBalance(item.getAccountId(), item.getAmount());
+            }
+        }
+        
+        return deleted;
     }
 
     public Item findItemById(UUID id) {
@@ -112,17 +189,29 @@ public class ItemService {
         return itemDAO.getById(id);
     }
 
-    public PaginatedResponseDTO<Item> listItemsByUserId(UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> listItemsByUserId(UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         if (userId == null) {
             System.err.println("Invalid user ID.");
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
         String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
-        return itemDAO.getByUserId(userId, sanitizedFilter, dateRange, pagination);
+        String sanitizedTypeFilter = (typeFilter != null && !typeFilter.isBlank()) ? typeFilter.trim() : null;
+        String sanitizedSemanticQuery = (semanticQuery != null && !semanticQuery.isBlank()) ? semanticQuery.trim() : null;
+
+        if (sanitizedSemanticQuery != null) {
+            float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic item search.");
+                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            }
+            return itemDAO.getByUserIdSemantic(userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+        }
+
+        return itemDAO.getByUserId(userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
     }
 
-    public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, String nameFilter, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+    public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
         if (categoryId == null) {
             System.err.println("Invalid category ID.");
             return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
@@ -134,30 +223,115 @@ public class ItemService {
         }
 
         String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
-        return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter, dateRange, pagination);
+        String sanitizedTypeFilter = (typeFilter != null && !typeFilter.isBlank()) ? typeFilter.trim() : null;
+        String sanitizedSemanticQuery = (semanticQuery != null && !semanticQuery.isBlank()) ? semanticQuery.trim() : null;
+
+        if (sanitizedSemanticQuery != null) {
+            float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic item search by category.");
+                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            }
+            return itemDAO.getByCategoryIdSemantic(categoryId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+        }
+
+        return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
     }
-        public ItemAnalyticsResponseDTO getAnalytics(ItemAnalyticsRequestDTO req) {
-        if (req == null || req.getUserId() == null) {
-            System.err.println("Invalid analytics request: missing userId");
-            return new ItemAnalyticsResponseDTO();
+
+    public PaginatedResponseDTO<Item> listItemsByCategoryAndAccount(UUID categoryId, UUID accountId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        if (categoryId == null) {
+            System.err.println("Invalid category ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        if (req.getStartDate() == null || req.getEndDate() == null) {
-            LocalDate end = LocalDate.now();
-            LocalDate start = end.minusMonths(6);
-            req.setStartDate(start);
-            req.setEndDate(end);
+        if (accountId == null) {
+            System.err.println("Invalid account ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        if (req.getGroupBy() == null || req.getGroupBy().isEmpty()) {
-            req.setGroupBy(List.of(ItemAnalyticsRequestDTO.GroupBy.month));
+        if (userId == null) {
+            System.err.println("Invalid user ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
         }
 
-        if (req.getMetric() == null) {
-            req.setMetric(ItemAnalyticsRequestDTO.Metric.total_expenses);
+        String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
+        String sanitizedTypeFilter = (typeFilter != null && !typeFilter.isBlank()) ? typeFilter.trim() : null;
+        String sanitizedSemanticQuery = (semanticQuery != null && !semanticQuery.isBlank()) ? semanticQuery.trim() : null;
+
+        if (sanitizedSemanticQuery != null) {
+            float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic item search by category and account.");
+                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            }
+            return itemDAO.getByCategoryAndAccountSemantic(categoryId, accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
         }
 
-        return itemDAO.getAnalytics(req);
+        return itemDAO.getByCategoryAndAccount(categoryId, accountId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
     }
+
+    public PaginatedResponseDTO<Item> listItemsByAccountId(UUID accountId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
+        if (accountId == null) {
+            System.err.println("Invalid account ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        if (userId == null) {
+            System.err.println("Invalid user ID.");
+            return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+        }
+
+        String sanitizedFilter = (nameFilter != null && !nameFilter.isBlank()) ? nameFilter.trim() : null;
+        String sanitizedTypeFilter = (typeFilter != null && !typeFilter.isBlank()) ? typeFilter.trim() : null;
+        String sanitizedSemanticQuery = (semanticQuery != null && !semanticQuery.isBlank()) ? semanticQuery.trim() : null;
+
+        if (sanitizedSemanticQuery != null) {
+            float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
+            if (embedding == null) {
+                System.err.println("Failed to generate embedding for semantic item search by account.");
+                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            }
+            return itemDAO.getByAccountIdSemantic(accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+        }
+
+        return itemDAO.getByAccountId(accountId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
+    }
+
+    private String buildSearchTerm(String name, String description) {
+        StringBuilder sb = new StringBuilder();
+        if (name != null && !name.isBlank()) {
+            sb.append(name.trim());
+        }
+        if (description != null && !description.isBlank()) {
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
+            sb.append(description.trim());
+        }
+        return sb.toString();
+    }
+    public ItemAnalyticsResponseDTO getAnalytics(ItemAnalyticsRequestDTO req) {
+        
+    if (req == null || req.getUserId() == null) {
+        throw new IllegalArgumentException("Requisição de analytics inválida: userId é obrigatório.");
+    }
+
+    if (req.getEndDate() == null) {
+        req.setEndDate(LocalDate.now());
+    }
+    if (req.getStartDate() == null) {
+        req.setStartDate(req.getEndDate().minusMonths(6));
+    }
+
+    if (req.getGroupBy() == null || req.getGroupBy().isEmpty()) {
+        req.setGroupBy(List.of(ItemAnalyticsRequestDTO.GroupBy.month));
+    }
+
+    if (req.getMetric() == null) {
+        req.setMetric(ItemAnalyticsRequestDTO.Metric.total_expenses);
+    }
+
+    return itemDAO.getAnalytics(req);
+}
 
 }

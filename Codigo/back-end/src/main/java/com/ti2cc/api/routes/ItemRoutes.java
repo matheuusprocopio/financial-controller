@@ -23,6 +23,7 @@ public class ItemRoutes {
             get("/:itemId", controller::getById);
             get("/user/:userId", controller::listByUserPath);
             get("/category/:categoryId", controller::getByCategoryId);
+            get("/account/:accountId", controller::getByAccountId);
             put("/:itemId", controller::update);
             delete("/:itemId", controller::delete);
             post("/analytics", controller::analytics);

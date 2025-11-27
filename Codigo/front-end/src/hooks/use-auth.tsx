@@ -19,6 +19,12 @@ import {
 import { auth, googleProvider } from "@/lib/firebase";
 import type { UserType } from "@/types/user.type";
 import { deleteCookie, getCookie, setCookie } from "@/utils/cookies";
+import { getUserById } from "@/utils/services/users";
+import type { RequestError } from "@/utils/requestProvider";
+
+const isRequestError = (response: unknown): response is RequestError => {
+  return !!response && typeof response === "object" && "error" in (response as Record<string, unknown>);
+};
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 const SESSION_COOKIE = "financialcontroller_session_id";
@@ -28,6 +34,10 @@ interface AuthResponse {
   message?: string;
   user?: any;
   sessionId?: string;
+}
+
+interface ValidateSessionOptions {
+  skipStateUpdate?: boolean;
 }
 
 export interface UseAuthReturn {
@@ -48,7 +58,10 @@ export interface UseAuthReturn {
   ) => Promise<UserCredential>;
   logout: () => Promise<void>;
   loginBackend: (idToken: string) => Promise<AuthResponse>;
-  validateSession: (overrideSessionId?: string) => Promise<AuthResponse>;
+  validateSession: (
+    overrideSessionId?: string,
+    options?: ValidateSessionOptions
+  ) => Promise<AuthResponse>;
   logoutBackend: () => Promise<AuthResponse>;
   loadBackendUser: () => Promise<UserType | null>;
 
@@ -96,6 +109,46 @@ function useProvideAuth(): UseAuthReturn {
     }
   }, []);
 
+  const validateSession = useCallback(
+    async (
+      overrideSessionId?: string,
+      options?: ValidateSessionOptions
+    ): Promise<AuthResponse> => {
+      const activeSessionId = overrideSessionId ?? sessionId;
+      if (!activeSessionId) {
+        throw new Error("Nenhuma sessão ativa");
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`${API_BASE}/auth/validate`, {
+          method: "GET",
+          headers: { "X-Session-Id": activeSessionId },
+        });
+
+        const data: AuthResponse = await response.json();
+
+        if (response.ok && data.success) {
+          setSessionId(activeSessionId);
+          await setCookie(SESSION_COOKIE, activeSessionId);
+          if (data.user && !options?.skipStateUpdate) {
+            setBackendUser(data.user);
+          }
+          return data;
+        } else {
+          setSessionId(null);
+          setBackendUser(null);
+          throw new Error(data.message || "Sessão inválida ou expirada");
+        }
+      } catch (error: any) {
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [sessionId]
+  );
+
   const loadBackendUser = useCallback(async (): Promise<UserType | null> => {
     const storedSession = sessionId ?? (await getCookie(SESSION_COOKIE));
     if (!storedSession) {
@@ -106,8 +159,28 @@ function useProvideAuth(): UseAuthReturn {
 
     setLoadingBackendUser(true);
     try {
-      const data = await validateSession(storedSession);
-      return data.user ?? null;
+      const data = await validateSession(storedSession, {
+        skipStateUpdate: true,
+      });
+      let resolvedUser = data.user ?? null;
+
+      const shouldFetchFreshUser = resolvedUser?.id && storedSession;
+
+      if (shouldFetchFreshUser) {
+        try {
+          const resp = await getUserById(resolvedUser!.id, storedSession);
+
+          if (resp && !isRequestError(resp)) {
+            resolvedUser = resp;
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados atualizados do usuário:", error);
+        }
+      }
+
+      setBackendUser(resolvedUser);
+
+      return resolvedUser;
     } catch (error) {
       console.error("Erro ao carregar usuário do backend:", error);
       await deleteCookie(SESSION_COOKIE);
@@ -117,7 +190,7 @@ function useProvideAuth(): UseAuthReturn {
     } finally {
       setLoadingBackendUser(false);
     }
-  }, [sessionId]);
+  }, [sessionId, validateSession]);
 
   useEffect(() => {
     loadBackendUser();
@@ -273,45 +346,6 @@ function useProvideAuth(): UseAuthReturn {
       setLoading(false);
     }
   }, []);
-
-
-  const validateSession = useCallback(
-    async (overrideSessionId?: string): Promise<AuthResponse> => {
-      const activeSessionId = overrideSessionId ?? sessionId;
-      if (!activeSessionId) {
-        throw new Error("Nenhuma sessão ativa");
-      }
-
-      setLoading(true);
-      try {
-        const response = await fetch(`${API_BASE}/auth/validate`, {
-          method: "GET",
-          headers: { "X-Session-Id": activeSessionId },
-        });
-
-        const data: AuthResponse = await response.json();
-
-        if (response.ok && data.success) {
-          setSessionId(activeSessionId);
-          await setCookie(SESSION_COOKIE, activeSessionId);
-          if (data.user) {
-            setBackendUser(data.user);
-          }
-          return data;
-        } else {
-          setSessionId(null);
-          setBackendUser(null);
-          throw new Error(data.message || "Sessão inválida ou expirada");
-        }
-      } catch (error: any) {
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [sessionId]
-  );
-
   useEffect(() => {
     if (!sessionId || backendUser) {
       return;

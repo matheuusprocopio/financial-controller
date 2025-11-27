@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,14 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
   );
   const hasMounted = useRef(false);
 
-  const pagination = usePagination({
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    setCurrentPage,
+    setItemsPerPage,
+    resetPage,
+  } = usePagination({
     totalItems: totalOfItems,
     initialPage: initialData?.currentPage ?? 1,
     initialItemsPerPage: initialData?.pageLimit ?? 10,
@@ -151,10 +158,13 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
     onError?.(message, initialData.error);
   }, [initialData?.error, onError]);
 
-  const notifyError = (message: string, payload?: unknown) => {
-    setError(message);
-    onError?.(message, payload);
-  };
+  const notifyError = useCallback(
+    (message: string, payload?: unknown) => {
+      setError(message);
+      onError?.(message, payload);
+    },
+    [onError]
+  );
 
   const hasActiveFilters =
     !!searchTerm.trim() ||
@@ -164,71 +174,82 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
     !!activeFilters.type ||
     !!activeFilters.dateRange;
 
-  const fetchItems = async (page?: number, itemsPerPage?: number) => {
-    setLoading(true);
-    setError(null);
+  const fetchItems = useCallback(
+    async (page?: number, itemsPerPageOverride?: number) => {
+      setLoading(true);
+      setError(null);
 
-    const params = new URLSearchParams();
-    const targetPage = itemsPerPage ? 1 : page ?? pagination.currentPage;
-    const limit = itemsPerPage ?? pagination.itemsPerPage;
+      const params = new URLSearchParams();
+      const targetPage = itemsPerPageOverride ? 1 : page ?? currentPage;
+      const limit = itemsPerPageOverride ?? itemsPerPage;
 
-    params.set("page", targetPage.toString());
-    params.set("pageLimit", limit.toString());
+      params.set("page", targetPage.toString());
+      params.set("pageLimit", limit.toString());
 
-    const semanticQuery = searchTerm.trim();
-    const nameFilter = activeFilters.name?.trim();
-    if (semanticQuery) {
-      params.set("semantical_search", semanticQuery);
-    } else if (nameFilter) {
-      params.set("name", nameFilter);
-    }
+      const semanticQuery = searchTerm.trim();
+      const nameFilter = activeFilters.name?.trim();
+      if (semanticQuery) {
+        params.set("semantical_search", semanticQuery);
+      } else if (nameFilter) {
+        params.set("name", nameFilter);
+      }
 
-    if (activeFilters.type) params.set("type", activeFilters.type);
-    if (activeFilters.categoryId) params.set("category_id", activeFilters.categoryId);
-    if (activeFilters.accountId) params.set("account_id", activeFilters.accountId);
+      if (activeFilters.type) params.set("type", activeFilters.type);
+      if (activeFilters.categoryId) params.set("category_id", activeFilters.categoryId);
+      if (activeFilters.accountId) params.set("account_id", activeFilters.accountId);
 
-    const startDate = activeFilters.dateRange?.from
-      ? activeFilters.dateRange.from.toISOString().split("T")[0]
-      : undefined;
-    const endDate = activeFilters.dateRange?.to
-      ? activeFilters.dateRange.to.toISOString().split("T")[0]
-      : undefined;
+      const startDate = activeFilters.dateRange?.from
+        ? activeFilters.dateRange.from.toISOString().split("T")[0]
+        : undefined;
+      const endDate = activeFilters.dateRange?.to
+        ? activeFilters.dateRange.to.toISOString().split("T")[0]
+        : undefined;
 
-    if (startDate) params.set("start_date", startDate);
-    if (endDate) params.set("end_date", endDate);
+      if (startDate) params.set("start_date", startDate);
+      if (endDate) params.set("end_date", endDate);
 
-    try {
-      const response = await fetch(`/api/pagination/items?${params.toString()}`);
-      const result = await response.json();
+      try {
+        const response = await fetch(`/api/pagination/items?${params.toString()}`);
+        const result = await response.json();
 
-      if (!response.ok || (result && result.error)) {
+        if (!response.ok || (result && result.error)) {
+          const message = result?.error?.message ?? "Erro ao carregar itens.";
+          notifyError(message, result);
+          setItems([]);
+          setTotalOfItems(0);
+          return;
+        }
+
+        setItems(result.data ?? []);
+        setTotalOfItems(result.totalItems ?? result.data?.length ?? 0);
+
+        if (itemsPerPageOverride) {
+          setItemsPerPage(limit);
+          resetPage();
+        } else if (page) {
+          setCurrentPage(targetPage);
+        }
+      } catch (fetchError) {
         const message =
-          result?.error?.message ?? "Erro ao carregar itens.";
-        notifyError(message, result);
+          (fetchError as RequestError)?.error?.message ?? "Erro ao carregar itens.";
+        notifyError(message, fetchError);
         setItems([]);
         setTotalOfItems(0);
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      setItems(result.data ?? []);
-      setTotalOfItems(result.totalItems ?? result.data?.length ?? 0);
-
-      if (itemsPerPage) {
-        pagination.setItemsPerPage(limit);
-        pagination.resetPage();
-      } else if (page) {
-        pagination.setCurrentPage(targetPage);
-      }
-    } catch (fetchError) {
-      const message =
-        (fetchError as RequestError)?.error?.message ?? "Erro ao carregar itens.";
-      notifyError(message, fetchError);
-      setItems([]);
-      setTotalOfItems(0);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [
+      activeFilters,
+      currentPage,
+      itemsPerPage,
+      notifyError,
+      resetPage,
+      searchTerm,
+      setCurrentPage,
+      setItemsPerPage,
+    ]
+  );
 
   useEffect(() => {
     if (hasMounted.current) return;
@@ -236,7 +257,7 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
     if (hasActiveFilters) {
       fetchItems(1);
     }
-  }, [hasActiveFilters]);
+  }, [fetchItems, hasActiveFilters]);
 
   useEffect(() => {
     if (!hasMounted.current) return;
@@ -247,14 +268,12 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
     }, 2000);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
+  }, [fetchItems, searchTerm]);
 
   useEffect(() => {
     if (!hasMounted.current) return;
     fetchItems(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilters]);
+  }, [activeFilters, fetchItems]);
 
   useEffect(() => {
     hasMounted.current = true;
@@ -573,18 +592,16 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
         {items.length > 0 && (
           <div className="flex flex-col gap-4 pt-2">
             <PaginationControls
-              itemsPerPage={pagination.itemsPerPage}
-              onItemsPerPageChange={(value) =>
-                fetchItems(undefined, Number(value))
-              }
-              currentPage={pagination.currentPage}
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={(value) => fetchItems(undefined, Number(value))}
+              currentPage={currentPage}
               totalItems={totalOfItems}
             />
 
-            {pagination.totalPages > 1 && (
+            {totalPages > 1 && (
               <PaginationNumbers
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
+                currentPage={currentPage}
+                totalPages={totalPages}
                 onPageChange={(page) => fetchItems(page)}
               />
             )}

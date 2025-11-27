@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,14 @@ import LoginModal from "@/components/auth/LoginModal";
 import { useAuth } from "@/hooks/use-auth";
 
 export default function LandingTech() {
+  return (
+    <Suspense fallback={null}>
+      <LandingTechContent />
+    </Suspense>
+  );
+}
+
+function LandingTechContent() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [loginModalOpen, setLoginModalOpen] = useState(false);

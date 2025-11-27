@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,13 +42,18 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
   const [totalItems, setTotalItems] = useState<number>(totalOfCategories);
   const hasMounted = useRef(false);
 
-  const pagination = usePagination({
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    setCurrentPage,
+    setItemsPerPage,
+    resetPage,
+  } = usePagination({
     totalItems,
     initialPage: data?.currentPage ?? 1,
     initialItemsPerPage: data?.pageLimit ?? 10,
   });
-
-  const { resetPage } = pagination;
 
   useEffect(() => {
     setSearchTerm(categoryName);
@@ -73,49 +78,52 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
 
   useEffect(() => {
     resetPage();
-  }, [searchTerm, resetPage]);
+  }, [resetPage, searchTerm]);
 
   const paginatedCategories = filteredCategories;
 
-  const handlePaginationChange = async (page?: number, itemsPerPage?: number) => {
-    const newPage = page ?? pagination.currentPage;
-    const newItemsPerPage = itemsPerPage ?? pagination.itemsPerPage;
+  const handlePaginationChange = useCallback(
+    async (page?: number, itemsPerPageOverride?: number) => {
+      const newPage = page ?? currentPage;
+      const newItemsPerPage = itemsPerPageOverride ?? itemsPerPage;
     const semantialSearch = searchTerm.trim()
       ? `&semantical_search=${encodeURIComponent(searchTerm.trim())}`
       : "";
-    const targetPage = itemsPerPage ? 1 : newPage;
+      const targetPage = itemsPerPageOverride ? 1 : newPage;
 
-    try {
-      const response = await fetch(
-        `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${semantialSearch}`
-      );
-      const result = await response.json();
+      try {
+        const response = await fetch(
+          `/api/pagination/categories?page=${targetPage}&size=${newItemsPerPage}${semantialSearch}`
+        );
+        const result = await response.json();
 
-      if (!response.ok || "error" in result) {
-        const errorMessage =
-          (result as RequestError)?.error?.message ||
-          "Erro ao buscar categorias. Tente novamente.";
-        onError?.(errorMessage);
-        return;
+        if (!response.ok || "error" in result) {
+          const errorMessage =
+            (result as RequestError)?.error?.message ||
+            "Erro ao buscar categorias. Tente novamente.";
+          onError?.(errorMessage);
+          return;
+        }
+
+        setCategoriesData(result.data);
+        setTotalItems((prev) => result.totalItems ?? prev);
+
+        if (itemsPerPageOverride) {
+          setItemsPerPage(newItemsPerPage);
+          resetPage();
+        } else if (page) {
+          setCurrentPage(newPage);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Erro ao buscar categorias. Tente novamente.";
+        onError?.(message);
       }
-
-      setCategoriesData(result.data);
-      setTotalItems((prev) => result.totalItems ?? prev);
-
-      if (itemsPerPage) {
-        pagination.setItemsPerPage(newItemsPerPage);
-        pagination.resetPage();
-      } else if (page) {
-        pagination.setCurrentPage(newPage);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Erro ao buscar categorias. Tente novamente.";
-      onError?.(message);
-    }
-  };
+    },
+    [currentPage, itemsPerPage, onError, resetPage, searchTerm, setCurrentPage, setItemsPerPage]
+  );
 
   useEffect(() => {
     if (!hasMounted.current) {
@@ -127,7 +135,7 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
     }, 2000);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [handlePaginationChange, searchTerm]);
 
   useEffect(() => {
     if (data?.error) {
@@ -213,20 +221,20 @@ const CategoriesList = ({ data, onError }: ICategoriesList) => {
           </Table>
         </div>
 
-        {filteredCategories.length > 0 && pagination.totalPages > 0 && (
+        {filteredCategories.length > 0 && totalPages > 0 && (
           <div className="flex flex-col gap-4">
             <PaginationControls
-              itemsPerPage={pagination.itemsPerPage}
+              itemsPerPage={itemsPerPage}
               onItemsPerPageChange={(value) => handlePaginationChange(undefined, Number(value))}
-              currentPage={pagination.currentPage}
+              currentPage={currentPage}
               totalItems={totalItems}
               showBalance={false}
             />
 
-            {pagination.totalPages > 1 && (
+            {totalPages > 1 && (
               <PaginationNumbers
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
+                currentPage={currentPage}
+                totalPages={totalPages}
                 onPageChange={(page) => handlePaginationChange(page)}
               />
             )}

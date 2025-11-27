@@ -45,7 +45,7 @@ const FilterAccounts = ({
     if (filterData.nickname && filterData.nickname.trim()) {
       const nicknameFilter = filterData.nickname.toLowerCase().trim();
       filteredAccounts = filteredAccounts.filter((account) =>
-        account.nickname.toLowerCase().includes(nicknameFilter)
+        account.name.toLowerCase().includes(nicknameFilter)
       );
     }
 
@@ -57,7 +57,7 @@ const FilterAccounts = ({
         .toLowerCase()
         .trim();
       filteredAccounts = filteredAccounts.filter((account) =>
-        account.financial_institution.toLowerCase().includes(institutionFilter)
+        account.financialInstitution.toLowerCase().includes(institutionFilter)
       );
     }
 

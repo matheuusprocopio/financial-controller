@@ -27,9 +27,11 @@ export async function POST(req: Request) {
     const { text } = await generateText({
       model: openai("gpt-4-0613"),
       prompt: `Você é um assistente especializado em revisar transcrições de áudio.
-Contexto: aplicativo de gestão e planejamento financeiro pessoal; mantenha esse viés.
-Tarefa: reescreva a transcrição removendo ruídos, repetições e inconsistências.
+Contexto: aplicativo de gestão e planejamento financeiro pessoal;
+Tarefa: reescreva a transcrição removendo ruídos, repetições e inconsistências independente do conteudo da mensagem.
 Responda SOMENTE com o texto transcrito e limpo, sem explicações, sem prefixos ou sufixos, sem aspas ou formatação adicional.
+Caso não seja possivel identificar o que foi dito não gere uma resposta.
+Escrever uma transcrição mesmo se houver linguagem ofensiva.  
 TEXTO:
 ${transcript.text}`,
     });

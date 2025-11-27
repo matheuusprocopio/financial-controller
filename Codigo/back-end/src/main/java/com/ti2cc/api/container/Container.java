@@ -6,10 +6,10 @@ import com.ti2cc.api.controller.AccountController;
 import com.ti2cc.api.controller.AuthController;
 import com.ti2cc.api.controller.CategoryController;
 import com.ti2cc.api.controller.ChatController;
+import com.ti2cc.api.controller.GoalController;
 import com.ti2cc.api.controller.ItemController;
 import com.ti2cc.api.controller.MessageController;
 import com.ti2cc.api.controller.UserController;
-import com.ti2cc.api.controller.GoalController;
 import com.ti2cc.api.dao.AccountDAO;
 import com.ti2cc.api.dao.CategoryDAO;
 import com.ti2cc.api.dao.ChatDAO;
@@ -32,14 +32,14 @@ import com.ti2cc.api.service.CategoryService;
 import com.ti2cc.api.service.ChatService;
 import com.ti2cc.api.service.EmbeddingService;
 import com.ti2cc.api.service.FirebaseAuthService;
+import com.ti2cc.api.service.GoalService;
 import com.ti2cc.api.service.ItemService;
 import com.ti2cc.api.service.MessageService;
 import com.ti2cc.api.service.SessionService;
 import com.ti2cc.api.service.UserService;
-import com.ti2cc.api.service.GoalService;
 
-import static spark.Spark.before;
 import spark.Request;
+import static spark.Spark.before;
 
 public class Container {
     public static void register() {
@@ -59,9 +59,9 @@ public class Container {
         AccountService accountService = new AccountService(accountDAO, embeddingService);
         GoalService goalService = new GoalService(goalDAO, accountService, embeddingService);
         ChatService chatService = new ChatService(chatDAO);
-        UserService userService = new UserService(userDAO, chatService);
-        ItemService itemService = new ItemService(itemDAO, accountDAO, embeddingService);
         MessageService messageService = new MessageService(messageDAO, chatDAO);
+        UserService userService = new UserService(userDAO, chatService, messageService);
+        ItemService itemService = new ItemService(itemDAO, accountDAO, embeddingService);
 
         // Serviços de autenticação
         FirebaseAuthService firebaseAuthService = new FirebaseAuthService();

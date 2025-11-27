@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 import { getErrorMessage } from "@/utils/errors";
 import { updateMessagePartsAction } from "@/actions/message";
 import { NewToolsMap } from "./ToolsMap";
+import TutorialActionsCard, {
+  isTutorialActionsPart,
+} from "../gen-ui/TutorialCard";
 
 import { ChartSpec } from "@/types/chart.types";
 import {
@@ -186,6 +189,16 @@ const MessageComponentContent = ({
   const renderParts = () =>
     localParts.map((part, i) => {
       const partKey = `${i}-${part.type}`;
+
+      if (isTutorialActionsPart(part)) {
+        return (
+          <TutorialActionsCard
+            key={partKey}
+            data={part}
+            onSendMessage={onSendMessage}
+          />
+        );
+      }
 
       if (part.type == "reasoning" && part.state == "streaming") {
         return <ReasoningState key={partKey} />;

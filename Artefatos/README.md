@@ -4,7 +4,8 @@ Este diretório reúne os modelos conceituais, lógicos e diagramas estruturais 
 
 ## 1. Scripts do Banco de Dados (PostgreSQL)
 
-```CREATE EXTENSION IF NOT EXISTS vector;
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Enum usado em items

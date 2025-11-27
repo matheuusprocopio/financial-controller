@@ -15,7 +15,6 @@ import {
 import { ChartContainer, ChartLegendContent } from "@/components/ui/chart";
 import { ItemAnalyticsResponse } from "@/types/analytics.types";
 
-// --- Tipos ---
 export type ChartMode = "gastos" | "receita" | "patrimonio";
 
 type ChartRow = {
@@ -30,7 +29,6 @@ interface ItemsAnalyticsChartProps {
   mode?: ChartMode;
 }
 
-// --- Constantes e Helpers (Extraídos para evitar recriação) ---
 const MODE_LABEL: Record<ChartMode, { title: string; description: string }> = {
   gastos: {
     title: "Evolução mensal por categoria",
@@ -73,9 +71,7 @@ const getMonthLabel = (monthKey: string) => {
   return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
 };
 
-// --- Componente Principal ---
 const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode }) => {
-  // 1. Fail-fast: Verificações simples antes de qualquer lógica
   if (!data) {
     return (
       <div className="p-4 rounded-md bg-muted text-sm">
@@ -96,7 +92,6 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
   const { points, groupBy, metric } = data;
   const resolvedMode = mode ?? METRIC_TO_MODE[metric] ?? "gastos";
 
-  // 2. Otimização com useMemo: Prepara todos os dados do gráfico
   const { chartData, chartConfig, activeCategories, isSupported, hasData } = useMemo(() => {
     const hasMonth = groupBy.includes("month");
     const hasCategory = groupBy.includes("category");
@@ -109,11 +104,9 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
       return { isSupported: true, hasData: false, chartData: [], chartConfig: {}, activeCategories: [] };
     }
 
-    // Identificar todas as categorias possíveis
     const allCategories = Array.from(new Set(points.map((p) => p.categoryName || "Outros")));
     const usedCategories = new Set<string>();
 
-    // Ordenação de meses (String sort é mais rápido que Date object para formato ISO YYYY-MM)
     const uniqueMonths = Array.from(new Set(points.map((p) => p.month || "")))
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b));
@@ -126,11 +119,9 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
         [STACK_TOTAL_KEY]: 0,
       };
 
-      // Otimização: Filtramos os pontos do mês APENAS UMA VEZ
       const pointsInMonth = points.filter((p) => (p.month || "") === m);
 
       allCategories.forEach((cat) => {
-        // Agora filtramos sobre um conjunto muito menor
         const value = pointsInMonth
           .filter((p) => (p.categoryName || "Outros") === cat)
           .reduce((sum, item) => sum + (item.value ?? 0), 0);
@@ -142,9 +133,8 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
         }
 
         row[cat] = normalizedValue;
-        row.total += value; // Total líquido real
+        row.total += value;
         
-        // Stack total para cálculo de porcentagem visual
         const stackVal = resolvedMode === "patrimonio" ? Math.abs(value) : Math.max(value, 0);
         row[STACK_TOTAL_KEY] = (row[STACK_TOTAL_KEY] as number) + stackVal;
         
@@ -154,9 +144,7 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
       return row;
     });
 
-    // Filtra apenas categorias que tiveram algum valor no período
     const finalCategories = allCategories.filter((c) => usedCategories.has(c));
-    // Fallback para mostrar todas se nenhuma tiver valor (gráfico zerado)
     const catsToShow = finalCategories.length > 0 ? finalCategories : allCategories;
 
     const config = catsToShow.reduce((acc, cat, index) => {
@@ -176,7 +164,6 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
     };
   }, [points, groupBy, resolvedMode]);
 
-  // 3. Renderização Condicional baseada no processamento
   if (!isSupported) {
     return (
       <div className="p-4 rounded-md bg-muted text-sm">
@@ -193,14 +180,12 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
     );
   }
 
-  // 4. Componente Tooltip Customizado (Definido aqui para acessar escopo de resolvedMode)
   const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
     if (!active || !payload || payload.length === 0) return null;
 
     const row = payload[0]?.payload as ChartRow;
     const stackTotal = (row?.[STACK_TOTAL_KEY] as number) ?? 0;
     
-    // No modo patrimônio, o cabeçalho mostra o valor líquido real, não a soma das barras absolutas
     const headerTotal = resolvedMode === "patrimonio" ? row?.total : stackTotal;
 
     return (
@@ -222,10 +207,8 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
             const key = entry.dataKey as string;
             const rawValue = (row?.[`${RAW_VALUE_PREFIX}${key}`] as number) ?? 0;
             
-            // Visualização: Se for patrimonio, mostra valor real (pode ser negativo). Se não, valor da barra.
             const displayValue = resolvedMode === "patrimonio" ? rawValue : (entry.value ?? 0);
             
-            // Contribuição visual para a barra
             const contributionAbs = resolvedMode === "patrimonio" ? Math.abs(rawValue) : (entry.value ?? 0);
             const percentage = stackTotal > 0 ? (contributionAbs / stackTotal) * 100 : 0;
 
@@ -293,7 +276,6 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
               stackId="total"
               name={chartConfig[cat].label}
               fill={chartConfig[cat].color}
-              // Arredonda apenas a última barra da pilha
               radius={index === activeCategories.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
               barSize={32}
             />

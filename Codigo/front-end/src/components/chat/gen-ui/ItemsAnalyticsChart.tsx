@@ -24,6 +24,15 @@ type ChartRow = {
   [key: string]: string | number;
 };
 
+type ChartComputationState = {
+  status: "no-data" | "error" | "unsupported" | "empty" | "ready";
+  resolvedMode: ChartMode;
+  chartData: ChartRow[];
+  chartConfig: Record<string, { label: string; color: string }>;
+  activeCategories: string[];
+  error?: ItemAnalyticsResponse["error"];
+};
+
 interface ItemsAnalyticsChartProps {
   data?: ItemAnalyticsResponse;
   mode?: ChartMode;
@@ -72,36 +81,62 @@ const getMonthLabel = (monthKey: string) => {
 };
 
 const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode }) => {
-  if (!data) {
-    return (
-      <div className="p-4 rounded-md bg-muted text-sm">
-        Ainda não recebemos os dados deste gráfico. Tente novamente em alguns instantes.
-      </div>
-    );
-  }
+  const {
+    status,
+    resolvedMode,
+    chartData,
+    chartConfig,
+    activeCategories,
+    error,
+  } = useMemo<ChartComputationState>(() => {
+    const metric = data?.metric ?? "";
+    const computedMode = mode ?? METRIC_TO_MODE[metric] ?? "gastos";
 
-  if (data.error) {
-    return (
-      <div className="p-4 rounded-md bg-destructive/10 text-sm">
-        Não foi possível carregar o gráfico ({data.error.error.status}).{" "}
-        <span className="font-medium">{data.error.error.message}</span>
-      </div>
-    );
-  }
+    if (!data) {
+      return {
+        status: "no-data" as const,
+        resolvedMode: computedMode,
+        chartData: [],
+        chartConfig: {},
+        activeCategories: [],
+      };
+    }
 
-  const { points, groupBy, metric } = data;
-  const resolvedMode = mode ?? METRIC_TO_MODE[metric] ?? "gastos";
+    if (data.error) {
+      return {
+        status: "error" as const,
+        resolvedMode: computedMode,
+        error: data.error,
+        chartData: [],
+        chartConfig: {},
+        activeCategories: [],
+      };
+    }
 
-  const { chartData, chartConfig, activeCategories, isSupported, hasData } = useMemo(() => {
+    const points = data.points ?? [];
+    const groupBy = data.groupBy ?? [];
+
     const hasMonth = groupBy.includes("month");
     const hasCategory = groupBy.includes("category");
 
     if (!hasMonth || !hasCategory) {
-      return { isSupported: false, hasData: false, chartData: [], chartConfig: {}, activeCategories: [] };
+      return {
+        status: "unsupported" as const,
+        resolvedMode: computedMode,
+        chartData: [],
+        chartConfig: {},
+        activeCategories: [],
+      };
     }
 
     if (points.length === 0) {
-      return { isSupported: true, hasData: false, chartData: [], chartConfig: {}, activeCategories: [] };
+      return {
+        status: "empty" as const,
+        resolvedMode: computedMode,
+        chartData: [],
+        chartConfig: {},
+        activeCategories: [],
+      };
     }
 
     const allCategories = Array.from(new Set(points.map((p) => p.categoryName || "Outros")));
@@ -126,7 +161,7 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
           .filter((p) => (p.categoryName || "Outros") === cat)
           .reduce((sum, item) => sum + (item.value ?? 0), 0);
 
-        const normalizedValue = resolvedMode === "patrimonio" ? Math.abs(value) : value;
+        const normalizedValue = computedMode === "patrimonio" ? Math.abs(value) : value;
 
         if (normalizedValue !== 0) {
           usedCategories.add(cat);
@@ -135,7 +170,7 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
         row[cat] = normalizedValue;
         row.total += value;
         
-        const stackVal = resolvedMode === "patrimonio" ? Math.abs(value) : Math.max(value, 0);
+        const stackVal = computedMode === "patrimonio" ? Math.abs(value) : Math.max(value, 0);
         row[STACK_TOTAL_KEY] = (row[STACK_TOTAL_KEY] as number) + stackVal;
         
         row[`${RAW_VALUE_PREFIX}${cat}`] = value;
@@ -147,24 +182,41 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
     const finalCategories = allCategories.filter((c) => usedCategories.has(c));
     const catsToShow = finalCategories.length > 0 ? finalCategories : allCategories;
 
-    const config = catsToShow.reduce((acc, cat, index) => {
+    const config = catsToShow.reduce<Record<string, { label: string; color: string }>>((acc, cat, index) => {
       acc[cat] = {
         label: cat,
         color: COLOR_PALETTE[index % COLOR_PALETTE.length],
       };
       return acc;
-    }, {} as any);
+    }, {});
 
     return {
-      isSupported: true,
-      hasData: uniqueMonths.length > 0,
+      status: "ready" as const,
+      resolvedMode: computedMode,
       chartData: processedData,
       chartConfig: config,
       activeCategories: catsToShow,
     };
-  }, [points, groupBy, resolvedMode]);
+  }, [data, mode]);
 
-  if (!isSupported) {
+  if (status === "no-data") {
+    return (
+      <div className="p-4 rounded-md bg-muted text-sm">
+        Ainda não recebemos os dados deste gráfico. Tente novamente em alguns instantes.
+      </div>
+    );
+  }
+
+  if (status === "error" && error) {
+    return (
+      <div className="p-4 rounded-md bg-destructive/10 text-sm">
+        Não foi possível carregar o gráfico ({error.error.status}).{" "}
+        <span className="font-medium">{error.error.message}</span>
+      </div>
+    );
+  }
+
+  if (status === "unsupported") {
     return (
       <div className="p-4 rounded-md bg-muted text-sm">
         Por enquanto este gráfico suporta apenas agrupamento por <strong>mês</strong> e <strong>categoria</strong>.
@@ -172,7 +224,7 @@ const ItemsAnalyticsChart: React.FC<ItemsAnalyticsChartProps> = ({ data, mode })
     );
   }
 
-  if (!hasData) {
+  if (status === "empty") {
     return (
       <div className="p-4 rounded-md bg-muted text-sm">
         Não encontramos dados suficientes para montar este gráfico. Tente ajustar o período ou os filtros.

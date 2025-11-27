@@ -1,11 +1,14 @@
 package com.ti2cc.api.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import com.ti2cc.api.dao.AccountDAO;
 import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.dto.DateRangeDTO;
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
+import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Item;
@@ -307,4 +310,28 @@ public class ItemService {
         }
         return sb.toString();
     }
+    public ItemAnalyticsResponseDTO getAnalytics(ItemAnalyticsRequestDTO req) {
+        
+    if (req == null || req.getUserId() == null) {
+        throw new IllegalArgumentException("Requisição de analytics inválida: userId é obrigatório.");
+    }
+
+    if (req.getEndDate() == null) {
+        req.setEndDate(LocalDate.now());
+    }
+    if (req.getStartDate() == null) {
+        req.setStartDate(req.getEndDate().minusMonths(6));
+    }
+
+    if (req.getGroupBy() == null || req.getGroupBy().isEmpty()) {
+        req.setGroupBy(List.of(ItemAnalyticsRequestDTO.GroupBy.month));
+    }
+
+    if (req.getMetric() == null) {
+        req.setMetric(ItemAnalyticsRequestDTO.Metric.total_expenses);
+    }
+
+    return itemDAO.getAnalytics(req);
+}
+
 }

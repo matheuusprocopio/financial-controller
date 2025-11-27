@@ -24,6 +24,8 @@ import EditGoalForm from "@/components/ToolsComponents/Goals/EditGoalForm";
 import ListGoalActions from "@/components/ToolsComponents/Goals/ListGoalActions";
 import GoalsList from "@/components/ToolsComponents/Goals/ListGoals";
 import { DynamicToolUIPart } from "ai";
+import ItemsAnalyticsChart, { ChartMode } from "@/components/chat/gen-ui/ItemsAnalyticsChart";
+import { ItemAnalyticsResponse } from "@/types/analytics.types";
 
 type ToolRendererType = (
   part: DynamicToolUIPart,
@@ -40,6 +42,13 @@ type NewToolsMapParamsType = {
 export const NewToolsMap = (
   params: NewToolsMapParamsType
 ): Record<string, ToolRendererType> => {
+
+  const metricToMode: Record<string, ChartMode> = {
+    total_expenses: "gastos",
+    total_incomes: "receita",
+    balance: "patrimonio",
+  };
+
   const ToolsMap: Record<string, ToolRendererType> = {
     "tool-createNewCategory": (p, helpers) => (
       <CreateCategoryForm
@@ -205,6 +214,14 @@ export const NewToolsMap = (
         onError={(msg) => helpers.onError(msg)}
       />
     ),
+    "tool-itemsAnalytics": (p, helpers) => {
+      const output = p.output as ItemAnalyticsResponse | undefined;
+      const inferredMode = output?.metric
+        ? metricToMode[output.metric] ?? undefined
+        : undefined;
+
+      return <ItemsAnalyticsChart data={output} mode={inferredMode} />;
+    },
   };
 
   return ToolsMap;

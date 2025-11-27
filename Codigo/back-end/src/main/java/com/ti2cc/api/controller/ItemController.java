@@ -9,10 +9,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.ti2cc.api.dto.CreateItemDTO;
 import com.ti2cc.api.dto.DateRangeDTO;
+import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
+import com.ti2cc.api.dto.ItemAnalyticsResponseDTO;
+import com.ti2cc.api.dto.ItemResponseDTO;
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.dto.UpdateItemDTO;
-import com.ti2cc.api.dto.ItemResponseDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
 import com.ti2cc.api.util.GsonUtil;
@@ -305,6 +307,42 @@ public class ItemController {
             return gson.toJson("Invalid UUID format.");
         }
     }
+
+    public Object analytics(Request req, Response res) {
+        res.type("application/json");
+
+        try {
+            UUID sessionUserId = getUserIdFromRequest(req);
+            if (sessionUserId == null) {
+                res.status(401);
+                return gson.toJson(new Error("Usuário não autenticado."));
+            }
+
+            ItemAnalyticsRequestDTO dto = gson.fromJson(req.body(), ItemAnalyticsRequestDTO.class);
+
+            if (dto == null) {
+                res.status(400);
+                return gson.toJson(new Error("Corpo da requisição vazio ou inválido."));
+            }
+
+            dto.setUserId(sessionUserId);
+
+            ItemAnalyticsResponseDTO resp = itemService.getAnalytics(dto);
+
+            res.status(200);
+            return gson.toJson(resp);
+
+        } catch (com.google.gson.JsonSyntaxException e) {
+            res.status(400);
+            return gson.toJson(new Error("JSON inválido: verifique a formatação."));
+            
+        } catch (Exception e) {
+            e.printStackTrace(); 
+            res.status(500);
+            return gson.toJson(new Error("Erro interno ao processar analytics."));
+        }
+    }
+
 
     private PaginationRequestDTO buildPagination(Request req) {
         String pageParam = getFirstParam(req, "page");

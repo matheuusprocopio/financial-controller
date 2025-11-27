@@ -26,6 +26,7 @@ public class ItemRoutes {
             get("/account/:accountId", controller::getByAccountId);
             put("/:itemId", controller::update);
             delete("/:itemId", controller::delete);
+            post("/analytics", controller::analytics);
         });
     }
 }

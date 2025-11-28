@@ -24,6 +24,7 @@ import com.ti2cc.api.routes.AuthRoutes;
 import com.ti2cc.api.routes.CategoryRoutes;
 import com.ti2cc.api.routes.ChatRoutes;
 import com.ti2cc.api.routes.GoalRoutes;
+import com.ti2cc.api.routes.HealthRoutes;
 import com.ti2cc.api.routes.ItemRoutes;
 import com.ti2cc.api.routes.MessageRoutes;
 import com.ti2cc.api.routes.UserRoutes;
@@ -86,6 +87,7 @@ public class Container {
         ChatRoutes chatRoutes = new ChatRoutes(chatController);
         MessageRoutes messageRoutes = new MessageRoutes(messageController);
         GoalRoutes goalRoutes = new GoalRoutes(goalController);
+        HealthRoutes healthRoutes = new HealthRoutes();
 
         registerAuthGuards(authMiddleware);
         
@@ -97,6 +99,7 @@ public class Container {
         chatRoutes.register();
         messageRoutes.register();
         goalRoutes.register();
+        healthRoutes.register();
     }
 
     private static void registerAuthGuards(AuthMiddleware authMiddleware) {

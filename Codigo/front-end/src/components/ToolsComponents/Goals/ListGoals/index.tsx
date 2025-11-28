@@ -35,6 +35,8 @@ type GoalFilterAccount = Pick<AccountType, "id" | "name" | "financialInstitution
 
 const ALL_ACCOUNTS_VALUE = "all";
 const GLOBAL_ACCOUNT_VALUE = "global";
+const SESSION_COOKIE_NAME = "financialcontroller_session_id";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const normalizeAccountFilterValue = (value?: string | null) => {
   if (!value) {
@@ -84,6 +86,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const hasRequestedAccountsFallback = useRef(false);
+  const pendingAccountRequests = useRef<Set<string>>(new Set());
   const hasProvidedAccounts = normalizedAccounts.length > 0;
 
   const paginationState = usePagination({
@@ -108,6 +111,23 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
   useEffect(() => {
     setAvailableAccounts(normalizedAccounts);
   }, [normalizedAccounts]);
+
+  const getSessionCookie = useCallback(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const cookies = document.cookie.split(";");
+    const sessionCookie = cookies
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(`${SESSION_COOKIE_NAME}=`));
+
+    if (!sessionCookie) {
+      return undefined;
+    }
+
+    return decodeURIComponent(sessionCookie.split("=")[1] ?? "");
+  }, []);
 
   useEffect(() => {
     setAccountFilter(normalizeAccountFilterValue(data?.accountId));
@@ -182,6 +202,100 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
       isMounted = false;
     };
   }, [hasProvidedAccounts, onError]);
+
+  useEffect(() => {
+    const existingIds = new Set(availableAccounts.map((account) => account.id));
+    const goalAccountIds = goalsData
+      .map((goal) => goal.accountId)
+      .filter((accountId): accountId is string => !!accountId && accountId !== GLOBAL_ACCOUNT_VALUE);
+    const idsToFetch = Array.from(new Set(goalAccountIds)).filter(
+      (accountId) => !existingIds.has(accountId) && !pendingAccountRequests.current.has(accountId)
+    );
+
+    if (!API_BASE_URL || idsToFetch.length === 0) {
+      return;
+    }
+
+    let isMounted = true;
+    idsToFetch.forEach((id) => pendingAccountRequests.current.add(id));
+
+    const fetchAccounts = async () => {
+      const sessionId = getSessionCookie();
+
+      if (!sessionId) {
+        onError?.("Não foi possível obter a sessão do usuário para buscar as contas vinculadas.");
+        idsToFetch.forEach((id) => pendingAccountRequests.current.delete(id));
+        return;
+      }
+
+      try {
+        const responses = await Promise.all(
+          idsToFetch.map(async (accountId) => {
+            try {
+              const response = await fetch(`${API_BASE_URL}/accounts/${accountId}`, {
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Session-Id": sessionId,
+                },
+              });
+
+              const payload = await response.json();
+
+              if (!response.ok || (payload && typeof payload === "object" && "error" in payload)) {
+                const message =
+                  (payload as RequestError)?.error?.message || "Erro ao carregar conta vinculada.";
+                onError?.(message);
+                return null;
+              }
+
+              return {
+                id: payload.id,
+                name: payload.name,
+                financialInstitution: payload.financialInstitution,
+              } as GoalFilterAccount;
+            } catch (error) {
+              if (process.env.NODE_ENV !== "production") {
+                console.error(`Erro ao buscar conta ${accountId}`, error);
+              }
+              const message =
+                error instanceof Error ? error.message : "Erro ao carregar conta vinculada.";
+              onError?.(message);
+              return null;
+            }
+          })
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        const fetched = responses.filter((account): account is GoalFilterAccount => account !== null);
+
+        if (fetched.length > 0) {
+          setAvailableAccounts((prev) => {
+            const knownIds = new Set(prev.map((account) => account.id));
+            const merged = [...prev];
+
+            fetched.forEach((account) => {
+              if (!knownIds.has(account.id)) {
+                merged.push(account);
+              }
+            });
+
+            return merged;
+          });
+        }
+      } finally {
+        idsToFetch.forEach((id) => pendingAccountRequests.current.delete(id));
+      }
+    };
+
+    void fetchAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [availableAccounts, goalsData, onError, getSessionCookie]);
 
   const buildQueryParams = useCallback(
     (page: number, size: number) => {
@@ -448,7 +562,9 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {goal.accountId ? goal.accountId : "Meta global"}
+                        {goal.accountId
+                          ? resolveAccountLabel(goal.accountId)
+                          : resolveAccountLabel(GLOBAL_ACCOUNT_VALUE)}
                       </TableCell>
                       <TableCell>
                         <div className="space-y-2">

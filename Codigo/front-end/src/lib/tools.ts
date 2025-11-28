@@ -10,6 +10,7 @@ import { findBestMatch } from "@/utils/fuzzySearch";
 import type { FuzzyMatchResult } from "@/utils/fuzzySearch";
 import { calculateItemsAnalytics, ItemAnalyticsRequest } from "@/utils/services/Analytics/itemsAnalytics";
 import { ItemAnalyticsResponse } from "@/types/analytics.types";
+import { ItemType } from "@/types/item.type";
 
 import { AccountType } from "@/types/account.type";
 import { GoalType } from "@/types/goal.types";
@@ -17,6 +18,39 @@ import { RequestError, createRequestError } from "@/utils/requestProvider";
 
 const isRequestError = (resp: unknown): resp is RequestError => {
   return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
+};
+
+const getTodayIsoDate = () => new Date().toISOString().split("T")[0];
+
+const MIN_MATCH_CONFIDENCE = 0.5;
+
+const resolveIsoDate = (value?: string | null, fallback?: string | null) => {
+  const candidates = [value, fallback];
+  let firstTrimmed: string | undefined;
+
+  for (const candidate of candidates) {
+    const trimmed = candidate?.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    if (!firstTrimmed) {
+      firstTrimmed = trimmed;
+    }
+
+    const timestamp = Date.parse(trimmed);
+
+    if (!Number.isNaN(timestamp)) {
+      return new Date(timestamp).toISOString().split("T")[0];
+    }
+  }
+
+  if (firstTrimmed) {
+    return firstTrimmed;
+  }
+
+  return getTodayIsoDate();
 };
 
 export const createNewCategoryTool = tool({
@@ -806,21 +840,8 @@ export const createNewItemTool = tool({
     suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
     suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
   }),
-
   execute: async ({ name, description, amount, type, date, suggestedCategoryName, suggestedAccountName }) => {
-    const today = new Date().toISOString().split("T")[0];
-    const parsedDate = (() => {
-      if (!date) {
-        return today;
-      }
-
-      const timestamp = Date.parse(date);
-      if (Number.isNaN(timestamp)) {
-        return today;
-      }
-
-      return new Date(timestamp).toISOString().split("T")[0];
-    })();
+    const parsedDate = resolveIsoDate(date);
     const sessionId = await getSessionId();
 
     if (!sessionId) {
@@ -852,7 +873,6 @@ export const createNewItemTool = tool({
       name?.trim() ||
       description?.trim() ||
       "";
-
     const [categoriesResp, accountsResp] = await Promise.all([
       listCategoriesPaginated(sessionId, { page: 1, size: 5 }, undefined, categorySearchTerm || undefined),
       listAccountsPaginated(sessionId, { page: 1, size: 10 }, accountSearchTerm || undefined),
@@ -921,16 +941,26 @@ export const createNewItemTool = tool({
       };
     }
 
-    const matchedCategory = findBestMatch(
-      categories,
-      suggestedCategoryName,
-      (cat) => cat.name
-    );
-    const matchedAccount = findBestMatch(
-      accounts,
-      suggestedAccountName,
-      (acc) => acc.name
-    );
+    const matchedCategory =
+      categories.length > 0
+        ? findBestMatch(categories, suggestedCategoryName, (cat) => cat.name)
+        : undefined;
+    const matchedAccount =
+      accounts.length > 0
+        ? findBestMatch(accounts, suggestedAccountName, (acc) => acc.name)
+        : undefined;
+
+    const resolvedCategory =
+      matchedCategory && matchedCategory.confidence >= MIN_MATCH_CONFIDENCE
+        ? matchedCategory
+        : undefined;
+    const resolvedAccount =
+      matchedAccount && matchedAccount.confidence >= MIN_MATCH_CONFIDENCE
+        ? matchedAccount
+        : undefined;
+
+    const needsCategorySelection = !resolvedCategory;
+    const needsAccountSelection = !resolvedAccount;
 
     return {
       name,
@@ -938,14 +968,17 @@ export const createNewItemTool = tool({
       amount,
       date: parsedDate,
       type,
-      categoryId: matchedCategory.id,
-      accountId: matchedAccount.id,
-      suggestedCategoryName: matchedCategory.name,
-      suggestedAccountName: matchedAccount.name,
+      categoryId: resolvedCategory?.id ?? "",
+      accountId: resolvedAccount?.id ?? "",
+      suggestedCategoryName: resolvedCategory?.name ?? suggestedCategoryName,
+      suggestedAccountName: resolvedAccount?.name ?? suggestedAccountName,
       categories,
+      accounts,
+      needsCategorySelection,
+      needsAccountSelection,
       matchConfidence: {
-        category: matchedCategory.confidence,
-        account: matchedAccount.confidence,
+        category: matchedCategory?.confidence ?? 0,
+        account: matchedAccount?.confidence ?? 0,
       },
     };
   },
@@ -954,7 +987,7 @@ export const createNewItemTool = tool({
 export const editItemTool = tool({
   description: "Edit an existing transaction (item)",
   inputSchema: z.object({
-    itemId: z.string(),
+    itemId: z.string().optional(),
     name: z.string().optional(),
     description: z.string().optional(),
     amount: z.number().optional(),
@@ -965,86 +998,136 @@ export const editItemTool = tool({
   }),
 
   execute: async ({ itemId, name, description, amount, date, type, categoryId, accountId }) => {
-    const today = new Date().toISOString().split("T")[0];
+    const computeDate = (fallback?: string | null) => resolveIsoDate(date, fallback);
     const sessionId = await getSessionId();
 
+    const baseResponse = (extra: Record<string, unknown> = {}) => ({
+      itemId: itemId ?? "",
+      name: name ?? "",
+      description: description ?? "",
+      amount: amount ?? 0,
+      date: computeDate(),
+      type: type ?? "expense",
+      categoryId: categoryId ?? "",
+      accountId: accountId ?? "",
+      ...extra,
+    });
+
     if (!sessionId) {
-      return {
-        itemId,
-        name: name ?? "",
-        description: description ?? "",
-        amount: amount ?? 0,
-        date: date ?? today,
-        type: type ?? "expense",
-        categoryId: categoryId ?? "",
-        accountId: accountId ?? "",
+      return baseResponse({
         error: createRequestError(
           401,
           "Não foi possível obter a sessão do usuário.",
-          `items/${itemId}`
+          `items/${itemId ?? ""}`
         ),
-      };
+      });
     }
 
     try {
-      const resp = await getItemById(itemId, sessionId);
+      let resolvedItem: ItemType | null = null;
+      let fuzzyMatch: FuzzyMatchResult | undefined;
+      let semanticalSearchTerm: string | undefined;
 
-      if (isRequestError(resp)) {
-        return {
-          itemId,
-          name: name ?? "",
-          description: description ?? "",
-          amount: amount ?? 0,
-          date: date ?? today,
-          type: type ?? "expense",
-          categoryId: categoryId ?? "",
-          accountId: accountId ?? "",
-          error: resp,
-        };
+      const trimmedItemId = itemId?.trim();
+
+      if (trimmedItemId) {
+        const resp = await getItemById(trimmedItemId, sessionId);
+
+        if (isRequestError(resp)) {
+          return baseResponse({ error: resp });
+        }
+
+        if (resp) {
+          resolvedItem = resp;
+        }
       }
 
-      if (resp) {
-        const item = resp;
-        return {
-          itemId: item.id,
-          name: name ?? item.name,
-          description: description ?? item.description,
-          amount: amount ?? item.amount,
-          date: date ?? item.date,
-          type: type ?? item.type,
-          categoryId: categoryId ?? item.categoryId,
-          accountId: accountId ?? item.accountId,
-        };
+      if (!resolvedItem) {
+        const candidateTerms = [name, description]
+          .map((value) => value?.trim())
+          .filter((value): value is string => Boolean(value));
+
+        if (candidateTerms.length > 0) {
+          semanticalSearchTerm = candidateTerms.join(" ");
+        }
+
+        if (!semanticalSearchTerm) {
+          return baseResponse({
+            error: createRequestError(
+              400,
+              "Forneça o nome ou a descrição da transação para localizar via busca semântica.",
+              "items"
+            ),
+          });
+        }
+
+        const listResp = await listItems(sessionId, {
+          semanticalSearch: semanticalSearchTerm,
+          page: 1,
+          pageLimit: 5,
+        });
+
+        if (isRequestError(listResp)) {
+          return baseResponse({
+            semanticalSearch: semanticalSearchTerm,
+            error: listResp,
+          });
+        }
+
+        const items = listResp.data ?? [];
+
+        if (items.length === 0) {
+          return baseResponse({
+            semanticalSearch: semanticalSearchTerm,
+            error: createRequestError(
+              404,
+              "Nenhuma transação encontrada para editar. Tente especificar melhor o nome ou a descrição.",
+              "items"
+            ),
+          });
+        }
+
+        const match = findBestMatch(
+          items,
+          semanticalSearchTerm,
+          (candidate) => {
+            const label = `${candidate.name ?? ""} ${candidate.description ?? ""}`.trim();
+            return label.length > 0 ? label : candidate.name;
+          }
+        );
+
+        fuzzyMatch = match;
+        resolvedItem = items.find((candidate) => candidate.id === match.id) ?? items[0];
+      }
+
+      if (!resolvedItem) {
+        return baseResponse({
+          error: createRequestError(404, "Transação não encontrada.", `items/${itemId ?? ""}`),
+        });
       }
 
       return {
-        itemId,
-        name: name ?? "",
-        description: description ?? "",
-        amount: amount ?? 0,
-        date: date ?? today,
-        type: type ?? "expense",
-        categoryId: categoryId ?? "",
-        accountId: accountId ?? "",
+        itemId: resolvedItem.id,
+        name: name ?? resolvedItem.name,
+        description: description ?? resolvedItem.description,
+        amount: amount ?? resolvedItem.amount,
+        date: computeDate(resolvedItem.date),
+        type: type ?? resolvedItem.type,
+        categoryId: categoryId ?? resolvedItem.categoryId,
+        accountId: accountId ?? resolvedItem.accountId,
+        semanticalSearch: trimmedItemId ? undefined : semanticalSearchTerm,
+        matchConfidence: fuzzyMatch ? { item: fuzzyMatch.confidence } : undefined,
       };
     } catch (error) {
-      return {
-        itemId,
-        name: name ?? "",
-        description: description ?? "",
-        amount: amount ?? 0,
-        date: date ?? today,
-        type: type ?? "expense",
-        categoryId: categoryId ?? "",
-        accountId: accountId ?? "",
+      return baseResponse({
         error: isRequestError(error)
           ? error
           : createRequestError(
               500,
               error instanceof Error ? error.message : "Unknown error",
-              `items/${itemId}`
+              `items/${itemId ?? ""}`
             ),
-      };
+      });
     }
   },
 });
@@ -1391,12 +1474,13 @@ export const createNewGoalTool = tool({
     deadline: z.string().optional(),
   }),
   execute: async ({ title = "", description = "", accountId = "", targetAmount = 0, deadline = "" }) => {
+    const normalizedDeadline = resolveIsoDate(deadline);
     const baseResponse = {
       title,
       description,
       accountId,
       targetAmount,
-      deadline,
+      deadline: normalizedDeadline,
     };
 
     try {
@@ -1473,6 +1557,8 @@ export const editGoalTool = tool({
     deadline: z.string().optional(),
   }),
   execute: async ({ goalId, title, description, accountId, targetAmount, deadline }) => {
+    const computeDeadline = (goalDeadline?: string | null) => resolveIsoDate(deadline, goalDeadline);
+
     try {
       const sessionId = await getSessionId();
       if (!sessionId) {
@@ -1482,7 +1568,7 @@ export const editGoalTool = tool({
           description,
           accountId,
           targetAmount,
-          deadline,
+          deadline: computeDeadline(),
           accounts: [],
           error: {
             error: {
@@ -1500,7 +1586,16 @@ export const editGoalTool = tool({
         const goalResp = await getGoalById(goalId, sessionId);
 
         if (isRequestError(goalResp)) {
-          return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
+          return {
+            goalId,
+            title,
+            description,
+            accountId,
+            targetAmount,
+            deadline: computeDeadline(),
+            accounts: [],
+            error: goalResp,
+          };
         }
 
         goal = goalResp;
@@ -1509,7 +1604,16 @@ export const editGoalTool = tool({
       if (!goal && title && title.trim()) {
         const goalResp = await listGoals(sessionId, title);
         if (isRequestError(goalResp)) {
-          return { goalId, title, description, accountId, targetAmount, deadline, accounts: [], error: goalResp };
+          return {
+            goalId,
+            title,
+            description,
+            accountId,
+            targetAmount,
+            deadline: computeDeadline(),
+            accounts: [],
+            error: goalResp,
+          };
         }
 
         const [bestMatch] = goalResp;
@@ -1520,7 +1624,7 @@ export const editGoalTool = tool({
             description,
             accountId,
             targetAmount,
-            deadline,
+            deadline: computeDeadline(),
             accounts: [],
             error: createRequestError(
               404,
@@ -1540,7 +1644,7 @@ export const editGoalTool = tool({
           description,
           accountId,
           targetAmount,
-          deadline,
+          deadline: computeDeadline(),
           accounts: [],
           error: createRequestError(404, "Meta não encontrada.", "goals"),
         };
@@ -1552,7 +1656,7 @@ export const editGoalTool = tool({
         description: description ?? goal.description,
         accountId: accountId ?? goal.accountId,
         targetAmount: targetAmount ?? goal.targetAmount,
-        deadline: deadline ?? goal.deadline,
+        deadline: computeDeadline(goal.deadline),
       };
 
       const accountsResp = await listAccounts(sessionId);
@@ -1583,7 +1687,7 @@ export const editGoalTool = tool({
         description,
         accountId,
         targetAmount,
-        deadline,
+        deadline: computeDeadline(),
         accounts: [],
         error: {
           error: {

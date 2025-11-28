@@ -617,6 +617,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
                 totalPages={totalPages}
                 onPageChange={(page) => handlePaginationChange(page)}
               />
+              
             )}
           </div>
         )}

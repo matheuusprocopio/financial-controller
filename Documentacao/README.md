@@ -57,7 +57,7 @@ O Financial Controller oferece:
     * Gerar relatórios financeiros detalhados sobre receitas, despesas e saldos
     * Analisar dados financeiros para sugerir previsões e estratégias financeiras
     * Usar OpenAI API para gerar relatórios automatizados e insights baseados no histórico de dados financeiros
-    * Sistema de text-to-speech
+    * Sistema de speech-to-text
 
 ### 5.5 Ferramentas de Desenvolvimento
 * Eclipse - desenvolvimento back-end em Java

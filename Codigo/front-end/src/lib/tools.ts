@@ -836,7 +836,7 @@ export const createNewItemTool = tool({
     description: z.string().describe("Detailed description extracted from user message"),
     amount: z.number().positive("Amount must be positive").describe("The monetary amount"),
     type: z.enum(["income", "expense"]).describe("Automatically determined: 'income' if received money, 'expense' if spent/paid"),
-    date: z.string().describe("Transaction date converted to ISO 8601 (YYYY-MM-DD). Use today's date when the user did not specify"),
+    date: z.string().describe("Transaction date converted to ISO 8601 (YYYY-MM-DD). when not specifyed keey it undefined"),
     suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
     suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
   }),

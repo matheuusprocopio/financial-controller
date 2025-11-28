@@ -71,7 +71,13 @@ function LandingTechContent() {
 
   const handleLoginModalChange = (open: boolean) => {
     setLoginModalOpen(open);
-    if (!open && searchParams.get("login") === "true") {
+
+    const shouldClearLoginParam =
+      !open &&
+      searchParams.get("login") === "true" &&
+      !isBackendAuthenticated;
+
+    if (shouldClearLoginParam) {
       router.replace("/", { scroll: false });
     }
   };

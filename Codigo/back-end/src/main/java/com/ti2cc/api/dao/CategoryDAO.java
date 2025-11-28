@@ -294,7 +294,8 @@ public class CategoryDAO {
         return list;
     }
 
-    public List<Category> getBySemanticSearchPaginated(UUID userId, float[] embedding, UUID mainCategoryId, int offset, int limit) {
+    public List<Category> getBySemanticSearchPaginated(UUID userId, float[] embedding, UUID mainCategoryId, int offset,
+            int limit) {
         List<Category> list = new ArrayList<>();
         String vectorLiteral = VectorUtils.toPgVectorLiteral(embedding);
         if (vectorLiteral == null) {
@@ -370,7 +371,8 @@ public class CategoryDAO {
     }
 
     public long countWithEmbedding(UUID userId, UUID mainCategoryId) {
-        StringBuilder query = new StringBuilder("SELECT COUNT(*) FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+        StringBuilder query = new StringBuilder(
+                "SELECT COUNT(*) FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
 
         if (mainCategoryId != null) {
             query.append(" AND main_category_id = ?");
@@ -400,11 +402,10 @@ public class CategoryDAO {
                 (UUID) rs.getObject("id"),
                 (UUID) rs.getObject("user_id"),
                 rs.getString("name"),
-                rs.getString("image_path"),
-                (UUID) rs.getObject("main_category_id"),
+                "",
+                null,
                 rs.getObject("created_at", java.time.OffsetDateTime.class),
-                VectorUtils.parsePgVector(rs.getObject("search_embedding"))
-        );
+                VectorUtils.parsePgVector(rs.getObject("search_embedding")));
     }
 
 }

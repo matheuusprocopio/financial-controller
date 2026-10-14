@@ -149,16 +149,11 @@ public class Container {
 
         before("/users", (req, res) -> {
             if (isPreflight(req)) return;
-            if ("POST".equalsIgnoreCase(req.requestMethod())) {
-                authMiddleware.requireValidSession(req, res);
-            }
+            authMiddleware.requireValidSession(req, res);
         });
-        before("/users/:id", (req, res) -> {
+        before("/users/*", (req, res) -> {
             if (isPreflight(req)) return;
-            String method = req.requestMethod();
-            if ("PUT".equalsIgnoreCase(method) || "DELETE".equalsIgnoreCase(method)) {
-                authMiddleware.requireValidSession(req, res);
-            }
+            authMiddleware.requireValidSession(req, res);
         });
     }
 

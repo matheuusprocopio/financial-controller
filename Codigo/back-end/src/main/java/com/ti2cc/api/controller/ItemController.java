@@ -128,6 +128,12 @@ public class ItemController {
             UUID id = UUID.fromString(req.params(":itemId"));
             Item item = itemService.findItemById(id);
 
+            UUID sessionUserId = req.attribute("userId");
+            if (item != null && !item.getUserId().equals(sessionUserId)) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             if (item != null) {
                 res.status(200);
                 return gson.toJson(toResponse(item));

@@ -51,3 +51,6 @@ Codigo/back-end/target/
 
 Codigo/back-end/*.log
 Codigo/back-end/hs_err_pid*
+
+# Modelos de variáveis de ambiente (sem segredos)
+!.env.example

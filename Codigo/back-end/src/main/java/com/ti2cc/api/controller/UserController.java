@@ -1,5 +1,6 @@
 package com.ti2cc.api.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import com.google.gson.Gson;
@@ -53,14 +54,33 @@ public class UserController {
 
     public Object getAll(Request req, Response res) {
         res.type("application/json");
+        User sessionUser = req.attribute("user");
+        if (sessionUser == null) {
+            res.status(401);
+            return gson.toJson("Usuário não autenticado.");
+        }
+
+        // Cada usuário só enxerga a si mesmo
+        User user = userService.findUserById(sessionUser.getId());
         res.status(200);
-        return gson.toJson(userService.listAllUsers());
+        return gson.toJson(user != null ? List.of(user) : List.of());
     }
 
     public Object getById(Request req, Response res) {
         res.type("application/json");
         try {
             UUID id = parseUserId(req.params(":id"));
+            User sessionUser = req.attribute("user");
+            if (sessionUser == null) {
+                res.status(401);
+                return gson.toJson("Usuário não autenticado.");
+            }
+
+            if (!id.equals(sessionUser.getId())) {
+                res.status(403);
+                return gson.toJson("Access denied.");
+            }
+
             User user = userService.findUserById(id);
 
             if (user != null) {

@@ -53,3 +53,30 @@ O schema está em `back-end/database/schema.sql`. Ele é idempotente e pode ser 
 ```bash
 psql "$DB_URL" -f Codigo/back-end/database/schema.sql
 ```
+
+## Deploy
+
+Front-end na Vercel, API no Render e banco no Neon (todos com plano gratuito).
+
+### 1. Banco (Neon)
+
+1. Crie um projeto em https://neon.tech e copie a connection string (`postgresql://...?sslmode=require`).
+2. Aplique o schema: `psql "<connection string>" -f Codigo/back-end/database/schema.sql`.
+
+### 2. API (Render)
+
+1. No Render, use **New > Blueprint** e selecione este repositório (usa o `render.yaml` da raiz).
+2. Preencha as variáveis pedidas:
+   - `DB_URL`: connection string do Neon
+   - `FIREBASE_SERVICE_ACCOUNT_JSON`: conteúdo do `service-account-key.json` em uma linha (`jq -c . service-account-key.json`)
+   - `FIREBASE_PROJECT_ID` e `OPENAI_API_KEY`
+   - `CORS_ALLOWED_ORIGINS`: URL do front na Vercel (pode ajustar depois do passo 3)
+3. Verifique: `https://<sua-api>.onrender.com/health`.
+
+No plano gratuito a API hiberna após 15 minutos sem uso: a primeira requisição demora cerca de 1 minuto e, como as sessões ficam em memória, os usuários precisam entrar de novo.
+
+### 3. Front-end (Vercel)
+
+1. Importe o repositório na Vercel com **Root Directory** `Codigo/front-end`.
+2. Cadastre as variáveis do `.env.example` do front, com `NEXT_PUBLIC_API_URL` apontando para a URL do Render.
+3. No Firebase, adicione o domínio da Vercel em **Authentication > Configurações > Domínios autorizados**.

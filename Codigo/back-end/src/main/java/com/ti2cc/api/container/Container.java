@@ -1,6 +1,6 @@
 package com.ti2cc.api.container;
 
-import java.sql.Connection;
+import javax.sql.DataSource;
 
 import com.ti2cc.api.controller.AccountController;
 import com.ti2cc.api.controller.AuthController;
@@ -44,15 +44,15 @@ import static spark.Spark.before;
 
 public class Container {
     public static void register() {
-        Connection postgresConn = PostgresFactory.getConnection();
+        DataSource dataSource = PostgresFactory.createDataSource();
 
-        CategoryDAO categoryDAO = new CategoryDAO(postgresConn);
-        AccountDAO accountDAO = new AccountDAO(postgresConn);
-        UserDAO userDAO = new UserDAO(postgresConn);
-        ItemDAO itemDAO = new ItemDAO(postgresConn);
-        ChatDAO chatDAO = new ChatDAO(postgresConn);
-        MessageDAO messageDAO = new MessageDAO(postgresConn);
-        GoalDAO goalDAO = new GoalDAO(postgresConn);
+        CategoryDAO categoryDAO = new CategoryDAO(dataSource);
+        AccountDAO accountDAO = new AccountDAO(dataSource);
+        UserDAO userDAO = new UserDAO(dataSource);
+        ItemDAO itemDAO = new ItemDAO(dataSource);
+        ChatDAO chatDAO = new ChatDAO(dataSource);
+        MessageDAO messageDAO = new MessageDAO(dataSource);
+        GoalDAO goalDAO = new GoalDAO(dataSource);
 
 
         EmbeddingService embeddingService = new EmbeddingService();

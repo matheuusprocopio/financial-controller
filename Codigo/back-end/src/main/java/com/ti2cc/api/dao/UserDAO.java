@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.model.User;
 
 public class UserDAO {
-    private Connection connection;
+    private final DataSource dataSource;
 
-    public UserDAO(Connection conn) {
-        this.connection = conn;
+    public UserDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(User user) {
@@ -25,7 +27,8 @@ public class UserDAO {
 
         String query = "INSERT INTO users (id, name, email) VALUES (?, ?, ?)";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, user.getId());
             pstmt.setString(2, user.getName());
             pstmt.setString(3, user.getEmail());
@@ -43,7 +46,8 @@ public class UserDAO {
         List<User> users = new ArrayList<>();
         String query = "SELECT * FROM users ORDER BY id ASC";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -64,7 +68,8 @@ public class UserDAO {
 
     public User getById(UUID id) {
         String query = "SELECT * FROM users WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
 
             ResultSet rs = pstmt.executeQuery();
@@ -86,7 +91,8 @@ public class UserDAO {
 
     public User findByEmail(String email) {
         String query = "SELECT * FROM users WHERE email = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, email);
 
             ResultSet rs = pstmt.executeQuery();
@@ -122,7 +128,8 @@ public class UserDAO {
 
         sb.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
             int paramIndex = 1;
 
             if (user.getName() != null)
@@ -144,7 +151,8 @@ public class UserDAO {
 
     public boolean delete(UUID id) {
         String query = "DELETE FROM users WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;

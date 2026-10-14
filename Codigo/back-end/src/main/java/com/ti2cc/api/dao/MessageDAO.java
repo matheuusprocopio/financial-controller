@@ -10,21 +10,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.ti2cc.api.model.Message;
 
 public class MessageDAO {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public MessageDAO(Connection connection) {
-        this.connection = connection;
+    public MessageDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Message message) {
         String query = "INSERT INTO messages (id, chat_id, role, parts) VALUES (?, ?, ?, ?::jsonb)";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             UUID messageId = message.getId() != null ? message.getId() : UUID.randomUUID();
             message.setId(messageId);
 
@@ -50,7 +53,8 @@ public class MessageDAO {
         String dataQuery = "SELECT id, chat_id, role, parts, created_at FROM messages WHERE chat_id = ? "
                 + "ORDER BY created_at ASC";
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
             dataStmt.setObject(1, chatId);
 
             ResultSet rs = dataStmt.executeQuery();
@@ -67,7 +71,8 @@ public class MessageDAO {
     public boolean updateParts(UUID messageId, UUID chatId, JsonElement parts) {
         String query = "UPDATE messages SET parts = ?::jsonb WHERE id = ? AND chat_id = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             if (parts != null) {
                 pstmt.setString(1, parts.toString());
             } else {

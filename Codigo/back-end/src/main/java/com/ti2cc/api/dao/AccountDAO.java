@@ -10,14 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.model.Account;
 import com.ti2cc.api.util.VectorUtils;
 
 public class AccountDAO {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public AccountDAO(Connection connection) {
-        this.connection = connection;
+    public AccountDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Account account) {
@@ -34,7 +36,8 @@ public class AccountDAO {
 
         String query = sb.toString();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             if (account.getId() == null) {
                 account.setId(UUID.randomUUID());
             }
@@ -93,7 +96,8 @@ public class AccountDAO {
 
         sb.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
             int paramIndex = 1;
 
             if (account.getName() != null) {
@@ -124,7 +128,8 @@ public class AccountDAO {
 
     public boolean delete(UUID accountId) {
         String query = "DELETE FROM accounts WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, accountId);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -136,7 +141,8 @@ public class AccountDAO {
 
     public Account getById(UUID accountId) {
         String query = "SELECT * FROM accounts WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, accountId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -154,7 +160,8 @@ public class AccountDAO {
         String query = "SELECT * FROM accounts WHERE user_id = ?";
         List<Account> accounts = new ArrayList<>();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -172,7 +179,8 @@ public class AccountDAO {
         String query = "SELECT * FROM accounts WHERE user_id = ? ORDER BY id LIMIT ? OFFSET ?";
         List<Account> accounts = new ArrayList<>();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);
             pstmt.setInt(2, limit);
             pstmt.setInt(3, offset);
@@ -197,7 +205,8 @@ public class AccountDAO {
 
         String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, vectorLiteral);
             pstmt.setObject(2, userId);
 
@@ -222,7 +231,8 @@ public class AccountDAO {
 
         String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC LIMIT ? OFFSET ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, vectorLiteral);
             pstmt.setObject(2, userId);
             pstmt.setInt(3, limit);
@@ -242,7 +252,8 @@ public class AccountDAO {
 
     public long countByUserId(UUID userId) {
         String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -258,7 +269,8 @@ public class AccountDAO {
 
     public long countWithEmbedding(UUID userId) {
         String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);
 
             ResultSet rs = pstmt.executeQuery();
@@ -284,7 +296,8 @@ public class AccountDAO {
     }
 
     private boolean executeBalanceUpdate(UUID accountId, double amount, String query) {
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setDouble(1, amount);
             pstmt.setObject(2, accountId);
             int rowsAffected = pstmt.executeUpdate();

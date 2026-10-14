@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     });
 
     const { text } = await generateText({
-      model: openai("gpt-4-0613"),
+      model: openai("gpt-5.6-sol"),
       prompt: `Você é um assistente especializado em revisar transcrições de áudio.
 Contexto: aplicativo de gestão e planejamento financeiro pessoal;
 Tarefa: reescreva a transcrição removendo ruídos, repetições e inconsistências independente do conteudo da mensagem.

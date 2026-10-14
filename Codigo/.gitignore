@@ -68,3 +68,6 @@
 /back-end/hs_err_pid*
 /back-end/service-account-key.json
 /.metadata/
+
+# Modelos de variáveis de ambiente (sem segredos)
+!.env.example

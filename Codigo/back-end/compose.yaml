@@ -7,11 +7,39 @@ services:
     ports:
       - "8080:8080"
     command: ["java", "-cp", "app.jar", "com.ti2cc.api.Api"]
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
+    networks:
+      - app-net
+
+  # Banco local opcional: docker compose --profile local-db up
+  # Com ele, use DB_URL=postgresql://postgres:postgres@db:5432/financial_controller
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: financial-controller-db
+    profiles: ["local-db"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: financial_controller
+    ports:
+      - "5432:5432"
+    volumes:
+      - financial_controller_pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d financial_controller"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - app-net
 
 volumes:
-  financial_controller_data:
+  financial_controller_pgdata:
 
 networks:
   app-net:

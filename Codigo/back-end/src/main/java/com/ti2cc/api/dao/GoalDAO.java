@@ -11,15 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.model.Goal;
 import com.ti2cc.api.util.VectorUtils;
 
 public class GoalDAO {
 
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public GoalDAO(Connection connection) {
-        this.connection = connection;
+    public GoalDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Goal goal) {
@@ -34,7 +36,8 @@ public class GoalDAO {
         }
         sb.append(")");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
             int paramIndex = 1;
             pstmt.setObject(paramIndex++, goal.getId());
             pstmt.setObject(paramIndex++, goal.getUserId());
@@ -78,7 +81,8 @@ public class GoalDAO {
 
     public Goal getById(UUID id) {
         String sql = "SELECT * FROM goals WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
@@ -94,7 +98,8 @@ public class GoalDAO {
         String sql = "SELECT * FROM goals WHERE user_id = ? ORDER BY deadline NULLS LAST, created_at DESC";
         List<Goal> goals = new ArrayList<>();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, userId);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
@@ -116,7 +121,8 @@ public class GoalDAO {
 
         String sql = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM goals WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, vectorLiteral);
             pstmt.setObject(2, userId);
             ResultSet rs = pstmt.executeQuery();
@@ -134,7 +140,8 @@ public class GoalDAO {
         String sql = "SELECT * FROM goals WHERE user_id = ? AND (account_id IS NULL OR account_id = ?)";
         List<Goal> goals = new ArrayList<>();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, userId);
             if (accountId != null) {
                 pstmt.setObject(2, accountId);
@@ -160,7 +167,8 @@ public class GoalDAO {
         }
         sb.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sb.toString())) {
             int paramIndex = 1;
             pstmt.setString(paramIndex++, goal.getTitle());
 
@@ -204,7 +212,8 @@ public class GoalDAO {
     public boolean updateProgress(UUID goalId, double currentAmount, boolean achieved) {
         String sql = "UPDATE goals SET current_amount = ?, achieved = ?, updated_at = NOW() WHERE id = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setDouble(1, currentAmount);
             pstmt.setBoolean(2, achieved);
             pstmt.setObject(3, goalId);
@@ -219,7 +228,8 @@ public class GoalDAO {
 
     public boolean delete(UUID id) {
         String sql = "DELETE FROM goals WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, id);
             int rows = pstmt.executeUpdate();
             return rows > 0;

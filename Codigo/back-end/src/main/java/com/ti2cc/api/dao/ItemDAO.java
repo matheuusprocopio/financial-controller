@@ -10,6 +10,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.dto.DateRangeDTO;
 import com.ti2cc.api.dto.ItemAnalyticsPointDTO;
 import com.ti2cc.api.dto.ItemAnalyticsRequestDTO;
@@ -23,10 +25,10 @@ import com.ti2cc.api.model.Item.ItemType;
 import com.ti2cc.api.util.VectorUtils;
 
 public class ItemDAO {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public ItemDAO(Connection connection) {
-        this.connection = connection;
+    public ItemDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Item item) {
@@ -46,7 +48,8 @@ public class ItemDAO {
 
         String query = sb.toString();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             int paramIndex = 1;
 
             if (item.getId() == null) {
@@ -133,7 +136,8 @@ public class ItemDAO {
 
         query.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
 
             if (item.getCategoryId() != null)
@@ -176,7 +180,8 @@ public class ItemDAO {
 
     public boolean delete(UUID id) {
         String query = "DELETE FROM items WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -188,7 +193,8 @@ public class ItemDAO {
 
     public Item getById(UUID id) {
         String query = "SELECT * FROM items WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
             ResultSet rs = pstmt.executeQuery();
 
@@ -224,7 +230,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, userId);
             countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
@@ -247,7 +254,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by user: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setObject(index++, userId);
             dataStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
@@ -297,7 +305,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, userId);
             countStmt.setDate(index++, Date.valueOf(dateRange.getStartDate()));
@@ -315,7 +324,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by semantic search: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setString(index++, vectorLiteral);
             dataStmt.setObject(index++, userId);
@@ -364,7 +374,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, categoryId);
             countStmt.setObject(index++, userId);
@@ -388,7 +399,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by category: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setObject(index++, categoryId);
             dataStmt.setObject(index++, userId);
@@ -491,7 +503,8 @@ public class ItemDAO {
             sql.append("ORDER BY ").append(joinedGroups).append(" ");
         }
 
-        try (PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(sql.toString())) {
             int idx = 1;
             pstmt.setObject(idx++, req.getUserId());
             pstmt.setDate(idx++, Date.valueOf(req.getStartDate()));
@@ -557,7 +570,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, categoryId);
             countStmt.setObject(index++, accountId);
@@ -582,7 +596,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by category and account: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setObject(index++, categoryId);
             dataStmt.setObject(index++, accountId);
@@ -634,7 +649,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, categoryId);
             countStmt.setObject(index++, userId);
@@ -653,7 +669,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by semantic search within category: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setString(index++, vectorLiteral);
             dataStmt.setObject(index++, categoryId);
@@ -702,7 +719,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, categoryId);
             countStmt.setObject(index++, accountId);
@@ -722,7 +740,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by semantic search within category and account: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setString(index++, vectorLiteral);
             dataStmt.setObject(index++, categoryId);
@@ -773,7 +792,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY date DESC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, accountId);
             countStmt.setObject(index++, userId);
@@ -797,7 +817,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by account: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setObject(index++, accountId);
             dataStmt.setObject(index++, userId);
@@ -848,7 +869,8 @@ public class ItemDAO {
         }
         dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
             int index = 1;
             countStmt.setObject(index++, accountId);
             countStmt.setObject(index++, userId);
@@ -867,7 +889,8 @@ public class ItemDAO {
             System.err.println("Fail to count items by semantic search within account: " + e.getMessage());
         }
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery.toString())) {
             int index = 1;
             dataStmt.setString(index++, vectorLiteral);
             dataStmt.setObject(index++, accountId);

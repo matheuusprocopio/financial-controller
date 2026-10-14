@@ -2,9 +2,11 @@ package com.ti2cc.api.factory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
@@ -14,24 +16,40 @@ public class PostgresFactory {
             .ignoreIfMissing()
             .load();
 
-    public static Connection getConnection() {
+    /**
+     * Cria o pool de conexões. Cada operação pega uma conexão do pool e a devolve ao terminar;
+     * conexões derrubadas pelo banco (ex.: Neon hibernando) são descartadas e recriadas.
+     */
+    public static DataSource createDataSource() {
+        String rawUrl = dotenv.get("DB_URL");
+        if (rawUrl == null || rawUrl.isBlank()) {
+            throw new RuntimeException("Database URL not found in environment variables");
+        }
+
+        DatabaseConfig fromUrl = parseDatabaseUrl(rawUrl);
+
+        String resolvedUser = fromUrl.user != null ? fromUrl.user : dotenv.get("DB_USER");
+        String resolvedPassword = fromUrl.password != null ? fromUrl.password : dotenv.get("DB_PASSWORD");
+
+        if (resolvedUser == null || resolvedPassword == null) {
+            throw new RuntimeException("Database credentials not found in environment variables or URL");
+        }
+
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(fromUrl.jdbcUrl);
+        config.setUsername(resolvedUser);
+        config.setPassword(resolvedPassword);
+        config.setPoolName("financial-controller");
+        config.setMaximumPoolSize(5);
+        // Sem conexões ociosas mantidas abertas, o banco pode hibernar quando não há uso
+        config.setMinimumIdle(0);
+        config.setIdleTimeout(60_000);
+        config.setConnectionTimeout(30_000);
+
         try {
-            String rawUrl = dotenv.get("DB_URL");
-            if (rawUrl == null || rawUrl.isBlank()) {
-                throw new RuntimeException("Database URL not found in environment variables");
-            }
-
-            DatabaseConfig fromUrl = parseDatabaseUrl(rawUrl);
-
-            String resolvedUser = fromUrl.user != null ? fromUrl.user : dotenv.get("DB_USER");
-            String resolvedPassword = fromUrl.password != null ? fromUrl.password : dotenv.get("DB_PASSWORD");
-
-            if (resolvedUser == null || resolvedPassword == null) {
-                throw new RuntimeException("Database credentials not found in environment variables or URL");
-            }
-
-            return DriverManager.getConnection(fromUrl.jdbcUrl, resolvedUser, resolvedPassword);
-        } catch (SQLException e) {
+            // Valida a conexão já na criação: falha na inicialização se o banco estiver inacessível
+            return new HikariDataSource(config);
+        } catch (RuntimeException e) {
             throw new RuntimeException("Fail to establish a connection with postgres DB: ", e);
         }
     }

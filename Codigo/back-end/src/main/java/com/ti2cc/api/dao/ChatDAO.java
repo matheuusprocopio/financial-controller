@@ -8,21 +8,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.dto.PaginatedResponseDTO;
 import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.model.Chat;
 
 public class ChatDAO {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public ChatDAO(Connection connection) {
-        this.connection = connection;
+    public ChatDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Chat chat) {
         String query = "INSERT INTO chat (id, name, user_id) VALUES (?, ?, ?)";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             if (chat.getId() == null) {
                 chat.setId(UUID.randomUUID());
             }
@@ -41,7 +44,8 @@ public class ChatDAO {
     public boolean update(Chat chat) {
         String query = "UPDATE chat SET name = ?, updated_at = NOW() WHERE id = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, chat.getName());
             pstmt.setObject(2, chat.getId());
 
@@ -55,7 +59,8 @@ public class ChatDAO {
     public boolean delete(UUID chatId) {
         String query = "DELETE FROM chat WHERE id = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, chatId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -67,7 +72,8 @@ public class ChatDAO {
     public Chat getById(UUID chatId) {
         String query = "SELECT id, name, user_id, created_at, updated_at FROM chat WHERE id = ?";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, chatId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -85,7 +91,8 @@ public class ChatDAO {
         String query = "SELECT id, name, user_id, created_at, updated_at FROM chat "
                 + "WHERE user_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1";
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);
             ResultSet rs = pstmt.executeQuery();
 
@@ -103,7 +110,8 @@ public class ChatDAO {
         List<Chat> chats = new ArrayList<>();
         long totalItems = 0;
 
-        try (PreparedStatement countStmt = connection
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement countStmt = connection
                 .prepareStatement("SELECT COUNT(*) FROM chat WHERE user_id = ?")) {
             countStmt.setObject(1, userId);
             ResultSet countResult = countStmt.executeQuery();
@@ -118,7 +126,8 @@ public class ChatDAO {
         String dataQuery = "SELECT id, name, user_id, created_at, updated_at FROM chat "
                 + "WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
 
-        try (PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement dataStmt = connection.prepareStatement(dataQuery)) {
             dataStmt.setObject(1, userId);
             dataStmt.setInt(2, pagination.getPageLimit());
             dataStmt.setInt(3, pagination.getOffset());

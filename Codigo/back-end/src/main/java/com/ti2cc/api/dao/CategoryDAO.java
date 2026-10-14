@@ -9,14 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.ti2cc.api.model.Category;
 import com.ti2cc.api.util.VectorUtils;
 
 public class CategoryDAO {
-    private Connection connection;
+    private final DataSource dataSource;
 
-    public CategoryDAO(Connection connection) {
-        this.connection = connection;
+    public CategoryDAO(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public boolean create(Category category) {
@@ -56,7 +58,8 @@ public class CategoryDAO {
 
         String query = sb.toString();
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             int paramIndex = 1;
 
             if (category.getId() == null) {
@@ -125,7 +128,8 @@ public class CategoryDAO {
 
         query.append(" WHERE id = ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
 
             if (category.getName() != null)
@@ -154,7 +158,8 @@ public class CategoryDAO {
 
     public boolean delete(UUID id) {
         String query = "DELETE FROM categories WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -166,7 +171,8 @@ public class CategoryDAO {
 
     public Category getById(UUID id) {
         String query = "SELECT * FROM categories WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, id);
             ResultSet rs = pstmt.executeQuery();
 
@@ -193,7 +199,8 @@ public class CategoryDAO {
             query.append(" AND main_category_id = ?");
         }
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setObject(paramIndex++, userId);
 
@@ -232,7 +239,8 @@ public class CategoryDAO {
 
         query.append(" ORDER BY distance ASC");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setString(paramIndex++, vectorLiteral);
             pstmt.setObject(paramIndex++, userId);
@@ -268,7 +276,8 @@ public class CategoryDAO {
 
         query.append(" ORDER BY id LIMIT ? OFFSET ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setObject(paramIndex++, userId);
 
@@ -311,7 +320,8 @@ public class CategoryDAO {
 
         query.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setString(paramIndex++, vectorLiteral);
             pstmt.setObject(paramIndex++, userId);
@@ -347,7 +357,8 @@ public class CategoryDAO {
             query.append(" AND main_category_id = ?");
         }
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setObject(paramIndex++, userId);
 
@@ -378,7 +389,8 @@ public class CategoryDAO {
             query.append(" AND main_category_id = ?");
         }
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
             int paramIndex = 1;
             pstmt.setObject(paramIndex++, userId);
 

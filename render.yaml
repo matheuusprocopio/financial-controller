@@ -1,0 +1,28 @@
+# Blueprint do Render para a API (back-end)
+# Render > New > Blueprint > selecione este repositório
+services:
+  - type: web
+    name: financial-controller-api
+    runtime: docker
+    plan: free
+    rootDir: Codigo/back-end
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Connection string do Neon (postgresql://...?sslmode=require)
+      - key: DB_URL
+        sync: false
+      # JSON da service account do Firebase em uma única linha
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # URL do front na Vercel (ex.: https://financial-controller.vercel.app)
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # O plano free tem 512 MB; sem isso a JVM usa só 1/4 da memória
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75

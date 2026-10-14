@@ -5,6 +5,7 @@ import com.ti2cc.api.container.Container;
 import static spark.Spark.before;
 import static spark.Spark.options;
 import static spark.Spark.port;
+import static spark.Spark.stop;
 
 
 
@@ -36,6 +37,14 @@ public class Api {
             response.header("Access-Control-Allow-Credentials", "true");
         });
 
-        Container.register();
+        try {
+            Container.register();
+        } catch (RuntimeException e) {
+            // Sem isso o Jetty continua de pé sem nenhuma rota registrada (404 em tudo)
+            System.err.println("Falha ao inicializar a API: " + e.getMessage());
+            e.printStackTrace();
+            stop();
+            System.exit(1);
+        }
     }
 }

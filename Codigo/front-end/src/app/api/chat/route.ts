@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { messages, chatId }: { messages: UIMessage[]; chatId: string } =
     await req.json();
   const result = streamText({
-    model: openai("o3-mini"),
+    model: openai("gpt-5.6-sol"),
     messages: convertToModelMessages(messages),
     tools,
     system: `

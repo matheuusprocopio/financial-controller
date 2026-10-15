@@ -36,9 +36,9 @@ const BILLS = ["conta", "luz", "energia", "moradia", "casa", "utilidade", "servi
 const HEALTH = ["saude", "farmacia", "academia", "esporte", "bem-estar", "medic"];
 const LEISURE = ["lazer", "entretenimento", "cinema", "diversao", "assinatura", "streaming"];
 const GROCERY = ["mercado", "supermercado", "aliment", "compras"];
+const TELECOM = ["internet", "telefon", "conta", "servico", "moradia", "casa", "utilidade"];
 
-export const buildDataset = (d: DateHelpers): EvalCase[] => {
-  const item = (
+const item = (
     id: string,
     input: string,
     type: "income" | "expense",
@@ -58,8 +58,9 @@ export const buildDataset = (d: DateHelpers): EvalCase[] => {
         ...(category ? { suggestedCategoryName: { has: category } } : {}),
       },
     },
-  });
+});
 
+export const buildDataset = (d: DateHelpers): EvalCase[] => {
   // No date in the message: the tool falls back to today when it is omitted.
   const noDate = [d.today, undefined];
   const fiveDaysAgo = d.daysAgo(5);
@@ -258,5 +259,107 @@ export const buildDataset = (d: DateHelpers): EvalCase[] => {
     { id: "clarify-apaga-tudo", tag: "clarify", input: "apaga tudo", expect: { noTool: true } },
     { id: "clarify-exclui-conta", tag: "clarify", input: "exclui minha conta", expect: { noTool: true } },
     { id: "clarify-gastei", tag: "clarify", input: "gastei", expect: { noTool: true } },
+  ];
+};
+
+/**
+ * Held-out set: written after the main set was used to tune the prompt and never
+ * used for tuning. Different wording on purpose (slang, abbreviations, numbers in
+ * words or with thousands separators) to check that fixes generalize.
+ */
+export const buildHoldoutDataset = (d: DateHelpers): EvalCase[] => {
+  const noDate = [d.today, undefined];
+  const threeDaysAgo = d.daysAgo(3);
+
+  return [
+    item("h-item-uber", "uber pra casa 23,40", "expense", 23.4, noDate, TRANSPORT),
+    item("h-item-salario-hj", "caiu 3.250,00 de salário hj", "income", 3250, noDate, SALARY),
+    item("h-item-lanche-extenso", "gastei trinta reais de lanche", "expense", 30, noDate, FOOD),
+    item("h-item-internet-ontem", "paguei a fatura da internet ontem, 99,90", "expense", 99.9, [d.daysAgo(1)], TELECOM),
+    item("h-item-remedio", "comprei remédio 48 reais anteontem", "expense", 48, [d.daysAgo(2)], HEALTH),
+    item("h-item-reembolso", "recebi 75 de reembolso da empresa", "income", 75, noDate),
+    item("h-item-condominio", `dia ${threeDaysAgo.slice(8, 10)} paguei 1.100 de condomínio`, "expense", 1100, [threeDaysAgo], HOUSING),
+    item("h-item-spotify", "spotify 21,90", "expense", 21.9, noDate, LEISURE),
+    item("h-item-happy-hour", "ontem rolou um happy hour, gastei 120", "expense", 120, [d.daysAgo(1)], [...LEISURE, ...FOOD]),
+    item("h-item-aluguel-recebido", "transferiram 500 pra mim do aluguel do apê", "income", 500, noDate),
+
+    {
+      id: "h-query-entradas-mes",
+      tag: "query",
+      input: "o que entrou de dinheiro esse mês?",
+      expect: { tool: ["listItems", "itemsAnalytics"], args: { startDate: { date: [d.firstOfMonth()] } } },
+    },
+    {
+      id: "h-query-anteontem",
+      tag: "query",
+      input: "lista meus gastos de anteontem",
+      expect: { tool: ["listItems"], args: { startDate: { date: [d.daysAgo(2)] }, endDate: { date: [d.daysAgo(2)] } } },
+    },
+    {
+      id: "h-query-netflix",
+      tag: "query",
+      input: "acha a compra da netflix",
+      expect: { tool: ["listItems"], args: { semanticSearch: { has: ["netflix"] } } },
+    },
+    {
+      id: "h-query-itau",
+      tag: "query",
+      input: "despesas no itaú",
+      expect: { tool: ["listItems"], args: { accountName: { has: ["itau"] }, type: { eq: "expense" } } },
+    },
+
+    {
+      id: "h-analytics-saldo",
+      tag: "analytics",
+      input: "quero ver um gráfico do meu saldo nos últimos meses",
+      expect: { tool: ["itemsAnalytics"], args: { metric: { eq: "balance" }, groupBy: { includes: "month" } } },
+    },
+    {
+      id: "h-analytics-top-categoria",
+      tag: "analytics",
+      input: "qual categoria eu mais gastei no mês passado?",
+      expect: { tool: ["itemsAnalytics", "listItems"], args: { startDate: { date: [d.firstOfMonth(-1)] } } },
+    },
+    {
+      id: "h-analytics-distribuicao-ano",
+      tag: "analytics",
+      input: "distribuição dos gastos por categoria este ano",
+      expect: {
+        tool: ["itemsAnalytics"],
+        args: { metric: { eq: "total_expenses" }, groupBy: { includes: "category" }, startDate: { date: [d.firstOfYear()] } },
+      },
+    },
+
+    {
+      id: "h-entity-conta-inter",
+      tag: "entities",
+      input: "abre uma conta Inter com saldo zero",
+      expect: { tool: ["createNewAccount"], args: { financialInstitution: { has: ["inter"] }, balance: { approx: 0 } } },
+    },
+    {
+      id: "h-entity-cartao-xp",
+      tag: "entities",
+      input: "cartão XP limite 8 mil",
+      expect: { tool: ["createNewCreditCard"], args: { financialInstitution: { has: ["xp"] }, limit: { approx: 8000 } } },
+    },
+    {
+      id: "h-entity-categoria-educacao",
+      tag: "entities",
+      input: "nova categoria: educação",
+      expect: { tool: ["createNewCategory"], args: { name: { has: ["educa"] } } },
+    },
+    {
+      id: "h-entity-meta-reserva",
+      tag: "entities",
+      input: "meta: reserva de emergência de 20 mil",
+      expect: { tool: ["createNewGoal"], args: { targetAmount: { approx: 20000 } } },
+    },
+
+    { id: "h-scope-tempo", tag: "scope", input: "qual a previsão do tempo amanhã?", expect: { noTool: true } },
+    { id: "h-scope-acoes", tag: "scope", input: "vale a pena comprar ações da Petrobras?", expect: { noTool: true } },
+
+    { id: "h-clarify-registra", tag: "clarify", input: "registra aí", expect: { noTool: true } },
+    { id: "h-clarify-apaga-todos", tag: "clarify", input: "apaga meus lançamentos todos", expect: { noTool: true } },
+    { id: "h-clarify-recebi", tag: "clarify", input: "recebi", expect: { noTool: true } },
   ];
 };

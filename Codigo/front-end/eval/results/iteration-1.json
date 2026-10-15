@@ -1,0 +1,2763 @@
+{
+  "label": "iteration-1",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-15",
+  "runs": 1,
+  "summary": {
+    "cases": "100.0%",
+    "toolSelection": "100.0%",
+    "byTag": {
+      "create_item": "100.0%",
+      "query": "100.0%",
+      "analytics": "100.0%",
+      "entities": "100.0%",
+      "edit": "100.0%",
+      "scope": "100.0%",
+      "clarify": "100.0%"
+    },
+    "byField": {
+      "type": "100.0% (n=22)",
+      "amount": "100.0% (n=20)",
+      "date": "100.0% (n=20)",
+      "suggestedCategoryName": "100.0% (n=16)",
+      "startDate": "100.0% (n=9)",
+      "endDate": "100.0% (n=3)",
+      "accountName": "100.0% (n=1)",
+      "semanticSearch": "100.0% (n=1)",
+      "metric": "100.0% (n=4)",
+      "groupBy": "100.0% (n=5)",
+      "name": "100.0% (n=3)",
+      "financialInstitution": "100.0% (n=2)",
+      "balance": "100.0% (n=2)",
+      "limit": "100.0% (n=1)",
+      "targetAmount": "100.0% (n=1)",
+      "deadline": "100.0% (n=1)",
+      "status": "100.0% (n=1)"
+    },
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.2002,
+    "costPerCallUsd": 0.0036
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "item-almoco-ontem",
+        "tag": "create_item",
+        "input": "gastei 300 reais no almoço ontem",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 300
+            },
+            "date": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 300
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.015625,
+          "tokens": {
+            "input": 2609,
+            "cached": 0,
+            "output": 86
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-uber-hoje",
+        "tag": "create_item",
+        "input": "paguei 150 de uber hoje",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 150
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "transporte",
+                "combustivel",
+                "gasolina",
+                "carro",
+                "mobilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 150
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0036215,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 75
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-salario",
+        "tag": "create_item",
+        "input": "recebi meu salário de 5000",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 5000
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "salario",
+                "renda",
+                "receita",
+                "trabalho"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 5000
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Salário"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0034715,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 70
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-padaria",
+        "tag": "create_item",
+        "input": "comprei pão por 12,50 na padaria",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 12.5
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 12.5
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038215,
+          "tokens": {
+            "input": 2612,
+            "cached": 2593,
+            "output": 81
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-gasolina-ontem",
+        "tag": "create_item",
+        "input": "ontem coloquei 200 de gasolina",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 200
+            },
+            "date": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "transporte",
+                "combustivel",
+                "gasolina",
+                "carro",
+                "mobilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 200
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040415,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 89
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-luz-anteontem",
+        "tag": "create_item",
+        "input": "anteontem paguei 89,90 na conta de luz",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 89.9
+            },
+            "date": {
+              "date": [
+                "2026-10-13"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "conta",
+                "luz",
+                "energia",
+                "moradia",
+                "casa",
+                "utilidade",
+                "servico"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 89.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-13"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040665,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 89
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-freela-dia",
+        "tag": "create_item",
+        "input": "recebi 1200 de um freela dia 05",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 1200
+            },
+            "date": {
+              "date": [
+                "2026-10-05"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "salario",
+                "renda",
+                "receita",
+                "trabalho"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 1200
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-05"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Renda extra"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041215,
+          "tokens": {
+            "input": 2612,
+            "cached": 2593,
+            "output": 91
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-ifood",
+        "tag": "create_item",
+        "input": "gastei 45 no ifood",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 45
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 45
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038315,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 82
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-academia",
+        "tag": "create_item",
+        "input": "paguei a academia, 120 reais",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 120
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "saude",
+                "farmacia",
+                "academia",
+                "esporte",
+                "bem-estar",
+                "medic"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 120
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0034765,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 70
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-netflix",
+        "tag": "create_item",
+        "input": "netflix 55,90",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 55.9
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 55.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Assinaturas e serviços"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037615,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 80
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-pix-joao",
+        "tag": "create_item",
+        "input": "recebi 300 de pix do joão",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 300
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 300
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041965,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 94
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-bicicleta",
+        "tag": "create_item",
+        "input": "vendi minha bicicleta por 800",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 800
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 800
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039765,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 87
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-aluguel-ddmm",
+        "tag": "create_item",
+        "input": "paguei 2 mil de aluguel dia 10/10",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 2000
+            },
+            "date": {
+              "date": [
+                "2026-10-10"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "moradia",
+                "casa",
+                "aluguel",
+                "habitac"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 2000
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-10"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039465,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 85
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-farmacia-ontem",
+        "tag": "create_item",
+        "input": "farmácia 37 reais ontem",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 37
+            },
+            "date": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "saude",
+                "farmacia",
+                "academia",
+                "esporte",
+                "bem-estar",
+                "medic"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 37
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037615,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 80
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-cashback",
+        "tag": "create_item",
+        "input": "recebi 150 de cashback",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 150
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 150
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0034015,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 68
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-mercado",
+        "tag": "create_item",
+        "input": "o mercado deu 432,18",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 432.18
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "mercado",
+                "supermercado",
+                "aliment",
+                "compras"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 432.18
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037965,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 81
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-estacionamento",
+        "tag": "create_item",
+        "input": "paguei 60 de estacionamento anteontem",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 60
+            },
+            "date": {
+              "date": [
+                "2026-10-13"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "transporte",
+                "combustivel",
+                "gasolina",
+                "carro",
+                "mobilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 60
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-13"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038715,
+          "tokens": {
+            "input": 2610,
+            "cached": 2593,
+            "output": 83
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-presente",
+        "tag": "create_item",
+        "input": "ganhei 250 de presente da minha vó",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 250
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 250
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039265,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 85
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-cinema",
+        "tag": "create_item",
+        "input": "cinema com a namorada, 70 reais",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 70
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 70
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Lazer"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0035715,
+          "tokens": {
+            "input": 2610,
+            "cached": 2593,
+            "output": 73
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "item-dia-semana-passada",
+        "tag": "create_item",
+        "input": "dia 08/10 gastei 95 no dentista",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 95
+            },
+            "date": {
+              "date": [
+                "2026-10-08"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "saude",
+                "farmacia",
+                "academia",
+                "esporte",
+                "bem-estar",
+                "medic"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 95
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-08"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040365,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 88
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-alimentacao-mes",
+        "tag": "query",
+        "input": "quais foram meus gastos com alimentação esse mês?",
+        "expect": {
+          "tool": [
+            "listItems",
+            "itemsAnalytics"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0035415,
+          "tokens": {
+            "input": 2610,
+            "cached": 2593,
+            "output": 72
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-ontem",
+        "tag": "query",
+        "input": "me mostra as transações de ontem",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "endDate": {
+              "date": [
+                "2026-10-14"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "endDate",
+              "ok": true,
+              "got": "2026-10-14"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0031665,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 60
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-receitas-mes-passado",
+        "tag": "query",
+        "input": "quanto recebi no mês passado?",
+        "expect": {
+          "tool": [
+            "listItems",
+            "itemsAnalytics"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-09-01"
+              ]
+            },
+            "endDate": {
+              "date": [
+                "2026-09-30"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-09-01"
+            },
+            {
+              "name": "endDate",
+              "ok": true,
+              "got": "2026-09-30"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037065,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 78
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-receitas",
+        "tag": "query",
+        "input": "mostra minhas receitas",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0027915,
+          "tokens": {
+            "input": 2604,
+            "cached": 2593,
+            "output": 48
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-despesas-nubank",
+        "tag": "query",
+        "input": "liste as despesas da conta Nubank",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "accountName": {
+              "has": [
+                "nubank"
+              ]
+            },
+            "type": {
+              "eq": "expense"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "accountName",
+              "ok": true,
+              "got": "Nubank"
+            },
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0030465,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 56
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-ultimos-7-dias",
+        "tag": "query",
+        "input": "transações dos últimos 7 dias",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-08",
+                "2026-10-09"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-09"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0031365,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 59
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-busca-uber",
+        "tag": "query",
+        "input": "procura aquele gasto com uber",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "semanticSearch": {
+              "has": [
+                "uber"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "semanticSearch",
+              "ok": true,
+              "got": "Uber"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029215,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 52
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "query-hoje",
+        "tag": "query",
+        "input": "o que eu gastei hoje?",
+        "expect": {
+          "tool": [
+            "listItems",
+            "itemsAnalytics"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-15"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029015,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 51
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-categoria-3m",
+        "tag": "analytics",
+        "input": "faz um gráfico dos meus gastos por categoria nos últimos 3 meses",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "total_expenses"
+            },
+            "groupBy": {
+              "includes": "category"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "metric",
+              "ok": true,
+              "got": "total_expenses"
+            },
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "month",
+                "category"
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0046965,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 110
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-saldo-ano",
+        "tag": "analytics",
+        "input": "como evoluiu meu saldo mês a mês este ano?",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "balance"
+            },
+            "groupBy": {
+              "includes": "month"
+            },
+            "startDate": {
+              "date": [
+                "2026-01-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "metric",
+              "ok": true,
+              "got": "balance"
+            },
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "month"
+              ]
+            },
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-01-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0033365,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 65
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-receitas-despesas-6m",
+        "tag": "analytics",
+        "input": "compare minhas receitas e despesas dos últimos 6 meses",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "groupBy": {
+              "includes": "month"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "month"
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0066015,
+          "tokens": {
+            "input": 2610,
+            "cached": 2593,
+            "output": 174
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-contagem-mes",
+        "tag": "analytics",
+        "input": "quantas transações eu fiz esse mês?",
+        "expect": {
+          "tool": [
+            "itemsAnalytics",
+            "listItems"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041665,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 93
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-conta-mes-passado",
+        "tag": "analytics",
+        "input": "gráfico de gastos por conta no mês passado",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "total_expenses"
+            },
+            "groupBy": {
+              "includes": "account"
+            },
+            "startDate": {
+              "date": [
+                "2026-09-01"
+              ]
+            },
+            "endDate": {
+              "date": [
+                "2026-09-30"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "metric",
+              "ok": true,
+              "got": "total_expenses"
+            },
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "account"
+              ]
+            },
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-09-01"
+            },
+            {
+              "name": "endDate",
+              "ok": true,
+              "got": "2026-09-30"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038065,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 81
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "analytics-gastos-por-mes-ano",
+        "tag": "analytics",
+        "input": "quanto gastei em cada mês desse ano?",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "total_expenses"
+            },
+            "groupBy": {
+              "includes": "month"
+            },
+            "startDate": {
+              "date": [
+                "2026-01-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "metric",
+              "ok": true,
+              "got": "total_expenses"
+            },
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "month"
+              ]
+            },
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-01-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0033915,
+          "tokens": {
+            "input": 2610,
+            "cached": 2593,
+            "output": 67
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-conta-itau",
+        "tag": "entities",
+        "input": "cria uma conta no Itaú chamada Conta Corrente com 1500 de saldo",
+        "expect": {
+          "tool": [
+            "createNewAccount"
+          ],
+          "args": {
+            "name": {
+              "has": [
+                "corrente"
+              ]
+            },
+            "financialInstitution": {
+              "has": [
+                "itau"
+              ]
+            },
+            "balance": {
+              "approx": 1500
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewAccount",
+          "args": [
+            {
+              "name": "name",
+              "ok": true,
+              "got": "Conta Corrente"
+            },
+            {
+              "name": "financialInstitution",
+              "ok": true,
+              "got": "Itaú"
+            },
+            {
+              "name": "balance",
+              "ok": true,
+              "got": 1500
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029765,
+          "tokens": {
+            "input": 2617,
+            "cached": 2593,
+            "output": 52
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-conta-carteira",
+        "tag": "entities",
+        "input": "adicionar conta Carteira com 200 reais",
+        "expect": {
+          "tool": [
+            "createNewAccount"
+          ],
+          "args": {
+            "name": {
+              "has": [
+                "carteira"
+              ]
+            },
+            "balance": {
+              "approx": 200
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewAccount",
+          "args": [
+            {
+              "name": "name",
+              "ok": true,
+              "got": "Carteira"
+            },
+            {
+              "name": "balance",
+              "ok": true,
+              "got": 200
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0042865,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 97
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-cartao-nubank",
+        "tag": "entities",
+        "input": "quero cadastrar meu cartão Nubank com limite de 3000",
+        "expect": {
+          "tool": [
+            "createNewCreditCard"
+          ],
+          "args": {
+            "financialInstitution": {
+              "has": [
+                "nubank"
+              ]
+            },
+            "limit": {
+              "approx": 3000
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewCreditCard",
+          "args": [
+            {
+              "name": "financialInstitution",
+              "ok": true,
+              "got": "Nubank"
+            },
+            {
+              "name": "limit",
+              "ok": true,
+              "got": 3000
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0032865,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 63
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-categoria-pets",
+        "tag": "entities",
+        "input": "cria a categoria Pets",
+        "expect": {
+          "tool": [
+            "createNewCategory"
+          ],
+          "args": {
+            "name": {
+              "has": [
+                "pet"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewCategory",
+          "args": [
+            {
+              "name": "name",
+              "ok": true,
+              "got": "Pets"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0022565,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 30
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-listar-categorias",
+        "tag": "entities",
+        "input": "quais categorias eu tenho?",
+        "expect": {
+          "tool": [
+            "listCategories"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listCategories",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0017815,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 14
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-listar-contas",
+        "tag": "entities",
+        "input": "quais são minhas contas?",
+        "expect": {
+          "tool": [
+            "listAccounts",
+            "filterAccounts"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listAccounts",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0017815,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 14
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-listar-cartoes",
+        "tag": "entities",
+        "input": "meus cartões",
+        "expect": {
+          "tool": [
+            "listCreditCards"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listCreditCards",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0021265,
+          "tokens": {
+            "input": 2603,
+            "cached": 2593,
+            "output": 26
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-meta-viagem",
+        "tag": "entities",
+        "input": "quero juntar 10 mil para uma viagem até dezembro",
+        "expect": {
+          "tool": [
+            "createNewGoal"
+          ],
+          "args": {
+            "targetAmount": {
+              "approx": 10000
+            },
+            "deadline": {
+              "startsWith": "2026-12"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewGoal",
+          "args": [
+            {
+              "name": "targetAmount",
+              "ok": true,
+              "got": 10000
+            },
+            {
+              "name": "deadline",
+              "ok": true,
+              "got": "2026-12-31"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0044765,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 103
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-listar-metas",
+        "tag": "entities",
+        "input": "como estão minhas metas?",
+        "expect": {
+          "tool": [
+            "listGoals"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listGoals",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0021365,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 26
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "entity-metas-batidas",
+        "tag": "entities",
+        "input": "quais metas eu já bati?",
+        "expect": {
+          "tool": [
+            "listGoals"
+          ],
+          "args": {
+            "status": {
+              "eq": "achieved"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listGoals",
+          "args": [
+            {
+              "name": "status",
+              "ok": true,
+              "got": "achieved"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0022965,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 31
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "edit-apagar-uber",
+        "tag": "edit",
+        "input": "apaga a transação do uber de ontem",
+        "expect": {
+          "tool": [
+            "listItems",
+            "deleteItem"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0035365,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 72
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "edit-valor-almoco",
+        "tag": "edit",
+        "input": "muda o valor do almoço de ontem para 35",
+        "expect": {
+          "tool": [
+            "listItems",
+            "editItem"
+          ]
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [],
+          "text": "",
+          "costUsd": 0.0034865,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 70
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-capital",
+        "tag": "scope",
+        "input": "qual a capital da França?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Sorry, I can only respond to financial planning questions.",
+          "costUsd": 0.0018115,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 15
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-poema",
+        "tag": "scope",
+        "input": "me escreve um poema sobre o mar",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Sorry, I can only respond to financial planning questions.",
+          "costUsd": 0.0018165,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 15
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-cdb",
+        "tag": "scope",
+        "input": "quanto rendeu meu CDB este mês?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Investimentos como CDB e cálculo de rentabilidade não são suportados. Posso registrar o rendimento deste mês como uma **receita**, se você informar o valor recebido.",
+          "costUsd": 0.0036865,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 77
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-bitcoin",
+        "tag": "scope",
+        "input": "devo investir em bitcoin?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Não ofereço orientação sobre investimentos, incluindo Bitcoin. Posso, porém, registrar uma compra ou venda de Bitcoin como uma transação financeira.",
+          "costUsd": 0.0033415,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 66
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-python",
+        "tag": "scope",
+        "input": "me ajuda a corrigir um código python",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Sorry, I can only respond to financial planning questions.",
+          "costUsd": 0.0018215,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 15
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "scope-futebol",
+        "tag": "scope",
+        "input": "quem ganhou o jogo do Flamengo ontem?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Sorry, I can only respond to financial planning questions.",
+          "costUsd": 0.0018215,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 15
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "clarify-lanca-200",
+        "tag": "clarify",
+        "input": "lança 200",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Os R$ 200 foram uma **entrada (receita)** ou **saída (despesa)**? Com o quê?",
+          "costUsd": 0.0028215,
+          "tokens": {
+            "input": 2604,
+            "cached": 2593,
+            "output": 49
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "clarify-apaga-tudo",
+        "tag": "clarify",
+        "input": "apaga tudo",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "O que você quer apagar: **transações, contas, cartões, categorias, metas ou todos os dados financeiros**?\n\nComo isso excluirá vários registros, preciso da sua confirmação explícita. Responda, por exemplo: **“Confirmo apagar todas as transações.”**",
+          "costUsd": 0.0044365,
+          "tokens": {
+            "input": 2603,
+            "cached": 2593,
+            "output": 103
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "clarify-exclui-conta",
+        "tag": "clarify",
+        "input": "exclui minha conta",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Você quer excluir:\n\n1. **Uma conta financeira** (bancária/carteira)\n2. **Seu perfil de usuário**\n\nQual delas?",
+          "costUsd": 0.0029465,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 53
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "clarify-gastei",
+        "tag": "clarify",
+        "input": "gastei",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Qual foi o valor gasto e com o quê?",
+          "costUsd": 0.0017665,
+          "tokens": {
+            "input": 2603,
+            "cached": 2593,
+            "output": 14
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import { listGoals, getGoalById } from "@/utils/services/goals";
 import { listItems, getItemById } from "@/utils/services/items";
 import { getSessionId } from "@/utils/server-cookies";
 import { findBestMatch } from "@/utils/fuzzySearch";
+import { getLocalIsoDate } from "@/utils/date";
 import type { FuzzyMatchResult } from "@/utils/fuzzySearch";
 import { calculateItemsAnalytics, ItemAnalyticsRequest } from "@/utils/services/Analytics/itemsAnalytics";
 import { ItemAnalyticsResponse } from "@/types/analytics.types";
@@ -20,7 +21,7 @@ const isRequestError = (resp: unknown): resp is RequestError => {
   return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
 };
 
-const getTodayIsoDate = () => new Date().toISOString().split("T")[0];
+const getTodayIsoDate = () => getLocalIsoDate();
 
 const MIN_MATCH_CONFIDENCE = 0.5;
 
@@ -827,16 +828,17 @@ export const createNewItemTool = tool({
   - Extract the amount from the message
   
   Examples:
-  - "gastei 300 reais no almoço ontem" -> expense, food category, 300, yesterday's ISO date (e.g., 2024-04-03)
-  - "recebi meu salário de 5000 dia 05" -> income, salary category, 5000, 2024-04-05
-  - "paguei 150 de uber dia 12/04" -> expense, transport category, 150, 2024-04-12`,
+  - "gastei 300 reais no almoço ontem" -> expense, food category, 300, today's date minus one day
+  - "recebi meu salário de 5000 dia 05" -> income, salary category, 5000, the most recent past day 05
+  - "paguei 150 de uber dia 12/04" -> expense, transport category, 150, April 12 of the current year (previous year if that is in the future)
+  Always compute dates from today's date given in the system prompt.`,
   
   inputSchema: z.object({
     name: z.string().describe("Short name for the transaction (e.g., 'Almoço', 'Uber', 'Salário')"),
     description: z.string().describe("Detailed description extracted from user message"),
     amount: z.number().positive("Amount must be positive").describe("The monetary amount"),
     type: z.enum(["income", "expense"]).describe("Automatically determined: 'income' if received money, 'expense' if spent/paid"),
-    date: z.string().describe("Transaction date converted to ISO 8601 (YYYY-MM-DD). when not specifyed keey it undefined"),
+    date: z.string().describe("Transaction date converted to ISO 8601 (YYYY-MM-DD). When the user does not mention a date, use today's date."),
     suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
     suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
   }),
@@ -1258,8 +1260,7 @@ export const listItemsTool = tool({
   }),
 
   execute: async ({ semanticSearch = "", categoryName, accountName, startDate, endDate, type }) => {
-    const today = new Date();
-    const todayIso = today.toISOString().split("T")[0];
+    const todayIso = getLocalIsoDate();
     const sanitizedStartDate = startDate?.trim();
     const sanitizedEndDate = endDate?.trim();
     const finalStartDate =

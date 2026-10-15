@@ -11,6 +11,7 @@ import { RequestError } from "@/utils/requestProvider";
 import { getErrorMessage } from "@/utils/errors";
 import { formatCurrencyValue, parseCurrencyToNumber } from "@/utils/currency";
 import { CategorieType } from "@/types/categorie.type";
+import { getLocalIsoDate } from "@/utils/date";
 
 interface ICreateItemForm {
   data: {
@@ -42,7 +43,7 @@ const CreateItemForm = ({ data, onError, onSubmitted }: ICreateItemForm) => {
     name: data?.name ?? "",
     description: data?.description ?? "",
     amount: formatCurrencyValue(data?.amount),
-    date: data?.date ?? new Date().toISOString().split("T")[0],
+    date: data?.date ?? getLocalIsoDate(),
     type: data?.type ?? "expense",
     categoryId: data?.categoryId ?? data?.categories?.[0]?.id ?? "",
     accountId: data?.accountId ?? "",
@@ -64,7 +65,7 @@ const CreateItemForm = ({ data, onError, onSubmitted }: ICreateItemForm) => {
       amount: formatCurrencyValue(
         data?.amount ?? prev.amount ?? "0"
       ),
-      date: data?.date ?? prev.date ?? new Date().toISOString().split("T")[0],
+      date: data?.date ?? prev.date ?? getLocalIsoDate(),
       type: data?.type ?? (prev.type as "income" | "expense") ?? "expense",
       categoryId: data?.categoryId ?? prev.categoryId ?? data?.categories?.[0]?.id ?? "",
       accountId: data?.accountId ?? prev.accountId ?? "",
@@ -238,7 +239,7 @@ const handleSubmit = async (values: Record<string, string>) => {
         type: (values.type as "income" | "expense") ?? "expense",
         categoryId: values.categoryId ?? "",
         accountId: values.accountId ?? "",
-        date: values.date ?? new Date().toISOString().split("T")[0],
+        date: values.date ?? getLocalIsoDate(),
         userId: backendUser.id,
       });
 

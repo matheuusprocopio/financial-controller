@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "prestart": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "bun test",
+    "eval": "bun run eval/run.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.135",
@@ -68,6 +70,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/bun": "1.2.23",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

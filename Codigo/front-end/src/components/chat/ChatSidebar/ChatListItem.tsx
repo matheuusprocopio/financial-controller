@@ -27,51 +27,47 @@ const ChatListItem = ({
 }: ChatListItemProps) => {
   return (
     <div
-      className={`relative cursor-pointer overflow-hidden rounded-xl border transition-all duration-300 p-3 sm:p-3.5 ${
+      className={`group relative cursor-pointer rounded-md px-3 py-2.5 transition-colors ${
         isActive
-          ? "translate-x-1.5 border-purple-400/50 bg-gradient-to-br from-purple-500/15 via-transparent to-cyan-400/10 shadow-[-3px_0_0_#8b5cf6,0_8px_24px_rgba(139,92,246,0.25)]"
-          : "border-purple-400/15 bg-purple-500/5 hover:translate-x-1 hover:border-purple-400/35 hover:bg-purple-500/10"
+          ? "bg-white/10"
+          : "hover:bg-white/5"
       }`}
       onClick={onSelect}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3.5 flex-1 min-w-0">
-          <div className="mt-1 relative">
-            <div className="absolute inset-0 bg-purple-500/20 blur-md rounded-full"></div>
-            <MessageSquare className="h-4 w-4 text-purple-400 relative z-10" />
-          </div>
-          <div className="flex-1 min-w-0 space-y-1.5">
-            <h3 className="font-medium text-sm truncate text-gray-200 leading-5">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" />
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <h3 className="truncate text-sm leading-5 text-neutral-200">
               {chat.name}
             </h3>
-            <p className="text-xs text-gray-400 truncate">{"last message"}</p>
-            <span className="text-[11px] text-gray-500 block">
+            <span className="block text-xs text-neutral-500">
               {formatTimestamp(chat.updatedAt)}
             </span>
           </div>
         </div>
-        <div className="pt-1">
+        <div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-purple-500/20 transition-colors"
+                className="h-6 w-6 p-0 text-neutral-500 transition-colors hover:bg-white/10 hover:text-neutral-200"
                 onClick={(e) => e.stopPropagation()}
               >
-                <MoreVertical className="h-3 w-3 text-gray-400 hover:text-purple-400 transition-colors" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-black/95 border-purple-500/30 backdrop-blur-xl"
+              className="border-white/10 bg-neutral-900"
             >
               <DropdownMenuItem
                 onClick={async (e) => {
                   e.stopPropagation();
                   await onDelete();
                 }}
-                className="text-red-400 hover:bg-red-500/20 focus:bg-red-500/20 cursor-pointer"
+                className="cursor-pointer text-red-400 focus:bg-red-500/10 focus:text-red-300"
               >
                 Excluir
               </DropdownMenuItem>

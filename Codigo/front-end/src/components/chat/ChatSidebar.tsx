@@ -112,7 +112,7 @@ const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) =
       />
 
       <div
-        className={`fixed left-0 z-40 flex w-80 flex-col transform transition-transform duration-300 ease-in-out rounded-r-2xl border-r border-purple-400/30 bg-black/95 shadow-[4px_0_32px_rgba(139,92,246,0.2)] backdrop-blur-3xl ${
+        className={`fixed left-0 z-40 flex w-80 flex-col transform transition-transform duration-300 ease-in-out border-r border-white/10 bg-neutral-950 ${
           isOpen
             ? "translate-x-0 pointer-events-auto"
             : "-translate-x-full pointer-events-none"

@@ -5,9 +5,10 @@
  * in production, but with the tools' `execute` stripped: the model only *chooses* a
  * tool and its arguments, nothing touches the database. We then score that choice.
  *
- *   bun run eval -- --label baseline [--runs 3] [--tag create_item] [--budget 1.5]
+ *   bun run eval -- --label baseline [--runs 3] [--tag create_item] [--budget 1.5] [--rpm 3]
  *
  * --budget (USD) stops launching new calls once the estimated spend reaches it.
+ * --rpm spaces out calls to stay under the account's requests-per-minute limit.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -50,6 +51,7 @@ const parseFlags = () => {
     runs: Number(flag("runs") ?? 1),
     tag: flag("tag"),
     budget: Number(flag("budget") ?? Infinity),
+    rpm: flag("rpm") ? Number(flag("rpm")) : undefined,
   };
 };
 
@@ -92,6 +94,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
       system: SYSTEM_PROMPT,
       tools: schemaOnlyTools,
       prompt: c.input,
+      maxRetries: 5,
     });
     costUsd = estimateCost(result.totalUsage);
 
@@ -135,7 +138,7 @@ const mapWithConcurrency = async <T, R>(items: T[], limit: number, fn: (item: T)
 const pct = (num: number, den: number) => (den === 0 ? "-" : `${((100 * num) / den).toFixed(1)}%`);
 
 const main = async () => {
-  const { label, runs, tag, budget } = parseFlags();
+  const { label, runs, tag, budget, rpm } = parseFlags();
   const today = localIsoDate();
   const dataset = buildDataset(createDateHelpers(today)).filter((c) => !tag || c.tag === tag);
 
@@ -143,12 +146,23 @@ const main = async () => {
 
   const jobs = dataset.flatMap((c) => Array.from({ length: runs }, () => c));
   let spent = 0;
-  const flat = await mapWithConcurrency(jobs, CONCURRENCY, async (c): Promise<RunResult> => {
+  // With an RPM cap, calls run one at a time with a fixed gap between starts.
+  const gapMs = rpm ? Math.ceil(60_000 / rpm) + 500 : 0;
+  let nextStart = 0;
+  let done = 0;
+  const flat = await mapWithConcurrency(jobs, rpm ? 1 : CONCURRENCY, async (c): Promise<RunResult> => {
+    if (gapMs) {
+      const wait = nextStart - Date.now();
+      if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+      nextStart = Date.now() + gapMs;
+    }
     if (spent >= budget) {
       return { ok: false, toolOk: false, toolName: null, args: [], text: "", costUsd: 0, skipped: true };
     }
     const r = await runCase(c);
     spent += r.costUsd;
+    done++;
+    console.log(`[${done}/${jobs.length}] ${r.ok ? "✓" : "✗"} ${c.id} · $${spent.toFixed(3)}`);
     return r;
   });
   const perCase = dataset.map((c, i) => ({

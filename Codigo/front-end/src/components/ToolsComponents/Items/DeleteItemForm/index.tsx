@@ -48,9 +48,9 @@ const DeleteItemForm = ({ data, onError, onSubmitted }: IDeleteItemForm) => {
 
   const getTypeIcon = (itemType: string) => {
     return itemType === "income" ? (
-      <TrendingUp className="h-4 w-4 text-green-600" />
+      <TrendingUp className="h-4 w-4 text-emerald-400" />
     ) : (
-      <TrendingDown className="h-4 w-4 text-red-600" />
+      <TrendingDown className="h-4 w-4 text-red-400" />
     );
   };
 

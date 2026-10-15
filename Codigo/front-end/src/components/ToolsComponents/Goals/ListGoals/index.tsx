@@ -585,7 +585,7 @@ const GoalsList = ({ data, onError }: IGoalsList) => {
                         <Badge
                           variant={goal.achieved ? "default" : "outline"}
                           className={
-                            goal.achieved ? "bg-green-600 text-white" : ""
+                            goal.achieved ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300" : ""
                           }
                         >
                           {goal.achieved ? "Concluída" : "Em andamento"}

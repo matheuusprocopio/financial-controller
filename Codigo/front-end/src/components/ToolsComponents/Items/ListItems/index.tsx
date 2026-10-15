@@ -287,7 +287,7 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
   };
 
   const getTypeColor = (type: string) => {
-    return type === "income" ? "text-green-600" : "text-red-600";
+    return type === "income" ? "text-emerald-400" : "text-red-400";
   };
 
   const getTypeBadgeVariant = (type: string) => {
@@ -481,13 +481,13 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
+          <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+                <TrendingUp className="h-5 w-5 text-emerald-400" />
                 <div>
                   <p className="text-xs text-muted-foreground">Total Receitas</p>
-                  <p className="text-lg font-bold text-green-600">
+                  <p className="text-lg font-bold text-emerald-400">
                     {formatCurrency(totalIncome)}
                   </p>
                 </div>
@@ -495,13 +495,13 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
             </CardContent>
           </Card>
 
-          <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-red-600" />
+                <TrendingDown className="h-5 w-5 text-red-400" />
                 <div>
                   <p className="text-xs text-muted-foreground">Total Despesas</p>
-                  <p className="text-lg font-bold text-red-600">
+                  <p className="text-lg font-bold text-red-400">
                     {formatCurrency(totalExpense)}
                   </p>
                 </div>
@@ -509,16 +509,13 @@ const ItemsList = ({ data: initialData, onError }: IItemsList) => {
             </CardContent>
           </Card>
 
-          <Card className={cn(
-            "border-2",
-            balance >= 0 ? "border-green-200 bg-green-50 dark:bg-green-950/20" : "border-red-200 bg-red-50 dark:bg-red-950/20"
-          )}>
+          <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <DollarSign className={cn("h-5 w-5", balance >= 0 ? "text-green-600" : "text-red-600")} />
+                <DollarSign className={cn("h-5 w-5", balance >= 0 ? "text-emerald-400" : "text-red-400")} />
                 <div>
                   <p className="text-xs text-muted-foreground">Saldo</p>
-                  <p className={cn("text-lg font-bold", balance >= 0 ? "text-green-600" : "text-red-600")}>
+                  <p className={cn("text-lg font-bold", balance >= 0 ? "text-emerald-400" : "text-red-400")}>
                     {formatCurrency(balance)}
                   </p>
                 </div>

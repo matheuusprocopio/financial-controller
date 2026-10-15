@@ -123,8 +123,8 @@ const AccountsList = ({ data, onError }: IAccountsList) => {
   };
 
   const getBalanceColor = (balance: number) => {
-    if (balance > 0) return "text-green-600";
-    if (balance < 0) return "text-red-600";
+    if (balance > 0) return "text-emerald-400";
+    if (balance < 0) return "text-red-400";
     return "text-muted-foreground";
   };
 

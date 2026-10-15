@@ -5,7 +5,7 @@
  * in production, but with the tools' `execute` stripped: the model only *chooses* a
  * tool and its arguments, nothing touches the database. We then score that choice.
  *
- *   bun run eval -- --label baseline [--runs 3] [--tag create_item] [--budget 1.5] [--rpm 3]
+ *   bun run eval -- --label baseline [--runs 3] [--tag create_item] [--budget 1.5] [--rpm 3] [--dataset holdout]
  *
  * --budget (USD) stops launching new calls once the estimated spend reaches it.
  * --rpm spaces out calls to stay under the account's requests-per-minute limit.
@@ -19,7 +19,7 @@ import { generateText, type Tool } from "ai";
 import { AGENT_MODEL } from "@/lib/agent/model";
 import { SYSTEM_PROMPT } from "@/lib/agent/systemPrompt";
 import { tools } from "@/lib/tools";
-import { buildDataset, type Check, type EvalCase } from "./dataset";
+import { buildDataset, buildHoldoutDataset, type Check, type EvalCase } from "./dataset";
 import { createDateHelpers, localIsoDate } from "./dates";
 
 const CONCURRENCY = 4;
@@ -53,6 +53,7 @@ const parseFlags = () => {
     tag: flag("tag"),
     budget: Number(flag("budget") ?? Infinity),
     rpm: flag("rpm") ? Number(flag("rpm")) : undefined,
+    datasetName: flag("dataset") ?? "main",
   };
 };
 
@@ -144,11 +145,12 @@ const mapWithConcurrency = async <T, R>(items: T[], limit: number, fn: (item: T)
 const pct = (num: number, den: number) => (den === 0 ? "-" : `${((100 * num) / den).toFixed(1)}%`);
 
 const main = async () => {
-  const { label, runs, tag, budget, rpm } = parseFlags();
+  const { label, runs, tag, budget, rpm, datasetName } = parseFlags();
   const today = localIsoDate();
-  const dataset = buildDataset(createDateHelpers(today)).filter((c) => !tag || c.tag === tag);
+  const build = datasetName === "holdout" ? buildHoldoutDataset : buildDataset;
+  const dataset = build(createDateHelpers(today)).filter((c) => !tag || c.tag === tag);
 
-  console.log(`Model ${AGENT_MODEL} · ${dataset.length} cases × ${runs} run(s) · today ${today}\n`);
+  console.log(`Model ${AGENT_MODEL} · ${datasetName} · ${dataset.length} cases × ${runs} run(s) · today ${today}\n`);
 
   // Run-major order: every case once, then again. If the budget runs out, whole
   // repetitions are dropped instead of the cases at the end of the dataset.
@@ -235,7 +237,7 @@ const main = async () => {
   const outFile = join(outDir, `${label}.json`);
   writeFileSync(
     outFile,
-    JSON.stringify({ label, model: AGENT_MODEL, today, runs, summary, cases: perCase }, null, 2),
+    JSON.stringify({ label, dataset: datasetName, model: AGENT_MODEL, today, runs, summary, cases: perCase }, null, 2),
   );
   console.log(`\nSaved ${outFile}`);
 

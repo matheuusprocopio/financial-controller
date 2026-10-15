@@ -1,0 +1,1342 @@
+{
+  "label": "fixed-holdout",
+  "dataset": "holdout",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-15",
+  "runs": 1,
+  "summary": {
+    "cases": "96.2%",
+    "toolSelection": "96.2%",
+    "byTag": {
+      "create_item": "100.0%",
+      "query": "100.0%",
+      "analytics": "66.7%",
+      "entities": "100.0%",
+      "scope": "100.0%",
+      "clarify": "100.0%"
+    },
+    "byField": {
+      "type": "100.0% (n=11)",
+      "amount": "100.0% (n=10)",
+      "date": "100.0% (n=10)",
+      "suggestedCategoryName": "100.0% (n=8)",
+      "startDate": "100.0% (n=4)",
+      "endDate": "100.0% (n=1)",
+      "semanticSearch": "100.0% (n=1)",
+      "accountName": "100.0% (n=1)",
+      "metric": "100.0% (n=1)",
+      "groupBy": "100.0% (n=1)",
+      "financialInstitution": "100.0% (n=2)",
+      "balance": "100.0% (n=1)",
+      "limit": "100.0% (n=1)",
+      "name": "100.0% (n=1)",
+      "targetAmount": "100.0% (n=1)"
+    },
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.0917,
+    "costPerCallUsd": 0.0035
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "h-item-uber",
+        "tag": "create_item",
+        "input": "uber pra casa 23,40",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 23.4
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "transporte",
+                "combustivel",
+                "gasolina",
+                "carro",
+                "mobilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 23.4
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0036165,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 75
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-salario-hj",
+        "tag": "create_item",
+        "input": "caiu 3.250,00 de salário hj",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 3250
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "salario",
+                "renda",
+                "receita",
+                "trabalho"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 3250
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Salário"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041815,
+          "tokens": {
+            "input": 2612,
+            "cached": 2593,
+            "output": 93
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-lanche-extenso",
+        "tag": "create_item",
+        "input": "gastei trinta reais de lanche",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 30
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 30
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037765,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 80
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-internet-ontem",
+        "tag": "create_item",
+        "input": "paguei a fatura da internet ontem, 99,90",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 99.9
+            },
+            "date": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "internet",
+                "telefon",
+                "conta",
+                "servico",
+                "moradia",
+                "casa",
+                "utilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 99.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Internet"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0044615,
+          "tokens": {
+            "input": 2614,
+            "cached": 2593,
+            "output": 102
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-remedio",
+        "tag": "create_item",
+        "input": "comprei remédio 48 reais anteontem",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 48
+            },
+            "date": {
+              "date": [
+                "2026-10-13"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "saude",
+                "farmacia",
+                "academia",
+                "esporte",
+                "bem-estar",
+                "medic"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 48
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-13"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0037265,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 78
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-reembolso",
+        "tag": "create_item",
+        "input": "recebi 75 de reembolso da empresa",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 75
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 75
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039865,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 87
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-condominio",
+        "tag": "create_item",
+        "input": "dia 12 paguei 1.100 de condomínio",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 1100
+            },
+            "date": {
+              "date": [
+                "2026-10-12"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "moradia",
+                "casa",
+                "aluguel",
+                "habitac"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 1100
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-12"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039665,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 86
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-spotify",
+        "tag": "create_item",
+        "input": "spotify 21,90",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 21.9
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 21.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Assinaturas"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039065,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 85
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-happy-hour",
+        "tag": "create_item",
+        "input": "ontem rolou um happy hour, gastei 120",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 120
+            },
+            "date": {
+              "date": [
+                "2026-10-14"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming",
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 120
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-14"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Lazer"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040065,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 87
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-aluguel-recebido",
+        "tag": "create_item",
+        "input": "transferiram 500 pra mim do aluguel do apê",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 500
+            },
+            "date": {
+              "date": [
+                "2026-10-15",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 500
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-15"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040865,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 90
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-query-entradas-mes",
+        "tag": "query",
+        "input": "o que entrou de dinheiro esse mês?",
+        "expect": {
+          "tool": [
+            "listItems",
+            "itemsAnalytics"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0032915,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 64
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-query-anteontem",
+        "tag": "query",
+        "input": "lista meus gastos de anteontem",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-10-13"
+              ]
+            },
+            "endDate": {
+              "date": [
+                "2026-10-13"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-10-13"
+            },
+            {
+              "name": "endDate",
+              "ok": true,
+              "got": "2026-10-13"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0031665,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 60
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-query-netflix",
+        "tag": "query",
+        "input": "acha a compra da netflix",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "semanticSearch": {
+              "has": [
+                "netflix"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "semanticSearch",
+              "ok": true,
+              "got": "Netflix"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0032465,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 63
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-query-itau",
+        "tag": "query",
+        "input": "despesas no itaú",
+        "expect": {
+          "tool": [
+            "listItems"
+          ],
+          "args": {
+            "accountName": {
+              "has": [
+                "itau"
+              ]
+            },
+            "type": {
+              "eq": "expense"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "listItems",
+          "args": [
+            {
+              "name": "accountName",
+              "ok": true,
+              "got": "Itaú"
+            },
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029465,
+          "tokens": {
+            "input": 2605,
+            "cached": 2593,
+            "output": 53
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-analytics-saldo",
+        "tag": "analytics",
+        "input": "quero ver um gráfico do meu saldo nos últimos meses",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "balance"
+            },
+            "groupBy": {
+              "includes": "month"
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": null,
+          "args": [],
+          "text": "De quantos meses você quer ver o saldo? Por exemplo: **últimos 3, 6 ou 12 meses**.",
+          "costUsd": 0.0056765,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 143
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-analytics-top-categoria",
+        "tag": "analytics",
+        "input": "qual categoria eu mais gastei no mês passado?",
+        "expect": {
+          "tool": [
+            "itemsAnalytics",
+            "listItems"
+          ],
+          "args": {
+            "startDate": {
+              "date": [
+                "2026-09-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-09-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0033965,
+          "tokens": {
+            "input": 2611,
+            "cached": 2593,
+            "output": 67
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-analytics-distribuicao-ano",
+        "tag": "analytics",
+        "input": "distribuição dos gastos por categoria este ano",
+        "expect": {
+          "tool": [
+            "itemsAnalytics"
+          ],
+          "args": {
+            "metric": {
+              "eq": "total_expenses"
+            },
+            "groupBy": {
+              "includes": "category"
+            },
+            "startDate": {
+              "date": [
+                "2026-01-01"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "itemsAnalytics",
+          "args": [
+            {
+              "name": "metric",
+              "ok": true,
+              "got": "total_expenses"
+            },
+            {
+              "name": "groupBy",
+              "ok": true,
+              "got": [
+                "category"
+              ]
+            },
+            {
+              "name": "startDate",
+              "ok": true,
+              "got": "2026-01-01"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039265,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 85
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-entity-conta-inter",
+        "tag": "entities",
+        "input": "abre uma conta Inter com saldo zero",
+        "expect": {
+          "tool": [
+            "createNewAccount"
+          ],
+          "args": {
+            "financialInstitution": {
+              "has": [
+                "inter"
+              ]
+            },
+            "balance": {
+              "approx": 0
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewAccount",
+          "args": [
+            {
+              "name": "financialInstitution",
+              "ok": true,
+              "got": "Inter"
+            },
+            {
+              "name": "balance",
+              "ok": true,
+              "got": 0
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029265,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 52
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-entity-cartao-xp",
+        "tag": "entities",
+        "input": "cartão XP limite 8 mil",
+        "expect": {
+          "tool": [
+            "createNewCreditCard"
+          ],
+          "args": {
+            "financialInstitution": {
+              "has": [
+                "xp"
+              ]
+            },
+            "limit": {
+              "approx": 8000
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewCreditCard",
+          "args": [
+            {
+              "name": "financialInstitution",
+              "ok": true,
+              "got": "XP"
+            },
+            {
+              "name": "limit",
+              "ok": true,
+              "got": 8000
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0029265,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 52
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-entity-categoria-educacao",
+        "tag": "entities",
+        "input": "nova categoria: educação",
+        "expect": {
+          "tool": [
+            "createNewCategory"
+          ],
+          "args": {
+            "name": {
+              "has": [
+                "educa"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewCategory",
+          "args": [
+            {
+              "name": "name",
+              "ok": true,
+              "got": "Educação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0023715,
+          "tokens": {
+            "input": 2604,
+            "cached": 2593,
+            "output": 34
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-entity-meta-reserva",
+        "tag": "entities",
+        "input": "meta: reserva de emergência de 20 mil",
+        "expect": {
+          "tool": [
+            "createNewGoal"
+          ],
+          "args": {
+            "targetAmount": {
+              "approx": 20000
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewGoal",
+          "args": [
+            {
+              "name": "targetAmount",
+              "ok": true,
+              "got": 20000
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0033565,
+          "tokens": {
+            "input": 2609,
+            "cached": 2593,
+            "output": 66
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-scope-tempo",
+        "tag": "scope",
+        "input": "qual a previsão do tempo amanhã?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Sorry, I can only respond to financial planning questions.",
+          "costUsd": 0.0018165,
+          "tokens": {
+            "input": 2607,
+            "cached": 2593,
+            "output": 15
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-scope-acoes",
+        "tag": "scope",
+        "input": "vale a pena comprar ações da Petrobras?",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Investimentos não são suportados. Posso ajudar a registrar a compra de ações da Petrobras como uma transação financeira.",
+          "costUsd": 0.0022115,
+          "tokens": {
+            "input": 2608,
+            "cached": 2593,
+            "output": 28
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-clarify-registra",
+        "tag": "clarify",
+        "input": "registra aí",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "O que você quer registrar? Informe **descrição e valor** — por exemplo: “gastei R$ 50 no mercado hoje” ou “recebi R$ 2.000 de salário”.",
+          "costUsd": 0.0033265,
+          "tokens": {
+            "input": 2603,
+            "cached": 2593,
+            "output": 66
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-clarify-apaga-todos",
+        "tag": "clarify",
+        "input": "apaga meus lançamentos todos",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "⚠️ Isso excluirá **todos os seus lançamentos financeiros** (receitas e despesas).\n\nConfirma a exclusão permanente de todos os lançamentos? Responda: **“Sim, apagar todos”**.",
+          "costUsd": 0.0040015,
+          "tokens": {
+            "input": 2606,
+            "cached": 2593,
+            "output": 88
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-clarify-recebi",
+        "tag": "clarify",
+        "input": "recebi",
+        "expect": {
+          "noTool": true
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": null,
+          "args": [],
+          "text": "Qual foi o valor recebido? Se quiser, informe também a origem; sem data, registrarei como hoje (15/10/2026).",
+          "costUsd": 0.0033515,
+          "tokens": {
+            "input": 2602,
+            "cached": 2593,
+            "output": 67
+          }
+        }
+      ]
+    }
+  ]
+}

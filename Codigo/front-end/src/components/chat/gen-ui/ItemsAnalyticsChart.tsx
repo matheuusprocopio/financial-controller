@@ -65,9 +65,10 @@ const METRIC_TO_MODE: Record<string, ChartMode> = {
 const RAW_VALUE_PREFIX = "__raw__";
 const STACK_TOTAL_KEY = "__stackTotal";
 
+// Paleta categórica validada para fundo escuro (contraste e daltonismo); a ordem é fixa
 const COLOR_PALETTE = [
-  "#7C3AED", "#0EA5E9", "#F97316", "#10B981", "#F43F5E",
-  "#14B8A6", "#FACC15", "#6366F1", "#EC4899", "#A855F7",
+  "#3987e5", "#d95926", "#199e70", "#c98500",
+  "#d55181", "#008300", "#9085e9", "#e66767",
 ];
 
 const formatCurrency = (value: number) =>

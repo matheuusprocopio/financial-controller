@@ -87,9 +87,17 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+    id          UUID PRIMARY KEY,
+    user_id     UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    expires_at  TIMESTAMPTZ NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_accounts_user ON accounts (user_id);
 CREATE INDEX IF NOT EXISTS idx_categories_user ON categories (user_id);
 CREATE INDEX IF NOT EXISTS idx_items_user_date ON items (user_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_goals_user ON goals (user_id);
 CREATE INDEX IF NOT EXISTS idx_chat_user ON chat (user_id, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages (chat_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions (expires_at);

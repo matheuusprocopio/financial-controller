@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploadModal } from "@/components/ui/file-upload-modal";
-import { Send, Mic, Paperclip, X } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Square, X } from "lucide-react";
 import { transcribeAudio } from "@/utils/services/audio-transcript";
 
 interface ChatInputProps {
@@ -33,20 +33,9 @@ function VoiceWaveAnimation() {
 
 function TranscribingIndicator() {
   return (
-    <div className="mb-3 rounded-md border border-white/10 bg-white/5 p-3 text-xs text-neutral-300">
-      <div className="flex items-center gap-2">
-        <span className="flex h-4 w-4 items-center justify-center">
-          <span className="h-4 w-4 rounded-full border-2 border-b-transparent border-neutral-400 animate-spin" />
-        </span>
-        <div className="flex flex-col">
-          <span className="font-medium text-neutral-200">
-            Processando
-          </span>
-          <span className="text-neutral-400">
-            Transcrevendo seu áudio e preparando a resposta...
-          </span>
-        </div>
-      </div>
+    <div className="mb-2 flex items-center gap-2 px-1 text-xs text-neutral-400">
+      <span className="h-3 w-3 animate-spin rounded-full border-2 border-neutral-600 border-t-neutral-300" />
+      Transcrevendo seu áudio…
     </div>
   );
 }
@@ -212,69 +201,88 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="relative z-10 border-t border-white/10 bg-neutral-950 px-4 py-4 sm:px-6">
-      <div className="relative mx-auto max-w-3xl">
-        {isRecording && (
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
-            <div className="flex items-center gap-4">
-              <VoiceWaveAnimation />
-              <span className="text-sm font-medium text-red-400">
-                Gravando: {formatTime(recordingTime)}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCancelRecording}
-              className="h-8 rounded-full border border-red-300/40 bg-transparent text-red-200 hover:border-red-300 hover:bg-red-500/20"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Cancelar áudio
-            </Button>
-          </div>
-        )}
-        {isTranscribing && (
-          <TranscribingIndicator />
-        )}
+    <div className="shrink-0 px-4 pb-4 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        {isTranscribing && <TranscribingIndicator />}
         {transcribeError && (
-          <div className="flex items-center gap-2 mb-3 p-2 rounded-lg border border-red-400/30 bg-red-500/10 text-xs text-red-200">
+          <div className="mb-2 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
             {transcribeError}
           </div>
         )}
-        <div className="flex items-center gap-3">
-        
-          <div className="flex-1 relative">
+
+        <div className="rounded-xl border border-white/10 bg-neutral-900 transition-colors focus-within:border-white/20">
+          {isRecording ? (
+            <div className="flex min-h-[52px] items-center gap-3 px-4 py-3">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+              <VoiceWaveAnimation />
+              <span className="text-sm tabular-nums text-neutral-300">
+                Gravando · {formatTime(recordingTime)}
+              </span>
+            </div>
+          ) : (
             <Textarea
               ref={textareaRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Digite sua mensagem..."
-              className="min-h-[44px] max-h-32 w-full resize-none rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 pr-12 text-neutral-100 placeholder:text-neutral-500 focus-visible:border-white/25 focus-visible:ring-0"
+              placeholder="Pergunte ou registre algo, ex.: “gastei R$ 30 no almoço”"
+              className="max-h-40 min-h-[52px] w-full resize-none border-0 bg-transparent px-4 pt-3.5 pb-1 text-[15px] text-neutral-100 shadow-none placeholder:text-neutral-500 focus-visible:ring-0 dark:bg-transparent"
               rows={1}
             />
-            <Button
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim()}
-              size="icon"
-              className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md bg-neutral-100 text-neutral-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500 disabled:opacity-100"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+          )}
+
+          <div className="flex items-center justify-between gap-2 px-2 pb-2">
+            {isRecording ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelRecording}
+                className="h-8 gap-1.5 rounded-md px-2.5 text-neutral-400 hover:bg-white/5 hover:text-neutral-100"
+              >
+                <X className="h-4 w-4" />
+                Cancelar
+              </Button>
+            ) : (
+              <span className="hidden pl-2 text-xs text-neutral-600 sm:block">
+                Enter para enviar · Shift + Enter para nova linha
+              </span>
+            )}
+
+            <div className="ml-auto flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleRecording}
+                aria-label={isRecording ? "Parar gravação" : "Gravar áudio"}
+                className={`h-8 w-8 rounded-md ${
+                  isRecording
+                    ? "bg-red-500/15 text-red-300 hover:bg-red-500/25 hover:text-red-200"
+                    : "text-neutral-400 hover:bg-white/5 hover:text-neutral-100"
+                }`}
+              >
+                {isRecording ? <Square className="h-3.5 w-3.5 fill-current" /> : <Mic className="h-4 w-4" />}
+              </Button>
+              {!isRecording && (
+                <Button
+                  type="button"
+                  onClick={handleSendMessage}
+                  disabled={!inputValue.trim()}
+                  size="icon"
+                  aria-label="Enviar mensagem"
+                  className="h-8 w-8 rounded-md bg-neutral-100 text-neutral-950 transition-colors hover:bg-white disabled:bg-neutral-800 disabled:text-neutral-500 disabled:opacity-100"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
-          <Button
-            variant={isRecording ? "destructive" : "ghost"}
-            size="icon"
-            onClick={toggleRecording}
-            className={`h-11 w-11 flex-shrink-0 rounded-lg ${
-              isRecording
-                ? "bg-red-500 hover:bg-red-600"
-                : "border border-white/10 bg-transparent text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100"
-            }`}
-          >
-            <Mic className="h-4 w-4" />
-          </Button>
         </div>
+
+        <p className="mt-2 text-center text-xs text-neutral-600">
+          O assistente pode cometer erros. Confira valores importantes.
+        </p>
       </div>
       <FileUploadModal
         isOpen={isUploadModalOpen}

@@ -30,7 +30,7 @@ function getFileIcon(fileName: string) {
     case "json":
     case "csv":
     case "xml":
-      return <FileText className="w-4 h-4 text-blue-500" />
+      return <FileText className="w-4 h-4 text-muted-foreground" />
     default:
       return <File className="w-4 h-4" />
   }

@@ -4,8 +4,15 @@ import { NextResponse } from "next/server";
 const SESSION_COOKIE = "financialcontroller_session_id";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-const redirectToHome = (req: NextRequest) => {
-  const redirectResponse = NextResponse.redirect(new URL("/", req.url));
+type RedirectReason = "expired" | "unavailable";
+
+// Volta para a home com o login aberto; `reason` explica ao usuário por que ele precisa entrar de novo
+const redirectToLogin = (req: NextRequest, reason?: RedirectReason) => {
+  const url = new URL("/", req.url);
+  url.searchParams.set("login", "true");
+  if (reason) url.searchParams.set("session", reason);
+
+  const redirectResponse = NextResponse.redirect(url);
   redirectResponse.cookies.delete(SESSION_COOKIE);
   return redirectResponse;
 };
@@ -63,12 +70,12 @@ export async function middleware(req: NextRequest) {
   const sessionId = req.cookies.get(SESSION_COOKIE)?.value;
 
   if (!sessionId) {
-    return redirectToHome(req);
+    return redirectToLogin(req);
   }
 
   try {
     const sessionValid = await isSessionValid(sessionId);
-    if (!sessionValid) return redirectToHome(req);
+    if (!sessionValid) return redirectToLogin(req, "expired");
 
     const chatId = req.nextUrl.searchParams.get("chat_id");
 
@@ -89,7 +96,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   } catch (error) {
     console.error("Erro ao validar sessão no middleware:", error);
-    return redirectToHome(req);
+    return redirectToLogin(req, "unavailable");
   }
 }
 

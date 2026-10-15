@@ -36,6 +36,7 @@ type RunResult = {
   args: ArgResult[];
   text: string;
   costUsd: number;
+  tokens?: { input: number; cached: number; output: number };
   error?: string;
   skipped?: boolean;
 };
@@ -97,6 +98,11 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
       maxRetries: 5,
     });
     costUsd = estimateCost(result.totalUsage);
+    const tokens = {
+      input: result.totalUsage.inputTokens ?? 0,
+      cached: result.totalUsage.cachedInputTokens ?? 0,
+      output: result.totalUsage.outputTokens ?? 0,
+    };
 
     const call = result.toolCalls[0];
     const toolName = call?.toolName ?? null;
@@ -104,7 +110,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
 
     if ("noTool" in c.expect) {
       const ok = toolName === null;
-      return { ok, toolOk: ok, toolName, args: [], text: result.text, costUsd };
+      return { ok, toolOk: ok, toolName, args: [], text: result.text, costUsd, tokens };
     }
 
     const toolOk = toolName !== null && c.expect.tool.includes(toolName);
@@ -116,7 +122,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
         }))
       : [];
 
-    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, args, text: result.text, costUsd };
+    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, args, text: result.text, costUsd, tokens };
   } catch (error) {
     return { ok: false, toolOk: false, toolName: null, args: [], text: "", costUsd, error: String(error) };
   }
@@ -144,7 +150,9 @@ const main = async () => {
 
   console.log(`Model ${AGENT_MODEL} · ${dataset.length} cases × ${runs} run(s) · today ${today}\n`);
 
-  const jobs = dataset.flatMap((c) => Array.from({ length: runs }, () => c));
+  // Run-major order: every case once, then again. If the budget runs out, whole
+  // repetitions are dropped instead of the cases at the end of the dataset.
+  const jobs = Array.from({ length: runs }, () => dataset).flat();
   let spent = 0;
   // With an RPM cap, calls run one at a time with a fixed gap between starts.
   const gapMs = rpm ? Math.ceil(60_000 / rpm) + 500 : 0;
@@ -162,12 +170,13 @@ const main = async () => {
     const r = await runCase(c);
     spent += r.costUsd;
     done++;
-    console.log(`[${done}/${jobs.length}] ${r.ok ? "✓" : "✗"} ${c.id} · $${spent.toFixed(3)}`);
+    const t = r.tokens ? ` in=${r.tokens.input} cached=${r.tokens.cached} out=${r.tokens.output}` : "";
+    console.log(`[${done}/${jobs.length}] ${r.ok ? "✓" : "✗"} ${c.id} → ${r.error ? "error" : (r.toolName ?? "no tool")}${t} · $${spent.toFixed(3)}`);
     return r;
   });
   const perCase = dataset.map((c, i) => ({
     case: c,
-    runs: flat.slice(i * runs, (i + 1) * runs).filter((r) => !r.skipped),
+    runs: flat.filter((r, j) => j % dataset.length === i && !r.skipped),
   }));
 
   // Cases skipped by the budget guard are left out of every score.

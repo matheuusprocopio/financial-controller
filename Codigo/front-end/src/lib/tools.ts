@@ -7,6 +7,7 @@ import { listGoals, getGoalById } from "@/utils/services/goals";
 import { listItems, getItemById } from "@/utils/services/items";
 import { getSessionId } from "@/utils/server-cookies";
 import { findBestMatch } from "@/utils/fuzzySearch";
+import { getLocalIsoDate } from "@/utils/date";
 import type { FuzzyMatchResult } from "@/utils/fuzzySearch";
 import { calculateItemsAnalytics, ItemAnalyticsRequest } from "@/utils/services/Analytics/itemsAnalytics";
 import { ItemAnalyticsResponse } from "@/types/analytics.types";
@@ -20,7 +21,7 @@ const isRequestError = (resp: unknown): resp is RequestError => {
   return !!resp && typeof resp === "object" && "error" in (resp as Record<string, unknown>);
 };
 
-const getTodayIsoDate = () => new Date().toISOString().split("T")[0];
+const getTodayIsoDate = () => getLocalIsoDate();
 
 const MIN_MATCH_CONFIDENCE = 0.5;
 
@@ -1258,8 +1259,7 @@ export const listItemsTool = tool({
   }),
 
   execute: async ({ semanticSearch = "", categoryName, accountName, startDate, endDate, type }) => {
-    const today = new Date();
-    const todayIso = today.toISOString().split("T")[0];
+    const todayIso = getLocalIsoDate();
     const sanitizedStartDate = startDate?.trim();
     const sanitizedEndDate = endDate?.trim();
     const finalStartDate =

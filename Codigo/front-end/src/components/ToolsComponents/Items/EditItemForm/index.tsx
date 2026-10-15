@@ -284,7 +284,7 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
     return (
       <Card className="w-full max-w-2xl border-red-500">
         <CardHeader>
-          <CardTitle className="text-red-600">Erro</CardTitle>
+          <CardTitle className="text-red-400">Erro</CardTitle>
           <CardDescription>ID do item não fornecido</CardDescription>
         </CardHeader>
       </Card>
@@ -293,10 +293,10 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
 
   if (isSubmitted) {
     return (
-      <Card className="w-full max-w-2xl border-green-500 bg-green-50 dark:bg-green-950/20">
+      <Card className="w-full max-w-2xl border-emerald-500/30 bg-emerald-500/10">
         <CardHeader>
-          <CardTitle className="text-green-600">Transação atualizada com sucesso!</CardTitle>
-          <CardDescription className="text-green-600">
+          <CardTitle className="text-emerald-200">Transação atualizada com sucesso!</CardTitle>
+          <CardDescription className="text-emerald-300/80">
             {itemData?.type === "income" ? "Receita" : "Despesa"} atualizada
           </CardDescription>
         </CardHeader>

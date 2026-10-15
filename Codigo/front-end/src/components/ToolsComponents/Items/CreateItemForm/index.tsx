@@ -283,14 +283,14 @@ const handleSubmit = async (values: Record<string, string>) => {
 
   if (isSubmitted && lastSubmittedData) {
     return (
-      <Card className="border-green-200 bg-green-50">
+      <Card className="border-emerald-500/30 bg-emerald-500/10">
         <CardContent className="pt-6">
           <div className="text-center">
-            <div className="text-green-800 font-medium">
+            <div className="text-emerald-200 font-medium">
               {lastSubmittedData.type === "income" ? "Receita" : "Despesa"}{" "}
               adicionada com sucesso!
             </div>
-            <div className="text-sm text-green-600 mt-1">
+            <div className="text-sm text-emerald-300/80 mt-1">
               R$ {lastSubmittedData.amount.toFixed(2)} - {lastSubmittedData.name}
             </div>
           </div>

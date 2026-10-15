@@ -120,13 +120,13 @@ const FormCard = ({
 
   if (isSubmitted) {
     return (
-      <Card className={cn("border-green-200 bg-green-50", className)}>
+      <Card className={cn("border-emerald-500/30 bg-emerald-500/10", className)}>
         <CardContent className="pt-6">
           <div className="text-center">
-            <div className="text-green-800 font-medium">
+            <div className="text-emerald-200 font-medium">
               Formulário enviado com sucesso!
             </div>
-            <div className="text-sm text-green-600 mt-1">
+            <div className="text-sm text-emerald-300/80 mt-1">
               Obrigado pelas informações.
             </div>
           </div>

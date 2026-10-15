@@ -1,65 +1,50 @@
 "use client";
 
 import type React from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, User } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Wallet } from "lucide-react";
 import { UIMessage } from "ai";
 import MessageComponentContent from "./MessageComponentContent";
 
 interface IMessageComponent {
   message: UIMessage;
-  photoURL: string;
-  displayName: string;
   timestamp: Date;
   onSendMessage: (message: string) => Promise<void>;
   chatId: string;
 }
 
+export const AssistantAvatar = () => (
+  <div
+    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5"
+    aria-hidden="true"
+  >
+    <Wallet className="h-3.5 w-3.5 text-neutral-300" />
+  </div>
+);
+
 const MessageComponent = ({
   message,
   timestamp,
   onSendMessage,
-  photoURL,
-  displayName,
   chatId,
 }: IMessageComponent) => {
-  const isUserMessage = message.role === "user";
-  const authorLabel =
-    message.role === "assistant"
-      ? "Assistente"
-      : message.role === "system"
-        ? "Sistema"
-        : displayName || "Você";
+  // Mensagens do usuário ficam à direita, num balão; as do assistente são texto corrido com o ícone ao lado
+  if (message.role === "user") {
+    return (
+      <div className="flex flex-col items-end gap-1.5">
+        <MessageComponentContent
+          message={message}
+          timestamp={timestamp}
+          onSendMessage={onSendMessage}
+          chatId={chatId}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div
-      className={cn(
-        "flex gap-3 max-w-4xl mx-auto mb-4",
-        message.role === "user" ? "flex-row-reverse" : "flex-row"
-      )}
-    >
-      <Avatar className="h-8 w-8 flex-shrink-0 border border-border">
-        {isUserMessage && photoURL ? (
-          <AvatarImage src={photoURL} alt={`Foto de ${authorLabel}`} />
-        ) : null}
-        {message.role == "assistant" || message.role == "system" ? (
-          <AvatarFallback className="bg-muted text-muted-foreground">
-            <Bot className="h-4 w-4" />
-          </AvatarFallback>
-        ) : (
-          <AvatarFallback className="bg-muted text-sm text-foreground">
-            {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
-          </AvatarFallback>
-        )}
-      </Avatar>
-      <div
-        className={cn(
-          "flex-1 space-y-2 flex flex-col",
-          message.role === "user" ? "text-right items-end" : "text-left items-start"
-        )}
-      >
-        <div className="text-xs font-medium text-muted-foreground">{authorLabel}</div>
+    <div className="flex gap-3">
+      <AssistantAvatar />
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-3 pt-0.5">
         <MessageComponentContent
           message={message}
           timestamp={timestamp}

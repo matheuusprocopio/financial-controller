@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { UIMessage } from "@ai-sdk/react";
 
-import MessageComponent from "./MessageComponent";
+import MessageComponent, { AssistantAvatar } from "./MessageComponent";
+import ChatEmptyState from "./ChatEmptyState";
 import { FrontMessageType } from "@/types/message.types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -11,28 +11,25 @@ interface MessageContainerProps {
   messages: FrontMessageType[];
   onSendMessage: (message: string) => Promise<void>;
   chatId: string;
+  isWaitingResponse?: boolean;
 }
 
 const MessagesContainer = ({
   messages,
   onSendMessage,
   chatId,
+  isWaitingResponse = false,
 }: MessageContainerProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user, backendUser, loadBackendUser } = useAuth();
+  const { backendUser, loadBackendUser } = useAuth();
 
-  const photoURL = user?.photoURL || "";
   const [displayName, setDisplayName] = useState<string>(
     backendUser?.name || ""
   );
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isWaitingResponse]);
 
   useEffect(() => {
     if (!backendUser) {
@@ -47,9 +44,17 @@ const MessagesContainer = ({
     }
   }, [backendUser?.name]);
 
+  if (messages.length === 0 && !isWaitingResponse) {
+    return (
+      <div className="min-h-0 flex-1 overflow-y-auto chat-scroll-dark">
+        <ChatEmptyState userName={displayName} onSendMessage={onSendMessage} />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative z-10 flex-1 overflow-hidden">
-      <div className="relative h-full flex-1 overflow-y-auto p-6 chat-scroll-dark">
+    <div className="min-h-0 flex-1 overflow-y-auto chat-scroll-dark">
+      <div className="mx-auto w-full max-w-3xl space-y-8 px-4 py-8 sm:px-6">
         {messages.map((message) => (
           <MessageComponent
             onSendMessage={onSendMessage}
@@ -57,10 +62,18 @@ const MessagesContainer = ({
             message={message.message}
             timestamp={message.createdAt}
             chatId={chatId}
-            photoURL={photoURL}
-            displayName={displayName}
           />
         ))}
+        {isWaitingResponse && (
+          <div className="flex items-center gap-3" aria-live="polite">
+            <AssistantAvatar />
+            <span className="flex gap-1" aria-label="O assistente está respondendo">
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-500 [animation-delay:-0.3s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-500 [animation-delay:-0.15s]" />
+              <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-neutral-500" />
+            </span>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
     </div>

@@ -18,7 +18,7 @@ export default function ChatWrapper({
   serverMessages: ServerMessageType[];
   chatId: string;
 }) {
-  const { messages, sendMessage } = useChat({
+  const { messages, sendMessage, status } = useChat({
     id: chatId,
     generateId: generateMessageId,
     messages: serverMessages.map((m) => convertServerMessageToUIMessage(m)),
@@ -40,6 +40,7 @@ export default function ChatWrapper({
         messages={frontMessages}
         chatId={chatId}
         onSendMessage={handleSendMessage}
+        isWaitingResponse={status === "submitted"}
       />
       <ChatInput onSendMessage={handleSendMessage} />
     </div>

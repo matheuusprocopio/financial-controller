@@ -16,9 +16,10 @@ import { useAuth } from "@/hooks/use-auth";
 interface LoginModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  notice?: string;
 }
 
-export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
+export default function LoginModal({ open, onOpenChange, notice }: LoginModalProps) {
   const router = useRouter();
   const {
     user: firebaseUser,
@@ -46,7 +47,8 @@ export default function LoginModal({ open, onOpenChange }: LoginModalProps) {
       return;
     }
     setActiveTab("login");
-  }, [open]);
+    setStatus(notice ? { type: "info", message: notice } : null);
+  }, [open, notice]);
 
   const handleEmailLogin = async () => {
     if (!email || !password) {

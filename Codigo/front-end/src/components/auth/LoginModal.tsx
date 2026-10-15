@@ -160,9 +160,9 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
   };
 
   const statusStyles = {
-    success: "border-green-500/40 bg-green-500/10 text-green-200",
-    error: "border-red-500/40 bg-red-500/10 text-red-200",
-    info: "border-blue-500/40 bg-blue-500/10 text-blue-200",
+    success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+    error: "border-red-500/30 bg-red-500/10 text-red-200",
+    info: "border-white/10 bg-white/5 text-neutral-300",
   } as const;
 
   const accountName = backendUser?.name || "Usuário";
@@ -173,24 +173,21 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-10">
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70"
         onClick={closeModal}
         aria-hidden="true"
       />
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-50 w-full max-w-xl overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white shadow-[0_40px_120px_-60px_rgba(34,211,238,0.7)]"
+        className="relative z-50 w-full max-w-md overflow-hidden rounded-xl border border-white/10 bg-neutral-950 text-neutral-100 shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-white/5 px-8 py-6">
+        <div className="flex items-start justify-between border-b border-white/10 px-6 py-5">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-200/70">
-              FinancialController
-            </p>
-            <h2 className="text-3xl font-bold leading-tight">
+            <h2 className="text-lg font-semibold tracking-tight">
               {isBackendAuthenticated ? "Minha Conta" : "Bem-vindo"}
             </h2>
-            <p className="text-sm text-slate-400">
+            <p className="mt-1 text-sm text-neutral-400">
               {isBackendAuthenticated
                 ? "Gerencie sua conta e preferências"
                 : "Entre ou crie uma conta para continuar"}
@@ -199,19 +196,18 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
           <button
             type="button"
             onClick={closeModal}
-            className="rounded-full border border-white/10 p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white"
+            className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-white/5 hover:text-neutral-100"
             aria-label="Fechar modal"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="relative px-8 py-6">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-blue-500/10 via-transparent to-transparent" />
-          <div className="relative space-y-6">
+        <div className="px-6 py-6">
+          <div className="space-y-6">
             {status && (
               <div
-                className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium ${statusStyles[status.type]}`}
+                className={`flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm ${statusStyles[status.type]}`}
               >
                 {status.type === "success" && <CheckCircle2 className="h-4 w-4" />}
                 {status.type === "error" && <XCircle className="h-4 w-4" />}
@@ -221,29 +217,29 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
             )}
 
             {isBackendAuthenticated ? (
-              <div className="space-y-8">
-                <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10 p-6 shadow-inner">
+              <div className="space-y-6">
+                <div className="rounded-lg border border-white/10 p-4">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 text-2xl font-bold shadow-lg shadow-purple-500/30">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-800 text-base font-medium text-neutral-200">
                       {accountInitial}
                     </div>
                     <div>
-                      <p className="text-lg font-semibold">
+                      <p className="font-medium">
                         {accountName}
                       </p>
-                      <p className="text-sm text-slate-400">{accountEmail}</p>
+                      <p className="text-sm text-neutral-400">{accountEmail}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <button
                     type="button"
                     onClick={() => {
                       onOpenChange(false);
                       router.push("/chat");
                     }}
-                    className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 px-6 py-3 text-sm font-semibold shadow-[0_20px_60px_-25px_rgba(99,102,241,0.9)] transition hover:scale-[1.01]"
+                    className="flex-1 rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:bg-white"
                   >
                     Abrir App
                   </button>
@@ -251,7 +247,7 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                     type="button"
                     onClick={handleLogout}
                     disabled={loading}
-                    className="flex-1 rounded-2xl border border-white/10 bg-slate-900/60 px-6 py-3 text-sm font-semibold text-slate-200 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-md border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span className="flex items-center justify-center gap-2">
                       {loading ? (
@@ -265,17 +261,17 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                 </div>
               </div>
             ) : (
-              <div className="space-y-8">
-                <div className="grid grid-cols-2 rounded-2xl border border-white/10 bg-black/30 p-1 text-sm font-semibold text-slate-400">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 rounded-md border border-white/10 p-1 text-sm font-medium text-neutral-400">
                   {(["login", "signup"] as const).map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
-                      className={`rounded-xl px-4 py-2 transition ${
+                      className={`rounded px-4 py-1.5 transition-colors ${
                         activeTab === tab
-                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-[0_10px_30px_-20px_rgba(56,189,248,0.8)]"
-                          : "hover:text-white"
+                          ? "bg-neutral-800 text-neutral-100"
+                          : "hover:text-neutral-100"
                       }`}
                     >
                       {tab === "login" ? "Entrar" : "Criar Conta"}
@@ -284,9 +280,9 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                 </div>
 
                 {activeTab === "login" ? (
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="login-email" className="text-sm text-slate-300">
+                      <label htmlFor="login-email" className="text-sm text-neutral-300">
                         Email
                       </label>
                       <input
@@ -296,11 +292,11 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, handleEmailLogin)}
-                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-white/10 bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-white/30 focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="login-password" className="text-sm text-slate-300">
+                      <label htmlFor="login-password" className="text-sm text-neutral-300">
                         Senha
                       </label>
                       <input
@@ -310,14 +306,14 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, handleEmailLogin)}
-                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+                        className="w-full rounded-md border border-white/10 bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-white/30 focus:outline-none"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleEmailLogin}
                       disabled={loading}
-                      className="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 px-4 py-3 text-sm font-semibold shadow-[0_20px_60px_-25px_rgba(37,99,235,0.9)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <span className="flex items-center justify-center gap-2">
                         {loading ? (
@@ -329,21 +325,22 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                       </span>
                     </button>
 
-                    <div className="relative py-4 text-center text-xs uppercase tracking-[0.4em] text-slate-500">
-                      <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
-                      <span className="relative bg-slate-950 px-3">ou continue com</span>
+                    <div className="flex items-center gap-3 text-xs text-neutral-500">
+                      <div className="h-px flex-1 bg-white/10" />
+                      ou continue com
+                      <div className="h-px flex-1 bg-white/10" />
                     </div>
 
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={loading}
-                      className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex w-full items-center justify-center gap-3 rounded-md border border-white/10 bg-transparent px-4 py-2.5 text-sm font-medium text-neutral-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -354,9 +351,9 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-5">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="signup-email" className="text-sm text-slate-300">
+                      <label htmlFor="signup-email" className="text-sm text-neutral-300">
                         Email
                       </label>
                       <input
@@ -365,11 +362,11 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                         placeholder="seu-email@exemplo.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-purple-500 focus:outline-none"
+                        className="w-full rounded-md border border-white/10 bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-white/30 focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label htmlFor="signup-password" className="text-sm text-slate-300">
+                      <label htmlFor="signup-password" className="text-sm text-neutral-300">
                         Senha
                       </label>
                       <input
@@ -378,13 +375,13 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                         placeholder="Mínimo 6 caracteres"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-purple-500 focus:outline-none"
+                        className="w-full rounded-md border border-white/10 bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-white/30 focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
                       <label
                         htmlFor="signup-confirm-password"
-                        className="text-sm text-slate-300"
+                        className="text-sm text-neutral-300"
                       >
                         Confirmar Senha
                       </label>
@@ -395,14 +392,14 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, handleEmailSignup)}
-                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-purple-500 focus:outline-none"
+                        className="w-full rounded-md border border-white/10 bg-neutral-900 px-3 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 transition-colors focus:border-white/30 focus:outline-none"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={handleEmailSignup}
                       disabled={loading}
-                      className="w-full rounded-2xl bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 px-4 py-3 text-sm font-semibold shadow-[0_20px_60px_-25px_rgba(168,85,247,0.8)] transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full rounded-md bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <span className="flex items-center justify-center gap-2">
                         {loading ? (
@@ -414,21 +411,22 @@ export default function LoginModal({ open, onOpenChange, notice }: LoginModalPro
                       </span>
                     </button>
 
-                    <div className="relative py-4 text-center text-xs uppercase tracking-[0.4em] text-slate-500">
-                      <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
-                      <span className="relative bg-slate-950 px-3">ou continue com</span>
+                    <div className="flex items-center gap-3 text-xs text-neutral-500">
+                      <div className="h-px flex-1 bg-white/10" />
+                      ou continue com
+                      <div className="h-px flex-1 bg-white/10" />
                     </div>
 
                     <button
                       type="button"
                       onClick={handleGoogleLogin}
                       disabled={loading}
-                      className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-slate-900/50 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex w-full items-center justify-center gap-3 rounded-md border border-white/10 bg-transparent px-4 py-2.5 text-sm font-medium text-neutral-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {loading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                           <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />

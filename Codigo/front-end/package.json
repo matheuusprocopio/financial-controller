@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "prestart": "npm run build",
-    "lint": "eslint"
+    "lint": "eslint",
+    "eval": "bun run eval/run.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.135",

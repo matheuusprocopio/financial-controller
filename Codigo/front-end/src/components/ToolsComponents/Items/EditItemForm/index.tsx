@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { RequestError } from "@/utils/requestProvider";
 import { getErrorMessage } from "@/utils/errors";
 import { formatCurrencyValue, parseCurrencyToNumber } from "@/utils/currency";
+import { getLocalIsoDate } from "@/utils/date";
 
 interface IEditItemForm {
   data?: {
@@ -44,7 +45,7 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
     type: data?.type ?? "expense",
     categoryId: data?.categoryId ?? "",
     accountId: data?.accountId ?? "",
-    date: data?.date ?? new Date().toISOString().split("T")[0],
+    date: data?.date ?? getLocalIsoDate(),
   });
 
   useEffect(() => {
@@ -56,7 +57,7 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
       type: data?.type ?? (prev.type as "income" | "expense") ?? "expense",
       categoryId: data?.categoryId ?? prev.categoryId ?? "",
       accountId: data?.accountId ?? prev.accountId ?? "",
-      date: data?.date ?? prev.date ?? new Date().toISOString().split("T")[0],
+      date: data?.date ?? prev.date ?? getLocalIsoDate(),
     }));
   }, [data]);
 
@@ -127,7 +128,7 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
               data?.date ??
               itemResp.date ??
               prev.date ??
-              new Date().toISOString().split("T")[0],
+              getLocalIsoDate(),
           }));
         } else if (itemResp && "error" in itemResp) {
           handleError(itemResp.error.message);
@@ -231,7 +232,7 @@ const EditItemForm = ({ data, onError, onSubmitted }: IEditItemForm) => {
     if ((values.categoryId ?? "") !== (itemData.categoryId ?? "")) payload.categoryId = values.categoryId ?? "";
     if ((values.accountId ?? "") !== (itemData.accountId ?? "")) payload.accountId = values.accountId ?? "";
 
-    const newDate = values.date ?? new Date().toISOString().split("T")[0];
+    const newDate = values.date ?? getLocalIsoDate();
     const itemDate = itemData.date ? itemData.date.split("T")[0] : "";
     if (newDate !== itemDate) payload.date = newDate;
 

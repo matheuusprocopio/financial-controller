@@ -27,7 +27,7 @@ const ChatLayout = ({
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-gradient-to-b from-[#0a0a0f] to-[#1a1a2e]">
+    <div className="relative h-screen w-full overflow-hidden bg-neutral-950 text-neutral-100">
       <div className="relative z-10 flex h-full min-h-screen flex-col">
         <Header onToggleSidebar={handleToggleSidebar} />
         <div className="relative flex h-full flex-1 min-h-0 overflow-hidden">

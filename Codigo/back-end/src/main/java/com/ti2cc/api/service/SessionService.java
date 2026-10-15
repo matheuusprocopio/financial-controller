@@ -1,46 +1,63 @@
 package com.ti2cc.api.service;
 
+import com.ti2cc.api.dao.SessionDAO;
 import com.ti2cc.api.model.User;
-import java.util.Map;
+import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Sessões ficam no banco para sobreviver a reinícios e deploys do servidor.
+ */
 public class SessionService {
-    private static final Map<String, User> sessions = new ConcurrentHashMap<>();
-    private static final Map<String, Long> sessionExpiry = new ConcurrentHashMap<>();
-    private static final long SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 horas em milliseconds
+    private static final Duration SESSION_DURATION = Duration.ofHours(24);
+
+    private final SessionDAO sessionDAO;
+
+    public SessionService(SessionDAO sessionDAO) {
+        this.sessionDAO = sessionDAO;
+    }
 
     public String createSession(User user) {
-        String sessionId = UUID.randomUUID().toString();
-        sessions.put(sessionId, user);
-        sessionExpiry.put(sessionId, System.currentTimeMillis() + SESSION_DURATION);
-        return sessionId;
+        // Aproveita o login para limpar sessões vencidas
+        sessionDAO.deleteExpired();
+
+        UUID sessionId = UUID.randomUUID();
+        if (!sessionDAO.create(sessionId, user.getId(), SESSION_DURATION)) {
+            throw new RuntimeException("Não foi possível criar a sessão");
+        }
+        return sessionId.toString();
     }
 
     public User getSession(String sessionId) {
-        if (sessionId == null || sessionId.isEmpty()) {
-            return null;
-        }
-
-        Long expiry = sessionExpiry.get(sessionId);
-        if (expiry == null || System.currentTimeMillis() > expiry) {
-            sessions.remove(sessionId);
-            sessionExpiry.remove(sessionId);
+        UUID id = parseSessionId(sessionId);
+        if (id == null) {
             return null;
         }
 
         // Renova a sessão a cada acesso
-        sessionExpiry.put(sessionId, System.currentTimeMillis() + SESSION_DURATION);
-        return sessions.get(sessionId);
+        return sessionDAO.findUserAndRenew(id, SESSION_DURATION);
     }
 
     public void removeSession(String sessionId) {
-        sessions.remove(sessionId);
-        sessionExpiry.remove(sessionId);
+        UUID id = parseSessionId(sessionId);
+        if (id != null) {
+            sessionDAO.delete(id);
+        }
     }
 
     public boolean isValidSession(String sessionId) {
         return getSession(sessionId) != null;
     }
-}
 
+    private UUID parseSessionId(String sessionId) {
+        if (sessionId == null || sessionId.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return UUID.fromString(sessionId);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+}

@@ -16,6 +16,7 @@ import com.ti2cc.api.dao.ChatDAO;
 import com.ti2cc.api.dao.GoalDAO;
 import com.ti2cc.api.dao.ItemDAO;
 import com.ti2cc.api.dao.MessageDAO;
+import com.ti2cc.api.dao.SessionDAO;
 import com.ti2cc.api.dao.UserDAO;
 import com.ti2cc.api.factory.PostgresFactory;
 import com.ti2cc.api.middleware.AuthMiddleware;
@@ -53,6 +54,7 @@ public class Container {
         ChatDAO chatDAO = new ChatDAO(dataSource);
         MessageDAO messageDAO = new MessageDAO(dataSource);
         GoalDAO goalDAO = new GoalDAO(dataSource);
+        SessionDAO sessionDAO = new SessionDAO(dataSource);
 
 
         EmbeddingService embeddingService = new EmbeddingService();
@@ -66,7 +68,7 @@ public class Container {
 
         // Serviços de autenticação
         FirebaseAuthService firebaseAuthService = new FirebaseAuthService();
-        SessionService sessionService = new SessionService();
+        SessionService sessionService = new SessionService(sessionDAO);
         AuthMiddleware authMiddleware = new AuthMiddleware(sessionService);
 
         CategoryController categoryController = new CategoryController(categoryService);

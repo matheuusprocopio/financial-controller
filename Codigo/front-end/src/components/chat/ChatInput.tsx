@@ -33,16 +33,16 @@ function VoiceWaveAnimation() {
 
 function TranscribingIndicator() {
   return (
-    <div className="relative mb-3 overflow-hidden rounded-lg border border-cyan-300/30 bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-indigo-500/10 p-3 text-xs text-cyan-50 shadow-inner">
+    <div className="mb-3 rounded-md border border-white/10 bg-white/5 p-3 text-xs text-neutral-300">
       <div className="flex items-center gap-2">
         <span className="flex h-4 w-4 items-center justify-center">
-          <span className="h-4 w-4 rounded-full border-2 border-b-transparent border-cyan-200 animate-spin" />
+          <span className="h-4 w-4 rounded-full border-2 border-b-transparent border-neutral-400 animate-spin" />
         </span>
         <div className="flex flex-col">
-          <span className="font-semibold tracking-wide uppercase text-[10px] text-cyan-200">
+          <span className="font-medium text-neutral-200">
             Processando
           </span>
-          <span className="text-[11px] text-cyan-50/80">
+          <span className="text-neutral-400">
             Transcrevendo seu áudio e preparando a resposta...
           </span>
         </div>
@@ -212,8 +212,8 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="relative z-10 border-t border-purple-400/20 bg-black/60 p-6 backdrop-blur-2xl">
-      <div className="relative mx-auto max-w-5xl">
+    <div className="relative z-10 border-t border-white/10 bg-neutral-950 px-4 py-4 sm:px-6">
+      <div className="relative mx-auto max-w-3xl">
         {isRecording && (
           <div className="flex flex-wrap items-center justify-between gap-4 mb-3 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
             <div className="flex items-center gap-4">
@@ -250,29 +250,29 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem..."
-              className="min-h-[44px] max-h-32 w-full resize-none rounded-2xl border border-purple-400/30 bg-purple-500/5 px-4 py-3 pr-14 text-white placeholder:text-white/40 focus:border-purple-400/60 focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+              className="min-h-[44px] max-h-32 w-full resize-none rounded-lg border border-white/10 bg-neutral-900 px-4 py-3 pr-12 text-neutral-100 placeholder:text-neutral-500 focus-visible:border-white/25 focus-visible:ring-0"
               rows={1}
             />
             <Button
               onClick={handleSendMessage}
               disabled={!inputValue.trim()}
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl border border-purple-400/50 bg-gradient-to-r from-purple-600 to-cyan-600 p-3 text-white shadow-[0_10px_15px_-3px_rgba(139,92,246,0.5)] transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
+              className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md bg-neutral-100 text-neutral-950 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:bg-neutral-800 disabled:text-neutral-500 disabled:opacity-100"
             >
-              <Send className="w-5 h-5" />
+              <Send className="h-4 w-4" />
             </Button>
           </div>
           <Button
             variant={isRecording ? "destructive" : "ghost"}
             size="icon"
             onClick={toggleRecording}
-            className={`flex-shrink-0 h-11 w-11 ${
+            className={`h-11 w-11 flex-shrink-0 rounded-lg ${
               isRecording
                 ? "bg-red-500 hover:bg-red-600"
-                : "rounded-lg border border-purple-400/30 bg-purple-500/10 text-white transition hover:border-purple-400/50 hover:bg-purple-500/20"
+                : "border border-white/10 bg-transparent text-neutral-300 transition-colors hover:bg-white/5 hover:text-neutral-100"
             }`}
           >
-            <Mic className="w-5 h-5" />
+            <Mic className="h-4 w-4" />
           </Button>
         </div>
       </div>

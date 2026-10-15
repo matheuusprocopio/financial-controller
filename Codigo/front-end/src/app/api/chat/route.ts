@@ -1,3 +1,4 @@
+import { AGENT_MODEL } from "@/lib/agent/model";
 import { SYSTEM_PROMPT } from "@/lib/agent/systemPrompt";
 import { tools } from "@/lib/tools";
 import { convertUIMessageToServerMessage } from "@/utils/convertServerMessageToUiMessage";
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
   const { messages, chatId }: { messages: UIMessage[]; chatId: string } =
     await req.json();
   const result = streamText({
-    model: openai("gpt-5.6-sol"),
+    model: openai(AGENT_MODEL),
     messages: convertToModelMessages(messages),
     tools,
     system: SYSTEM_PROMPT,

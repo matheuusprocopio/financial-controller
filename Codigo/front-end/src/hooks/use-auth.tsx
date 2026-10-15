@@ -63,6 +63,7 @@ export interface UseAuthReturn {
     options?: ValidateSessionOptions
   ) => Promise<AuthResponse>;
   logoutBackend: () => Promise<AuthResponse>;
+  clearSession: () => void;
   loadBackendUser: () => Promise<UserType | null>;
 
   refreshToken: () => Promise<string | null>;
@@ -392,6 +393,12 @@ function useProvideAuth(): UseAuthReturn {
     }
   }, [sessionId]);
 
+  // Descarta a sessão local quando o servidor já a recusou (o cookie é removido pelo middleware)
+  const clearSession = useCallback(() => {
+    setSessionId(null);
+    setBackendUser(null);
+  }, []);
+
   const refreshToken = useCallback(async (): Promise<string | null> => {
     if (!user) {
       return null;
@@ -438,6 +445,7 @@ function useProvideAuth(): UseAuthReturn {
     loginBackend,
     validateSession,
     logoutBackend,
+    clearSession,
     loadBackendUser,
     refreshToken,
     getIdToken,

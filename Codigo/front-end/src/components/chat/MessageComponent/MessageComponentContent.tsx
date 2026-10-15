@@ -231,13 +231,16 @@ const MessageComponentContent = ({
 
         // Se já temos JSON completo de gráfico válido, renderiza o gráfico
         if (chartSpec) {
+          // Mesma paleta categórica do ItemsAnalyticsChart (validada para fundo escuro)
           const palette = [
-            "#6366F1",
-            "#22C55E",
-            "#F97316",
-            "#EC4899",
-            "#06B6D4",
-            "#F59E0B",
+            "#3987e5",
+            "#d95926",
+            "#199e70",
+            "#c98500",
+            "#d55181",
+            "#008300",
+            "#9085e9",
+            "#e66767",
           ];
 
           const config: ChartConfig = {};
@@ -333,7 +336,7 @@ const MessageComponentContent = ({
               "inline-block max-w-[90%] rounded-lg p-3",
               message.role === "user"
                 ? "ml-auto bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                : "border border-border bg-card text-card-foreground"
             )}
           >
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -391,7 +394,7 @@ const MessageComponentContent = ({
       {renderParts()}
       <div
         className={cn(
-          "text-xs text-gray-500 mt-1",
+          "text-xs text-muted-foreground mt-1",
           message.role === "user" ? "text-right" : "text-left"
         )}
       >

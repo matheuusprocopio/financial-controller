@@ -39,17 +39,17 @@ const MessageComponent = ({
         message.role === "user" ? "flex-row-reverse" : "flex-row"
       )}
     >
-      <Avatar className="w-9 h-9 flex-shrink-0 ring-2 ring-indigo-500/30">
+      <Avatar className="h-8 w-8 flex-shrink-0 border border-border">
         {isUserMessage && photoURL ? (
           <AvatarImage src={photoURL} alt={`Foto de ${authorLabel}`} />
         ) : null}
         {message.role == "assistant" || message.role == "system" ? (
-          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-indigo-600 text-white">
-            <Bot className="w-5 h-5" />
+          <AvatarFallback className="bg-muted text-muted-foreground">
+            <Bot className="h-4 w-4" />
           </AvatarFallback>
         ) : (
-          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-blue-600 text-white">
-            {displayName ? displayName.charAt(0).toUpperCase() : <User className="w-5 h-5" />}
+          <AvatarFallback className="bg-muted text-sm text-foreground">
+            {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
           </AvatarFallback>
         )}
       </Avatar>
@@ -59,7 +59,7 @@ const MessageComponent = ({
           message.role === "user" ? "text-right items-end" : "text-left items-start"
         )}
       >
-        <div className="text-xs font-semibold text-foreground/80">{authorLabel}</div>
+        <div className="text-xs font-medium text-muted-foreground">{authorLabel}</div>
         <MessageComponentContent
           message={message}
           timestamp={timestamp}

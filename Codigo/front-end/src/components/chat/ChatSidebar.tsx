@@ -9,6 +9,7 @@ import { useChatListPagination } from "@/hooks/useChatListPagination";
 import ChatList from "./ChatSidebar/ChatList";
 import ChatSidebarHeader from "./ChatSidebar/ChatSidebarHeader";
 import CreateChatDialog from "./ChatSidebar/CreateChatDialog";
+import SidebarUserMenu from "./SidebarUserMenu";
 
 interface ChatSidebarProps {
   chatsData: ChatListResponseType;
@@ -16,8 +17,6 @@ interface ChatSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const HEADER_HEIGHT = 64;
 
 const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) => {
   const router = useRouter();
@@ -96,48 +95,42 @@ const ChatSidebar = ({ isOpen, onClose, chatsData, chatId }: ChatSidebarProps) =
         onSubmit={handleCreateChat}
       />
 
+      {/* Fundo escuro da gaveta no mobile */}
       <div
-        className={`fixed z-30 bg-black/40 transition-opacity duration-300 ease-in-out ${
-          isOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+        className={`fixed inset-0 z-30 bg-black/60 transition-opacity duration-200 lg:hidden ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
-        style={{
-          top: `${HEADER_HEIGHT}px`,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      <div
-        className={`fixed left-0 z-40 flex w-80 flex-col transform transition-transform duration-300 ease-in-out border-r border-white/10 bg-neutral-950 ${
-          isOpen
-            ? "translate-x-0 pointer-events-auto"
-            : "-translate-x-full pointer-events-none"
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-neutral-950 transition-transform duration-200 ease-out lg:static lg:z-auto lg:w-64 lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{
-          top: `${HEADER_HEIGHT}px`,
-          height: `calc(100vh - ${HEADER_HEIGHT}px)`,
-        }}
-        aria-hidden={!isOpen}
         data-state={isOpen ? "open" : "closed"}
       >
         <ChatSidebarHeader onNewChat={handleNewChat} onClose={onClose} />
 
         <div
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto overflow-x-hidden"
+          className="chat-scroll-dark flex-1 overflow-y-auto overflow-x-hidden"
           onScroll={handleScroll}
         >
           <ChatList
             chats={chats}
-            onSelectChat={handleSelectChat}
+            onSelectChat={(id) => {
+              onClose();
+              handleSelectChat(id);
+            }}
             chatId={chatId}
           />
         </div>
-      </div>
+
+        <div className="border-t border-white/10 p-2">
+          <SidebarUserMenu />
+        </div>
+      </aside>
     </>
   );
 };

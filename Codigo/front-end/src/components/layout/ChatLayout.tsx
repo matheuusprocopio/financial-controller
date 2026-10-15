@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 
 import ChatSidebar from "@/components/chat/ChatSidebar";
-import Header from "@/components/layout/Header";
+import ChatTopBar from "@/components/chat/ChatTopBar";
 import { ChatListResponseType } from "@/types/chat.types";
 
 const ChatLayout = ({
@@ -16,32 +16,26 @@ const ChatLayout = ({
   chatsData: ChatListResponseType;
   chatId: string,
 }) => {
+  // Só controla a gaveta no mobile; no desktop a sidebar fica sempre visível
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleToggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleCloseSidebar = () => {
-    setSidebarOpen(false);
-  };
+  const currentChat = chatsData?.data?.find((chat) => chat.id === chatId);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-neutral-950 text-neutral-100">
-      <div className="relative z-10 flex h-full min-h-screen flex-col">
-        <Header onToggleSidebar={handleToggleSidebar} />
-        <div className="relative flex h-full flex-1 min-h-0 overflow-hidden">
-          <ChatSidebar
-            chatId={chatId}
-            chatsData={chatsData}
-            isOpen={sidebarOpen}
-            onClose={handleCloseSidebar}
-          />
-          <main className="relative flex flex-1 min-h-0 min-w-0 overflow-hidden">
-            <div className="flex flex-1 flex-col min-h-0">{children}</div>
-          </main>
-        </div>
-      </div>
+    <div className="flex h-dvh w-full overflow-hidden bg-neutral-950 text-neutral-100">
+      <ChatSidebar
+        chatId={chatId}
+        chatsData={chatsData}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main className="flex min-w-0 flex-1 flex-col">
+        <ChatTopBar
+          title={currentChat?.name ?? "Conversa"}
+          onOpenSidebar={() => setSidebarOpen(true)}
+        />
+        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+      </main>
     </div>
   );
 };

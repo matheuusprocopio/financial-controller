@@ -41,8 +41,21 @@ function LandingTechContent() {
     backendUser,
     isBackendAuthenticated,
     loading: authLoading,
+    clearSession,
   } = useAuth();
   const authChecked = !authLoading;
+  const sessionReason = searchParams.get("session");
+  const loginNotice =
+    sessionReason === "expired"
+      ? "Sua sessão expirou. Entre novamente para continuar."
+      : sessionReason === "unavailable"
+        ? "Não foi possível validar sua sessão. Entre novamente para continuar."
+        : undefined;
+
+  // O middleware recusou a sessão: o estado local ainda pode achar que o usuário está logado
+  useEffect(() => {
+    if (sessionReason) clearSession();
+  }, [sessionReason, clearSession]);
 
   useEffect(() => {
     let lastUpdate = 0;
@@ -439,7 +452,11 @@ function LandingTechContent() {
         </div>
       </footer>
 
-      <LoginModal open={loginModalOpen} onOpenChange={handleLoginModalChange} />
+      <LoginModal
+        open={loginModalOpen}
+        onOpenChange={handleLoginModalChange}
+        notice={loginNotice}
+      />
     </div>
   );
 }

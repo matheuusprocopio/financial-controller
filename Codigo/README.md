@@ -54,6 +54,8 @@ O schema está em `back-end/database/schema.sql`. Ele é idempotente e pode ser 
 psql "$DB_URL" -f Codigo/back-end/database/schema.sql
 ```
 
+As sessões de login ficam na tabela `sessions`, então sobrevivem a reinícios e deploys da API. Ao atualizar uma instalação existente, reaplique o schema antes de publicar o back-end; sem essa tabela o login falha.
+
 ## Deploy
 
 Front-end na Vercel, API no Render e banco no Neon (todos com plano gratuito).

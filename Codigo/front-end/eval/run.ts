@@ -5,7 +5,9 @@
  * in production, but with the tools' `execute` stripped: the model only *chooses* a
  * tool and its arguments, nothing touches the database. We then score that choice.
  *
- *   bun run eval -- --label baseline [--runs 3] [--tag create_item]
+ *   bun run eval -- --label baseline [--runs 3] [--tag create_item] [--budget 1.5]
+ *
+ * --budget (USD) stops launching new calls once the estimated spend reaches it.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -19,7 +21,11 @@ import { tools } from "@/lib/tools";
 import { buildDataset, type Check, type EvalCase } from "./dataset";
 import { createDateHelpers, localIsoDate } from "./dates";
 
-const CONCURRENCY = 6;
+const CONCURRENCY = 4;
+
+// USD per 1M tokens (standard list price). Estimates only — the OpenAI
+// dashboard is the source of truth for what was actually billed.
+const PRICE = { input: 5, cachedInput: 0.5, output: 30 };
 
 type ArgResult = { name: string; ok: boolean; got: unknown };
 type RunResult = {
@@ -28,7 +34,9 @@ type RunResult = {
   toolName: string | null;
   args: ArgResult[];
   text: string;
+  costUsd: number;
   error?: string;
+  skipped?: boolean;
 };
 
 const parseFlags = () => {
@@ -41,6 +49,7 @@ const parseFlags = () => {
     label: flag("label") ?? "run",
     runs: Number(flag("runs") ?? 1),
     tag: flag("tag"),
+    budget: Number(flag("budget") ?? Infinity),
   };
 };
 
@@ -67,7 +76,16 @@ const schemaOnlyTools = Object.fromEntries(
   Object.entries(tools).map(([name, t]) => [name, { ...(t as Tool), execute: undefined }]),
 ) as Record<string, Tool>;
 
+type Usage = { inputTokens?: number; cachedInputTokens?: number; outputTokens?: number };
+
+const estimateCost = ({ inputTokens = 0, cachedInputTokens = 0, outputTokens = 0 }: Usage) =>
+  ((inputTokens - cachedInputTokens) * PRICE.input +
+    cachedInputTokens * PRICE.cachedInput +
+    outputTokens * PRICE.output) /
+  1_000_000;
+
 const runCase = async (c: EvalCase): Promise<RunResult> => {
+  let costUsd = 0;
   try {
     const result = await generateText({
       model: openai(AGENT_MODEL),
@@ -75,6 +93,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
       tools: schemaOnlyTools,
       prompt: c.input,
     });
+    costUsd = estimateCost(result.totalUsage);
 
     const call = result.toolCalls[0];
     const toolName = call?.toolName ?? null;
@@ -82,7 +101,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
 
     if ("noTool" in c.expect) {
       const ok = toolName === null;
-      return { ok, toolOk: ok, toolName, args: [], text: result.text };
+      return { ok, toolOk: ok, toolName, args: [], text: result.text, costUsd };
     }
 
     const toolOk = toolName !== null && c.expect.tool.includes(toolName);
@@ -94,9 +113,9 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
         }))
       : [];
 
-    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, args, text: result.text };
+    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, args, text: result.text, costUsd };
   } catch (error) {
-    return { ok: false, toolOk: false, toolName: null, args: [], text: "", error: String(error) };
+    return { ok: false, toolOk: false, toolName: null, args: [], text: "", costUsd, error: String(error) };
   }
 };
 
@@ -116,17 +135,30 @@ const mapWithConcurrency = async <T, R>(items: T[], limit: number, fn: (item: T)
 const pct = (num: number, den: number) => (den === 0 ? "-" : `${((100 * num) / den).toFixed(1)}%`);
 
 const main = async () => {
-  const { label, runs, tag } = parseFlags();
+  const { label, runs, tag, budget } = parseFlags();
   const today = localIsoDate();
   const dataset = buildDataset(createDateHelpers(today)).filter((c) => !tag || c.tag === tag);
 
   console.log(`Model ${AGENT_MODEL} · ${dataset.length} cases × ${runs} run(s) · today ${today}\n`);
 
   const jobs = dataset.flatMap((c) => Array.from({ length: runs }, () => c));
-  const flat = await mapWithConcurrency(jobs, CONCURRENCY, runCase);
-  const perCase = dataset.map((c, i) => ({ case: c, runs: flat.slice(i * runs, (i + 1) * runs) }));
+  let spent = 0;
+  const flat = await mapWithConcurrency(jobs, CONCURRENCY, async (c): Promise<RunResult> => {
+    if (spent >= budget) {
+      return { ok: false, toolOk: false, toolName: null, args: [], text: "", costUsd: 0, skipped: true };
+    }
+    const r = await runCase(c);
+    spent += r.costUsd;
+    return r;
+  });
+  const perCase = dataset.map((c, i) => ({
+    case: c,
+    runs: flat.slice(i * runs, (i + 1) * runs).filter((r) => !r.skipped),
+  }));
 
+  // Cases skipped by the budget guard are left out of every score.
   const all = perCase.flatMap((p) => p.runs);
+  const skipped = flat.filter((r) => r.skipped).length;
   const errors = all.filter((r) => r.error).length;
 
   const byTag = new Map<string, RunResult[]>();
@@ -145,11 +177,16 @@ const main = async () => {
       [...byField].map(([f, oks]) => [f, `${pct(oks.filter(Boolean).length, oks.length)} (n=${oks.length})`]),
     ),
     errors,
+    skipped,
+    estimatedCostUsd: Number(spent.toFixed(4)),
+    costPerCallUsd: all.length ? Number((spent / all.length).toFixed(4)) : 0,
   };
 
   console.log(`Overall pass rate:  ${summary.cases}`);
   console.log(`Tool selection:     ${summary.toolSelection}`);
-  console.log(`API errors:         ${errors}\n`);
+  console.log(`API errors:         ${errors}`);
+  console.log(`Skipped (budget):   ${skipped}`);
+  console.log(`Estimated cost:     $${summary.estimatedCostUsd} ($${summary.costPerCallUsd}/call)\n`);
   console.table(summary.byTag);
   console.table(summary.byField);
 

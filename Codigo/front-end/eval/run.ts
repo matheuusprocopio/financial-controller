@@ -17,7 +17,7 @@ import { openai } from "@ai-sdk/openai";
 import { generateText, type Tool } from "ai";
 
 import { AGENT_MODEL } from "@/lib/agent/model";
-import { SYSTEM_PROMPT } from "@/lib/agent/systemPrompt";
+import { buildSystemPrompt } from "@/lib/agent/systemPrompt";
 import { tools } from "@/lib/tools";
 import { buildDataset, buildHoldoutDataset, type Check, type EvalCase } from "./dataset";
 import { createDateHelpers, localIsoDate } from "./dates";
@@ -93,7 +93,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
   try {
     const result = await generateText({
       model: openai(AGENT_MODEL),
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(),
       tools: schemaOnlyTools,
       prompt: c.input,
       maxRetries: 5,

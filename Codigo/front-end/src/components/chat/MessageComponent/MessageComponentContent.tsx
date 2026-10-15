@@ -256,40 +256,36 @@ const MessageComponentContent = ({
           return (
             <div
               key={partKey}
-              className={cn(
-                "inline-block max-w-[90%] rounded-lg p-3",
-                "bg-muted text-muted-foreground"
-              )}
+              className="w-full rounded-lg border border-white/10 p-4"
             >
-              <div className="mb-2">
-                <h3 className="text-sm font-semibold">{chartSpec.title}</h3>
+              <div className="mb-4">
+                <h3 className="text-sm font-medium text-neutral-100">{chartSpec.title}</h3>
                 {chartSpec.description && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {chartSpec.description}
                   </p>
                 )}
-                <p className="mt-0.5 text-[0.65rem] text-muted-foreground/80">
-                  {chartSpec.xLabel} × {chartSpec.yLabel}
-                </p>
               </div>
 
               <ChartContainer
                 config={config}
-                className="h-64 w-full rounded-md bg-background"
+                className="h-64 w-full"
               >
                 <ChartImpl data={chartSpec.data}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" />
-                  <YAxis />
+                  <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.08)" />
+                  <XAxis dataKey="x" tickLine={false} axisLine={false} tickMargin={8} />
+                  <YAxis tickLine={false} axisLine={false} tickMargin={8} width={48} />
                   <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
+                  {chartSpec.series.length > 1 && (
+                    <ChartLegend content={<ChartLegendContent />} />
+                  )}
                   {chartSpec.series.map((serie) =>
                     chartSpec.type === "bar" ? (
                       <Bar
                         key={serie.key}
                         dataKey={serie.key}
                         fill={`var(--color-${serie.key})`}
-                        radius={4}
+                        radius={[4, 4, 0, 0]}
                       />
                     ) : (
                       <Line
@@ -315,12 +311,9 @@ const MessageComponentContent = ({
           return (
             <div
               key={partKey}
-              className={cn(
-                "inline-block max-w-[90%] rounded-lg p-3",
-                "bg-muted text-muted-foreground"
-              )}
+              className="w-full rounded-lg border border-white/10 p-4"
             >
-              <p className="text-xs mb-2 text-muted-foreground">
+              <p className="mb-3 text-xs text-muted-foreground">
                 Gerando gráfico...
               </p>
               <div className="h-40 w-full animate-pulse rounded-md bg-muted/60" />
@@ -333,13 +326,12 @@ const MessageComponentContent = ({
           <div
             key={partKey}
             className={cn(
-              "inline-block max-w-[90%] rounded-lg p-3",
               message.role === "user"
-                ? "ml-auto bg-primary text-primary-foreground"
-                : "border border-border bg-card text-card-foreground"
+                ? "max-w-[85%] rounded-2xl bg-neutral-800 px-4 py-2.5 text-neutral-100"
+                : "max-w-none text-neutral-200"
             )}
           >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            <p className="text-[15px] leading-7 whitespace-pre-wrap">
               {part.text}
             </p>
           </div>
@@ -394,7 +386,7 @@ const MessageComponentContent = ({
       {renderParts()}
       <div
         className={cn(
-          "text-xs text-muted-foreground mt-1",
+          "text-xs text-neutral-600",
           message.role === "user" ? "text-right" : "text-left"
         )}
       >

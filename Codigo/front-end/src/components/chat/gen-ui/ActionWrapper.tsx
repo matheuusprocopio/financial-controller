@@ -22,7 +22,7 @@ const ActionWrapper = ({ children, state, errorMessage }: IActionWrapper) => {
     return <LoadingState />;
   }
 
-  return <div className="w-full max-w-[95%]">{children}</div>;
+  return <div className="w-full">{children}</div>;
 };
 
 export default ActionWrapper;

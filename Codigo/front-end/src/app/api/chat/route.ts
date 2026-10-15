@@ -1,5 +1,5 @@
 import { AGENT_MODEL } from "@/lib/agent/model";
-import { SYSTEM_PROMPT } from "@/lib/agent/systemPrompt";
+import { buildSystemPrompt } from "@/lib/agent/systemPrompt";
 import { tools } from "@/lib/tools";
 import { convertUIMessageToServerMessage } from "@/utils/convertServerMessageToUiMessage";
 import { createMessages } from "@/utils/services/messages";
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     model: openai(AGENT_MODEL),
     messages: convertToModelMessages(messages),
     tools,
-    system: SYSTEM_PROMPT,
+    system: buildSystemPrompt(),
   });
 
   return result.toUIMessageStreamResponse({

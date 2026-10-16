@@ -146,6 +146,11 @@ const pct = (num: number, den: number) => (den === 0 ? "-" : `${((100 * num) / d
 
 const main = async () => {
   const { label, runs, tag, budget, rpm, datasetName } = parseFlags();
+  if (!process.env.OPENAI_API_KEY) {
+    // Bun only loads .env.local from the current directory.
+    console.error("OPENAI_API_KEY is not set. Run the eval from Codigo/front-end.");
+    process.exit(1);
+  }
   const today = localIsoDate();
   const build = datasetName === "holdout" ? buildHoldoutDataset : buildDataset;
   const dataset = build(createDateHelpers(today)).filter((c) => !tag || c.tag === tag);

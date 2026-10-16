@@ -1,3 +1,4 @@
+import { AGENT_MODEL } from "@/lib/agent/model";
 import { openai } from "@ai-sdk/openai";
 import { generateText, experimental_transcribe as transcribe } from "ai";
 
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     });
 
     const { text } = await generateText({
-      model: openai("gpt-5.6-sol"),
+      model: openai(AGENT_MODEL),
       prompt: `Você é um assistente especializado em revisar transcrições de áudio.
 Contexto: aplicativo de gestão e planejamento financeiro pessoal;
 Tarefa: reescreva a transcrição removendo ruídos, repetições e inconsistências independente do conteudo da mensagem.

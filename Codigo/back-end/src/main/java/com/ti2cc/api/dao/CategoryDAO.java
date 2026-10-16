@@ -231,13 +231,13 @@ public class CategoryDAO {
         }
 
         StringBuilder query = new StringBuilder(
-                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ?");
 
         if (mainCategoryId != null) {
             query.append(" AND main_category_id = ?");
         }
 
-        query.append(" ORDER BY distance ASC");
+        query.append(" ORDER BY distance ASC NULLS LAST");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
@@ -312,13 +312,13 @@ public class CategoryDAO {
         }
 
         StringBuilder query = new StringBuilder(
-                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM categories WHERE user_id = ?");
 
         if (mainCategoryId != null) {
             query.append(" AND main_category_id = ?");
         }
 
-        query.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+        query.append(" ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(query.toString())) {
@@ -383,7 +383,7 @@ public class CategoryDAO {
 
     public long countWithEmbedding(UUID userId, UUID mainCategoryId) {
         StringBuilder query = new StringBuilder(
-                "SELECT COUNT(*) FROM categories WHERE user_id = ? AND search_embedding IS NOT NULL");
+                "SELECT COUNT(*) FROM categories WHERE user_id = ?");
 
         if (mainCategoryId != null) {
             query.append(" AND main_category_id = ?");

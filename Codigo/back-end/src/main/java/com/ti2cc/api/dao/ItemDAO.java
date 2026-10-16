@@ -294,16 +294,16 @@ public class ItemDAO {
             return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
         }
 
-        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             countQuery.append(" AND type = ?::item_type");
         }
 
-        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             dataQuery.append(" AND type = ?::item_type");
         }
-        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+        dataQuery.append(" ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
@@ -638,16 +638,16 @@ public class ItemDAO {
             return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
         }
 
-        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             countQuery.append(" AND type = ?::item_type");
         }
 
-        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             dataQuery.append(" AND type = ?::item_type");
         }
-        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+        dataQuery.append(" ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
@@ -707,17 +707,17 @@ public class ItemDAO {
         }
 
         StringBuilder countQuery = new StringBuilder(
-                "SELECT COUNT(*) FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+                "SELECT COUNT(*) FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             countQuery.append(" AND type = ?::item_type");
         }
 
         StringBuilder dataQuery = new StringBuilder(
-                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+                "SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE category_id = ? AND account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             dataQuery.append(" AND type = ?::item_type");
         }
-        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+        dataQuery.append(" ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {
@@ -858,16 +858,16 @@ public class ItemDAO {
             return new PaginatedResponseDTO<>(list, totalItems, pagination.getPage(), pagination.getPageLimit());
         }
 
-        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM items WHERE account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             countQuery.append(" AND type = ?::item_type");
         }
 
-        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE account_id = ? AND user_id = ? AND search_embedding IS NOT NULL AND date BETWEEN ? AND ?");
+        StringBuilder dataQuery = new StringBuilder("SELECT *, (search_embedding <=> ?::vector) AS distance FROM items WHERE account_id = ? AND user_id = ? AND date BETWEEN ? AND ?");
         if (hasTypeFilter) {
             dataQuery.append(" AND type = ?::item_type");
         }
-        dataQuery.append(" ORDER BY distance ASC LIMIT ? OFFSET ?");
+        dataQuery.append(" ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?");
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement countStmt = connection.prepareStatement(countQuery.toString())) {

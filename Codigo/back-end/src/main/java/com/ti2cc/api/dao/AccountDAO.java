@@ -203,7 +203,7 @@ public class AccountDAO {
             return accounts;
         }
 
-        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
+        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? ORDER BY distance ASC NULLS LAST";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -229,7 +229,7 @@ public class AccountDAO {
             return accounts;
         }
 
-        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC LIMIT ? OFFSET ?";
+        String query = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM accounts WHERE user_id = ? ORDER BY distance ASC NULLS LAST LIMIT ? OFFSET ?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -268,7 +268,7 @@ public class AccountDAO {
     }
 
     public long countWithEmbedding(UUID userId) {
-        String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ? AND search_embedding IS NOT NULL";
+        String query = "SELECT COUNT(*) FROM accounts WHERE user_id = ?";
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setObject(1, userId);

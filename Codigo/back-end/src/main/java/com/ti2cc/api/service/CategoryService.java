@@ -34,8 +34,7 @@ public class CategoryService {
 
         float[] embedding = embeddingService.generateEmbedding(category.getName());
         if (embedding == null) {
-            System.err.println("Failed to generate embedding for category creation.");
-            return false;
+            System.err.println("Failed to generate embedding for category creation. Saving without it; semantic search will rank it last.");
         }
         category.setSearchEmbedding(embedding);
 
@@ -58,8 +57,7 @@ public class CategoryService {
         if (category.getName() != null && !category.getName().trim().isEmpty()) {
             float[] embedding = embeddingService.generateEmbedding(category.getName());
             if (embedding == null) {
-                System.err.println("Failed to generate embedding for category update.");
-                return false;
+                System.err.println("Failed to generate embedding for category update. Keeping the previous embedding.");
             }
             category.setSearchEmbedding(embedding);
         }
@@ -93,11 +91,10 @@ public class CategoryService {
 
         if (semanticQuery != null && !semanticQuery.isBlank()) {
             float[] embedding = embeddingService.generateEmbedding(semanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic category search.");
-                return List.of();
+            if (embedding != null) {
+                return categoryDAO.getBySemanticSearch(userId, embedding, mainCategoryId);
             }
-            return categoryDAO.getBySemanticSearch(userId, embedding, mainCategoryId);
+            System.err.println("Failed to generate embedding for semantic category search. Falling back to regular listing.");
         }
 
         return categoryDAO.getByFilters(userId, name, mainCategoryId);
@@ -111,15 +108,13 @@ public class CategoryService {
 
         if (semanticQuery != null && !semanticQuery.isBlank()) {
             float[] embedding = embeddingService.generateEmbedding(semanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic category search (paginated).");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                List<Category> categories = categoryDAO.getBySemanticSearchPaginated(userId, embedding, mainCategoryId, pagination.getOffset(), pagination.getPageLimit());
+                long totalItems = categoryDAO.countWithEmbedding(userId, mainCategoryId);
+
+                return new PaginatedResponseDTO<>(categories, totalItems, pagination.getPage(), pagination.getPageLimit());
             }
-
-            List<Category> categories = categoryDAO.getBySemanticSearchPaginated(userId, embedding, mainCategoryId, pagination.getOffset(), pagination.getPageLimit());
-            long totalItems = categoryDAO.countWithEmbedding(userId, mainCategoryId);
-
-            return new PaginatedResponseDTO<>(categories, totalItems, pagination.getPage(), pagination.getPageLimit());
+            System.err.println("Failed to generate embedding for semantic category search (paginated). Falling back to regular listing.");
         }
 
         List<Category> categories = categoryDAO.getByFiltersPaginated(userId, name, mainCategoryId, pagination.getOffset(), pagination.getPageLimit());

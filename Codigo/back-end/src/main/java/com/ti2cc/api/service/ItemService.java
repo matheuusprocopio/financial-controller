@@ -78,8 +78,7 @@ public class ItemService {
         String searchTerm = buildSearchTerm(item.getName(), item.getDescription());
         float[] embedding = embeddingService.generateEmbedding(searchTerm);
         if (embedding == null) {
-            System.err.println("Failed to generate embedding for item creation.");
-            return false;
+            System.err.println("Failed to generate embedding for item creation. Saving without it; semantic search will rank it last.");
         }
         item.setSearchEmbedding(embedding);
 
@@ -126,8 +125,7 @@ public class ItemService {
             String searchTerm = buildSearchTerm(newName, newDescription);
             float[] embedding = embeddingService.generateEmbedding(searchTerm);
             if (embedding == null) {
-                System.err.println("Failed to generate embedding for item update.");
-                return false;
+                System.err.println("Failed to generate embedding for item update. Keeping the previous embedding.");
             }
             item.setSearchEmbedding(embedding);
         }
@@ -201,14 +199,13 @@ public class ItemService {
 
         if (sanitizedSemanticQuery != null) {
             float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic item search.");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                return itemDAO.getByUserIdSemantic(userId, embedding, sanitizedTypeFilter, dateRange, pagination);
             }
-            return itemDAO.getByUserIdSemantic(userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+            System.err.println("Failed to generate embedding for semantic item search. Falling back to regular listing.");
         }
 
-        return itemDAO.getByUserId(userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
+        return itemDAO.getByUserId(userId, sanitizedFilter != null ? sanitizedFilter : sanitizedSemanticQuery, sanitizedTypeFilter, dateRange, pagination);
     }
 
     public PaginatedResponseDTO<Item> listItemsByCategoryId(UUID categoryId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
@@ -228,14 +225,13 @@ public class ItemService {
 
         if (sanitizedSemanticQuery != null) {
             float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic item search by category.");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                return itemDAO.getByCategoryIdSemantic(categoryId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
             }
-            return itemDAO.getByCategoryIdSemantic(categoryId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+            System.err.println("Failed to generate embedding for semantic item search by category. Falling back to regular listing.");
         }
 
-        return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
+        return itemDAO.getByCategoryId(categoryId, userId, sanitizedFilter != null ? sanitizedFilter : sanitizedSemanticQuery, sanitizedTypeFilter, dateRange, pagination);
     }
 
     public PaginatedResponseDTO<Item> listItemsByCategoryAndAccount(UUID categoryId, UUID accountId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
@@ -260,14 +256,13 @@ public class ItemService {
 
         if (sanitizedSemanticQuery != null) {
             float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic item search by category and account.");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                return itemDAO.getByCategoryAndAccountSemantic(categoryId, accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
             }
-            return itemDAO.getByCategoryAndAccountSemantic(categoryId, accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+            System.err.println("Failed to generate embedding for semantic item search by category and account. Falling back to regular listing.");
         }
 
-        return itemDAO.getByCategoryAndAccount(categoryId, accountId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
+        return itemDAO.getByCategoryAndAccount(categoryId, accountId, userId, sanitizedFilter != null ? sanitizedFilter : sanitizedSemanticQuery, sanitizedTypeFilter, dateRange, pagination);
     }
 
     public PaginatedResponseDTO<Item> listItemsByAccountId(UUID accountId, UUID userId, String nameFilter, String typeFilter, String semanticQuery, DateRangeDTO dateRange, PaginationRequestDTO pagination) {
@@ -287,14 +282,13 @@ public class ItemService {
 
         if (sanitizedSemanticQuery != null) {
             float[] embedding = embeddingService.generateEmbedding(sanitizedSemanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic item search by account.");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                return itemDAO.getByAccountIdSemantic(accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
             }
-            return itemDAO.getByAccountIdSemantic(accountId, userId, embedding, sanitizedTypeFilter, dateRange, pagination);
+            System.err.println("Failed to generate embedding for semantic item search by account. Falling back to regular listing.");
         }
 
-        return itemDAO.getByAccountId(accountId, userId, sanitizedFilter, sanitizedTypeFilter, dateRange, pagination);
+        return itemDAO.getByAccountId(accountId, userId, sanitizedFilter != null ? sanitizedFilter : sanitizedSemanticQuery, sanitizedTypeFilter, dateRange, pagination);
     }
 
     private String buildSearchTerm(String name, String description) {

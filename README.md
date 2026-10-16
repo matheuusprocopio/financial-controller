@@ -36,48 +36,6 @@ flowchart LR
 | Dados | PostgreSQL (Neon) com `pgvector` |
 | Deploy | Vercel (front) e Render (API, via `render.yaml`) |
 
-## Avaliação do agente
-
-Para medir a qualidade do agente de forma objetiva, o projeto tem uma avaliação offline em `Codigo/front-end/eval/`.
-
-**Como funciona:** cada frase do dataset é enviada ao mesmo modelo, prompt e ferramentas usados em produção, mas com a execução das ferramentas desligada. O modelo apenas escolhe a ferramenta e os argumentos, e o script compara com a resposta esperada (ferramenta, tipo, valor, data, categoria etc.). Nada é gravado no banco.
-
-- **Conjunto principal:** 56 frases em português em 7 grupos (lançamentos, consultas, análises, cadastros, edições, pedidos fora do escopo e pedidos ambíguos).
-- **Conjunto separado (holdout):** 26 frases com outra escrita (gírias, números por extenso, "R$ 3.250,00"), criado depois dos ajustes e nunca usado para ajustar o prompt.
-- As datas esperadas são calculadas a partir do dia da execução, no fuso de São Paulo.
-
-### Resultados
-
-| Conjunto | Antes | Depois |
-|---|---|---|
-| Principal (56 casos) | 42,9% | 98,8% (166 de 168, em 3 execuções) |
-| Holdout (26 casos) | 34,6% | 96,2% |
-| Lançamento de transações (principal) | 5% | 96,7% (58 de 60, em 3 execuções) |
-| Custo médio por mensagem | US$ 0,0057 | US$ 0,0035 |
-
-As duas falhas restantes no conjunto principal são o mesmo caso: para "recebi 1200 de um freela" o agente sugere a categoria "Freelance", que o critério da avaliação não aceitava. O critério não foi alterado depois de ver o resultado. Os arquivos de cada execução estão em `eval/results/`.
-
-### O que a avaliação revelou
-
-1. **O agente não sabia a data de hoje.** Ele perguntava "qual data você considera como hoje?" ou chutava o ano errado. Correção: a data atual (fuso de São Paulo) passou a ir no prompt, e os exemplos com datas fixas de 2024 foram trocados por regras relativas.
-2. **O agente pedia esclarecimento demais.** Em 19 de 20 lançamentos ele perguntava "cartão ou conta?" em vez de agir, porque o próprio prompt usava isso como exemplo de ambiguidade. Como as ferramentas já abrem um formulário de confirmação, o prompt passou a mandar preencher o formulário com a melhor interpretação e só perguntar quando falta o essencial.
-3. **Bug de fuso horário fora da IA.** A data de "hoje" era calculada em UTC; depois das 21h no Brasil, transações eram lançadas no dia seguinte. Corrigido e coberto por teste.
-4. **Escopo desalinhado.** O prompt prometia investimentos (sem nenhuma ferramenta) e não mencionava metas (que têm cinco ferramentas).
-
-**Limitações conhecidas:** cada conjunto foi executado poucas vezes por limite de custo, então os números têm variação; a avaliação verifica a escolha da ferramenta e dos argumentos, não o texto final da resposta; no holdout, "gráfico do saldo nos últimos meses" ainda gera uma pergunta de esclarecimento.
-
-### Como rodar
-
-```bash
-cd Codigo/front-end
-bun install
-bun test                                   # testes unitários
-bun run eval -- --label minha-rodada       # avaliação (precisa de OPENAI_API_KEY no .env.local)
-bun run eval -- --dataset holdout --rpm 3 --budget 0.5
-```
-
-Opções: `--runs N` repete cada caso, `--tag create_item` filtra um grupo, `--budget` limita o gasto estimado em dólares e `--rpm` respeita o limite de requisições por minuto da conta. Os resultados ficam em `eval/results/`.
-
 ## Como executar o projeto
 
 **Back-end** (`Codigo/back-end`): copie `.env.example` para `.env`, preencha `DB_URL`, as credenciais do Firebase e `OPENAI_API_KEY`, aplique `database/schema.sql` e rode `docker compose up` ou `mvn package && java -jar target/*.jar`.

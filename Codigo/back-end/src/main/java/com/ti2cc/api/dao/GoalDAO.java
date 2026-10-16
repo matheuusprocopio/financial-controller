@@ -119,7 +119,7 @@ public class GoalDAO {
             return goals;
         }
 
-        String sql = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM goals WHERE user_id = ? AND search_embedding IS NOT NULL ORDER BY distance ASC";
+        String sql = "SELECT *, (search_embedding <=> ?::vector) AS distance FROM goals WHERE user_id = ? ORDER BY distance ASC NULLS LAST";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement pstmt = connection.prepareStatement(sql)) {

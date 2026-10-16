@@ -71,8 +71,7 @@ public class GoalService {
         String searchText = buildSearchText(goal.getTitle(), goal.getDescription());
         float[] embedding = embeddingService.generateEmbedding(searchText);
         if (embedding == null) {
-            System.err.println("Failed to generate embedding for goal creation.");
-            return null;
+            System.err.println("Failed to generate embedding for goal creation. Saving without it; semantic search will rank it last.");
         }
         goal.setSearchEmbedding(embedding);
 
@@ -92,11 +91,10 @@ public class GoalService {
 
         if (semanticQuery != null && !semanticQuery.isBlank()) {
             float[] embedding = embeddingService.generateEmbedding(semanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic goal search.");
-                return Collections.emptyList();
+            if (embedding != null) {
+                return goalDAO.listBySemantic(userId, embedding);
             }
-            return goalDAO.listBySemantic(userId, embedding);
+            System.err.println("Failed to generate embedding for semantic goal search. Falling back to regular listing.");
         }
 
         return goalDAO.listByUser(userId);
@@ -143,8 +141,7 @@ public class GoalService {
         String searchText = buildSearchText(goal.getTitle(), goal.getDescription());
         float[] embedding = embeddingService.generateEmbedding(searchText);
         if (embedding == null) {
-            System.err.println("Failed to generate embedding for goal update.");
-            return false;
+            System.err.println("Failed to generate embedding for goal update. Keeping the previous embedding.");
         }
         goal.setSearchEmbedding(embedding);
 

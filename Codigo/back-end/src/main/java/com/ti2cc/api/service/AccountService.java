@@ -40,8 +40,7 @@ public class AccountService {
         String searchText = buildSearchText(account.getName(), account.getFinancialInstitution());
         float[] embedding = embeddingService.generateEmbedding(searchText);
         if (embedding == null) {
-            System.err.println("Failed to generate embedding for account creation.");
-            return false;
+            System.err.println("Failed to generate embedding for account creation. Saving without it; semantic search will rank it last.");
         }
         account.setSearchEmbedding(embedding);
 
@@ -74,8 +73,7 @@ public class AccountService {
 
             float[] embedding = embeddingService.generateEmbedding(searchText);
             if (embedding == null) {
-                System.err.println("Failed to generate embedding for account update.");
-                return false;
+                System.err.println("Failed to generate embedding for account update. Keeping the previous embedding.");
             }
             account.setSearchEmbedding(embedding);
         }
@@ -109,12 +107,10 @@ public class AccountService {
 
         if (semanticQuery != null && !semanticQuery.isBlank()) {
             float[] embedding = embeddingService.generateEmbedding(semanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic account search.");
-                return List.of();
+            if (embedding != null) {
+                return accountDAO.getBySemanticSearch(userId, embedding);
             }
-
-            return accountDAO.getBySemanticSearch(userId, embedding);
+            System.err.println("Failed to generate embedding for semantic account search. Falling back to regular listing.");
         }
 
         return accountDAO.getByUserId(userId);
@@ -128,14 +124,12 @@ public class AccountService {
 
         if (semanticQuery != null && !semanticQuery.isBlank()) {
             float[] embedding = embeddingService.generateEmbedding(semanticQuery);
-            if (embedding == null) {
-                System.err.println("Failed to generate embedding for semantic account search (paginated).");
-                return new PaginatedResponseDTO<>(List.of(), 0, pagination.getPage(), pagination.getPageLimit());
+            if (embedding != null) {
+                List<Account> accounts = accountDAO.getBySemanticSearchPaginated(userId, embedding, pagination.getOffset(), pagination.getPageLimit());
+                long totalItems = accountDAO.countWithEmbedding(userId);
+                return new PaginatedResponseDTO<>(accounts, totalItems, pagination.getPage(), pagination.getPageLimit());
             }
-
-            List<Account> accounts = accountDAO.getBySemanticSearchPaginated(userId, embedding, pagination.getOffset(), pagination.getPageLimit());
-            long totalItems = accountDAO.countWithEmbedding(userId);
-            return new PaginatedResponseDTO<>(accounts, totalItems, pagination.getPage(), pagination.getPageLimit());
+            System.err.println("Failed to generate embedding for semantic account search (paginated). Falling back to regular listing.");
         }
 
         List<Account> accounts = accountDAO.getByUserIdPaginated(userId, pagination.getOffset(), pagination.getPageLimit());

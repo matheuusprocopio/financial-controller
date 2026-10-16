@@ -21,7 +21,7 @@ const filterGoalsByParams = (
 
   if (filters.accountId && filters.accountId.trim()) {
     if (filters.accountId === "global") {
-      filtered = filtered.filter((goal) => goal.accountId === null);
+      filtered = filtered.filter((goal) => !goal.accountId);
     } else {
       filtered = filtered.filter((goal) => goal.accountId === filters.accountId);
     }

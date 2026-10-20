@@ -1,0 +1,552 @@
+{
+  "label": "batch-fixed-holdout",
+  "dataset": "holdout",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-20",
+  "runs": 3,
+  "summary": {
+    "cases": "100.0%",
+    "toolSelection": "100.0%",
+    "byTag": {
+      "create_items": "100.0%"
+    },
+    "byField": {
+      "items": "100.0% (n=9)"
+    },
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.0495,
+    "costPerCallUsd": 0.0055
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "h-batch-gasolina-lavagem",
+        "tag": "create_items",
+        "input": "abasteci 200 e lavei o carro por 50",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 200
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 50
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Abastecimento",
+                  "description": "Abastecimento do carro",
+                  "amount": 200,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Lavagem do carro",
+                  "description": "Lavagem do carro",
+                  "amount": 50,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0053255,
+          "tokens": {
+            "input": 3091,
+            "cached": 3071,
+            "output": 123
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Abastecimento",
+                  "description": "Abastecimento do carro",
+                  "amount": 200,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Lavagem do carro",
+                  "description": "Lavagem do carro",
+                  "amount": 50,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0054455,
+          "tokens": {
+            "input": 3091,
+            "cached": 3071,
+            "output": 127
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Abastecimento",
+                  "description": "Abastecimento do carro",
+                  "amount": 200,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Lavagem do carro",
+                  "description": "Lavagem do carro",
+                  "amount": 50,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005279,
+          "tokens": {
+            "input": 3091,
+            "cached": 3088,
+            "output": 124
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-batch-freela-pix",
+        "tag": "create_items",
+        "input": "caiu 800 de um freela e 120 de um pix do pedro",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 800
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 120
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Freela",
+                  "description": "Recebimento de trabalho freelance",
+                  "amount": 800,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Freelance"
+                },
+                {
+                  "name": "Pix do Pedro",
+                  "description": "Pix recebido de Pedro",
+                  "amount": 120,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transferências"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0056505,
+          "tokens": {
+            "input": 3096,
+            "cached": 3071,
+            "output": 133
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Freela",
+                  "description": "Recebimento de R$ 800 por trabalho freelancer",
+                  "amount": 800,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Renda extra"
+                },
+                {
+                  "name": "Pix do Pedro",
+                  "description": "Pix de R$ 120 recebido de Pedro",
+                  "amount": 120,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transferência recebida"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0058815,
+          "tokens": {
+            "input": 3096,
+            "cached": 3093,
+            "output": 144
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Freela",
+                  "description": "Recebimento de R$ 800 por trabalho freelance",
+                  "amount": 800,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Freelance"
+                },
+                {
+                  "name": "Pix do Pedro",
+                  "description": "Recebimento de Pix de Pedro no valor de R$ 120",
+                  "amount": 120,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Outras receitas"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0058515,
+          "tokens": {
+            "input": 3096,
+            "cached": 3093,
+            "output": 143
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-batch-mercado-farmacia-ontem",
+        "tag": "create_items",
+        "input": "ontem: mercado 230,50 e farmácia 42",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 230.5
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "mercado",
+                      "supermercado",
+                      "aliment",
+                      "compras"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 42
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "saude",
+                      "farmacia",
+                      "academia",
+                      "esporte",
+                      "bem-estar",
+                      "medic"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Mercado",
+                  "description": "Compra no mercado",
+                  "amount": 230.5,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Farmácia",
+                  "description": "Compra na farmácia",
+                  "amount": 42,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Saúde"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0056855,
+          "tokens": {
+            "input": 3091,
+            "cached": 3071,
+            "output": 135
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Mercado",
+                  "description": "Compra no mercado",
+                  "amount": 230.5,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Farmácia",
+                  "description": "Compra na farmácia",
+                  "amount": 42,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Saúde"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005219,
+          "tokens": {
+            "input": 3091,
+            "cached": 3088,
+            "output": 122
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Mercado",
+                  "description": "Compra no mercado",
+                  "amount": 230.5,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Farmácia",
+                  "description": "Compra na farmácia",
+                  "amount": 42,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Saúde"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005129,
+          "tokens": {
+            "input": 3091,
+            "cached": 3088,
+            "output": 119
+          }
+        }
+      ]
+    }
+  ]
+}

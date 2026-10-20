@@ -2,7 +2,7 @@ import { createNewCategoryTool, editCategoryTool, deleteCategoryTool, listCatego
 import { createNewCreditCardTool, deleteCreditCardTool, listCreditCardsTool, listCreditCardActionsTool } from "./creditCards";
 import { createNewAccountTool, editAccountTool, deleteAccountTool, listAccountActionsTool, listAccountsTool, filterAccountsTool } from "./accounts";
 import { itemsAnalyticsTool } from "./analytics";
-import { createNewItemTool, editItemTool, deleteItemTool, listItemsTool, listItemActionsTool } from "./items";
+import { createNewItemTool, createNewItemsTool, editItemTool, deleteItemTool, listItemsTool, listItemActionsTool } from "./items";
 import { updateUserTool, deleteUserTool } from "./user";
 import { createNewGoalTool, editGoalTool, deleteGoalTool, listGoalActionsTool, listGoalsTool } from "./goals";
 
@@ -28,6 +28,7 @@ export const tools = {
   itemsAnalytics: itemsAnalyticsTool,
 
   createNewItem: createNewItemTool,
+  createNewItems: createNewItemsTool,
   editItem: editItemTool,
   listItemActions: listItemActionsTool,
   deleteItem: deleteItemTool,

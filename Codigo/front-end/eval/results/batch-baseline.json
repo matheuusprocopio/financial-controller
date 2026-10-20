@@ -1,0 +1,838 @@
+{
+  "label": "batch-baseline",
+  "dataset": "main",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-20",
+  "runs": 3,
+  "summary": {
+    "cases": "0.0%",
+    "toolSelection": "0.0%",
+    "byTag": {
+      "create_items": "0.0%"
+    },
+    "byField": {},
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.1346,
+    "costPerCallUsd": 0.0075
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "batch-cafe-uber-mercado",
+        "tag": "create_items",
+        "input": "hoje gastei 12 de café, 38 de uber e 150 no mercado",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 12
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 38
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 150
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "mercado",
+                      "supermercado",
+                      "aliment",
+                      "compras"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0074265,
+          "tokens": {
+            "input": 2619,
+            "cached": 2593,
+            "output": 200
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.006933,
+          "tokens": {
+            "input": 2619,
+            "cached": 2616,
+            "output": 187
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.007053,
+          "tokens": {
+            "input": 2619,
+            "cached": 2616,
+            "output": 191
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-luz-internet-ontem",
+        "tag": "create_items",
+        "input": "ontem paguei 89,90 de luz e 99,90 de internet",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 89.9
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "conta",
+                      "luz",
+                      "energia",
+                      "moradia",
+                      "casa",
+                      "utilidade",
+                      "servico"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 99.9
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "internet",
+                      "telefon",
+                      "conta",
+                      "servico",
+                      "moradia",
+                      "casa",
+                      "utilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.018125,
+          "tokens": {
+            "input": 2617,
+            "cached": 0,
+            "output": 168
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.006572,
+          "tokens": {
+            "input": 2617,
+            "cached": 2614,
+            "output": 175
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.006452,
+          "tokens": {
+            "input": 2617,
+            "cached": 2614,
+            "output": 171
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-salario-aluguel",
+        "tag": "create_items",
+        "input": "recebi 5000 de salário e paguei 2000 de aluguel",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 5000
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "salario",
+                      "renda",
+                      "receita",
+                      "trabalho"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 2000
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "moradia",
+                      "casa",
+                      "aluguel",
+                      "habitac"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0057565,
+          "tokens": {
+            "input": 2615,
+            "cached": 2593,
+            "output": 145
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.005821,
+          "tokens": {
+            "input": 2615,
+            "cached": 2612,
+            "output": 150
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.005611,
+          "tokens": {
+            "input": 2615,
+            "cached": 2612,
+            "output": 143
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-datas-diferentes",
+        "tag": "create_items",
+        "input": "anteontem almocei por 35 e ontem jantei por 60",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 35
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-18"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 60
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0057065,
+          "tokens": {
+            "input": 2617,
+            "cached": 2593,
+            "output": 143
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.005672,
+          "tokens": {
+            "input": 2617,
+            "cached": 2614,
+            "output": 145
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.005642,
+          "tokens": {
+            "input": 2617,
+            "cached": 2614,
+            "output": 144
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-lista",
+        "tag": "create_items",
+        "input": "lança: farmácia 37, padaria 15, estacionamento 20",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 37
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "saude",
+                      "farmacia",
+                      "academia",
+                      "esporte",
+                      "bem-estar",
+                      "medic"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 15
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 20
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0070815,
+          "tokens": {
+            "input": 2616,
+            "cached": 2593,
+            "output": 189
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0069315,
+          "tokens": {
+            "input": 2616,
+            "cached": 2613,
+            "output": 187
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0072015,
+          "tokens": {
+            "input": 2616,
+            "cached": 2613,
+            "output": 196
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-quatro",
+        "tag": "create_items",
+        "input": "hoje: cinema 70, pipoca 30, uber 25 e ifood 80",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 70
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "lazer",
+                      "entretenimento",
+                      "cinema",
+                      "diversao",
+                      "assinatura",
+                      "streaming"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 30
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "lazer",
+                      "entretenimento",
+                      "cinema",
+                      "diversao",
+                      "assinatura",
+                      "streaming",
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 25
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 80
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0089915,
+          "tokens": {
+            "input": 2620,
+            "cached": 2593,
+            "output": 252
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0090335,
+          "tokens": {
+            "input": 2620,
+            "cached": 2617,
+            "output": 257
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem",
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0085835,
+          "tokens": {
+            "input": 2620,
+            "cached": 2617,
+            "output": 242
+          }
+        }
+      ]
+    }
+  ]
+}

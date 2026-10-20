@@ -1,7 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { listCategoriesPaginated } from "@/utils/services/categories";
-import { listAccountsPaginated } from "@/utils/services/accounts";
+import { listCategories, listCategoriesPaginated } from "@/utils/services/categories";
+import { listAccounts, listAccountsPaginated } from "@/utils/services/accounts";
 import { listItems, getItemById } from "@/utils/services/items";
 import { getSessionId } from "@/utils/server-cookies";
 import { findBestMatch } from "@/utils/fuzzySearch";
@@ -10,9 +10,10 @@ import type { FuzzyMatchResult } from "@/utils/fuzzySearch";
 import { ItemType } from "@/types/item.type";
 import { RequestError, createRequestError } from "@/utils/requestProvider";
 import { isRequestError, MIN_MATCH_CONFIDENCE, resolveIsoDate } from "./shared";
+import { categorySearchTerm, resolveBatchRow, type NamedOption } from "./itemsBatch";
 
 export const createNewItemTool = tool({
-  description: `Create or add a new transaction (item) to user. Analyze the user's message and automatically determine:
+  description: `Create or add a new transaction (item) to user. Use it only when the message has a single transaction; for two or more, use createNewItems. Analyze the user's message and automatically determine:
   - If it's income (received money, salary, payment received) or expense (spent money, paid, bought)
   - Suggest the most appropriate category based on the context (e.g., "almoço" -> food category, "uber" -> transport)
   - Suggest the most appropriate account if mentioned or use default
@@ -174,6 +175,80 @@ export const createNewItemTool = tool({
         category: matchedCategory?.confidence ?? 0,
         account: matchedAccount?.confidence ?? 0,
       },
+    };
+  },
+});
+
+const batchItemSchema = z.object({
+  name: z.string().describe("Short name for the transaction (e.g., 'Café', 'Uber', 'Mercado')"),
+  description: z.string().describe("Detailed description extracted from user message"),
+  amount: z.number().positive("Amount must be positive").describe("The monetary amount of this transaction only"),
+  type: z.enum(["income", "expense"]).describe("'income' if received money, 'expense' if spent/paid"),
+  date: z.string().describe("This transaction's date in ISO 8601 (YYYY-MM-DD). When the user does not mention a date, use today's date."),
+  suggestedCategoryName: z.string().optional().describe("Suggest category name based on context (e.g., 'Alimentação', 'Transporte', 'Salário')"),
+  suggestedAccountName: z.string().optional().describe("Suggest account name if mentioned by user"),
+});
+
+const toOptions = (list: { id: string; name: string }[]): NamedOption[] =>
+  list.map(({ id, name }) => ({ id, name }));
+
+export const createNewItemsTool = tool({
+  description: `Create several transactions (items) at once when one message mentions two or more of them.
+  Call it a single time with one entry per transaction, instead of calling createNewItem several times.
+  For each entry apply the same rules as createNewItem: income or expense, amount, suggested category and account, and its own date in ISO 8601 (YYYY-MM-DD).
+  A date or account mentioned once applies to every transaction it refers to.
+
+  Examples:
+  - "hoje gastei 12 de café, 38 de uber e 150 no mercado" -> 3 expenses dated today: café (food), uber (transport), mercado (groceries)
+  - "recebi 5000 de salário e paguei 2000 de aluguel" -> income 5000 (salary) and expense 2000 (housing)
+  - "anteontem almocei por 35 e ontem jantei por 60" -> 35 dated today minus two days, 60 dated today minus one day
+  Always compute dates from today's date given in the system prompt.`,
+
+  inputSchema: z.object({
+    items: z.array(batchItemSchema).min(1).max(20).describe("One entry per transaction mentioned in the message"),
+  }),
+
+  execute: async ({ items }) => {
+    const rows = items.map((item) => ({ ...item, date: resolveIsoDate(item.date) }));
+    const sessionId = await getSessionId();
+
+    if (!sessionId) {
+      return { items: rows, error: createRequestError(401, "Não foi possível obter a sessão do usuário.", "items") };
+    }
+
+    // One semantic search per transaction, in parallel with the full lists used as form options.
+    const [categoriesResp, accountsResp, candidatesResps] = await Promise.all([
+      listCategories(sessionId),
+      listAccounts(sessionId),
+      Promise.all(
+        items.map((item) =>
+          listCategoriesPaginated(sessionId, { page: 1, size: 5 }, undefined, categorySearchTerm(item) || undefined),
+        ),
+      ),
+    ]);
+
+    if (isRequestError(categoriesResp)) return { items: rows, error: categoriesResp };
+    if (isRequestError(accountsResp)) return { items: rows, error: accountsResp };
+
+    const categories = toOptions(categoriesResp ?? []);
+    const accounts = toOptions(accountsResp ?? []);
+
+    if (categories.length === 0) {
+      return { items: rows, error: createRequestError(404, "Nenhuma categoria encontrada. Crie uma categoria primeiro.", "categories") };
+    }
+    if (accounts.length === 0) {
+      return { items: rows, error: createRequestError(404, "Nenhuma conta encontrada. Crie uma conta primeiro.", "accounts") };
+    }
+
+    return {
+      items: items.map((item, i) => {
+        const resp = candidatesResps[i];
+        // If this search failed, fuzzy-match against every category instead.
+        const candidates = isRequestError(resp) || !resp.data?.length ? categories : toOptions(resp.data);
+        return resolveBatchRow(item, candidates, accounts);
+      }),
+      categories,
+      accounts,
     };
   },
 });

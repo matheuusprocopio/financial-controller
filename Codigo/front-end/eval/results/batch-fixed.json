@@ -1,0 +1,1320 @@
+{
+  "label": "batch-fixed",
+  "dataset": "main",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-20",
+  "runs": 3,
+  "summary": {
+    "cases": "100.0%",
+    "toolSelection": "100.0%",
+    "byTag": {
+      "create_items": "100.0%"
+    },
+    "byField": {
+      "items": "100.0% (n=18)"
+    },
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.124,
+    "costPerCallUsd": 0.0069
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "batch-cafe-uber-mercado",
+        "tag": "create_items",
+        "input": "hoje gastei 12 de café, 38 de uber e 150 no mercado",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 12
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 38
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 150
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "mercado",
+                      "supermercado",
+                      "aliment",
+                      "compras"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Café",
+                  "description": "Gasto com café hoje",
+                  "amount": 12,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Gasto com Uber hoje",
+                  "amount": 38,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Mercado",
+                  "description": "Compra no mercado hoje",
+                  "amount": 150,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Mercado"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0066455,
+          "tokens": {
+            "input": 3097,
+            "cached": 3071,
+            "output": 166
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Café",
+                  "description": "Gasto de R$ 12 com café hoje",
+                  "amount": 12,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Gasto de R$ 38 com Uber hoje",
+                  "amount": 38,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Mercado",
+                  "description": "Gasto de R$ 150 no mercado hoje",
+                  "amount": 150,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.007082,
+          "tokens": {
+            "input": 3097,
+            "cached": 3094,
+            "output": 184
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Café",
+                  "description": "Gasto de R$ 12 com café",
+                  "amount": 12,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Gasto de R$ 38 com Uber",
+                  "amount": 38,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "Mercado",
+                  "description": "Gasto de R$ 150 no mercado",
+                  "amount": 150,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Mercado"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.006422,
+          "tokens": {
+            "input": 3097,
+            "cached": 3094,
+            "output": 162
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-luz-internet-ontem",
+        "tag": "create_items",
+        "input": "ontem paguei 89,90 de luz e 99,90 de internet",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 89.9
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "conta",
+                      "luz",
+                      "energia",
+                      "moradia",
+                      "casa",
+                      "utilidade",
+                      "servico"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 99.9
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "internet",
+                      "telefon",
+                      "conta",
+                      "servico",
+                      "moradia",
+                      "casa",
+                      "utilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Conta de luz",
+                  "description": "Pagamento da conta de luz",
+                  "amount": 89.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Moradia"
+                },
+                {
+                  "name": "Internet",
+                  "description": "Pagamento da conta de internet",
+                  "amount": 99.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Internet e telefone"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.019645,
+          "tokens": {
+            "input": 3095,
+            "cached": 0,
+            "output": 139
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Conta de luz",
+                  "description": "Pagamento de conta de luz",
+                  "amount": 89.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Moradia"
+                },
+                {
+                  "name": "Internet",
+                  "description": "Pagamento de conta de internet",
+                  "amount": 99.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Moradia"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005551,
+          "tokens": {
+            "input": 3095,
+            "cached": 3092,
+            "output": 133
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Conta de luz",
+                  "description": "Pagamento da conta de luz",
+                  "amount": 89.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Moradia"
+                },
+                {
+                  "name": "Internet",
+                  "description": "Pagamento da conta de internet",
+                  "amount": 99.9,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Moradia"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.006091,
+          "tokens": {
+            "input": 3095,
+            "cached": 3092,
+            "output": 151
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-salario-aluguel",
+        "tag": "create_items",
+        "input": "recebi 5000 de salário e paguei 2000 de aluguel",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 5000
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "salario",
+                      "renda",
+                      "receita",
+                      "trabalho"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 2000
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "moradia",
+                      "casa",
+                      "aluguel",
+                      "habitac"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Salário",
+                  "description": "Recebimento de salário",
+                  "amount": 5000,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Salário"
+                },
+                {
+                  "name": "Aluguel",
+                  "description": "Pagamento de aluguel",
+                  "amount": 2000,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Moradia"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0049755,
+          "tokens": {
+            "input": 3093,
+            "cached": 3071,
+            "output": 111
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Salário",
+                  "description": "Recebimento de salário",
+                  "amount": 5000,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Salário"
+                },
+                {
+                  "name": "Aluguel",
+                  "description": "Pagamento de aluguel",
+                  "amount": 2000,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Moradia"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.00489,
+          "tokens": {
+            "input": 3093,
+            "cached": 3090,
+            "output": 111
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Salário",
+                  "description": "Recebimento de salário",
+                  "amount": 5000,
+                  "type": "income",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Salário"
+                },
+                {
+                  "name": "Aluguel",
+                  "description": "Pagamento de aluguel",
+                  "amount": 2000,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Moradia"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.00501,
+          "tokens": {
+            "input": 3093,
+            "cached": 3090,
+            "output": 115
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-datas-diferentes",
+        "tag": "create_items",
+        "input": "anteontem almocei por 35 e ontem jantei por 60",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 35
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-18"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 60
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Almoço",
+                  "description": "Almoço por 35 reais",
+                  "amount": 35,
+                  "type": "expense",
+                  "date": "2026-10-18",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Jantar",
+                  "description": "Jantar por 60 reais",
+                  "amount": 60,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0052555,
+          "tokens": {
+            "input": 3095,
+            "cached": 3071,
+            "output": 120
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Almoço",
+                  "description": "Almoço por 35 reais",
+                  "amount": 35,
+                  "type": "expense",
+                  "date": "2026-10-18",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Jantar",
+                  "description": "Jantar por 60 reais",
+                  "amount": 60,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005251,
+          "tokens": {
+            "input": 3095,
+            "cached": 3092,
+            "output": 123
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Almoço",
+                  "description": "Almoço por 35 reais",
+                  "amount": 35,
+                  "type": "expense",
+                  "date": "2026-10-18",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Jantar",
+                  "description": "Jantar por 60 reais",
+                  "amount": 60,
+                  "type": "expense",
+                  "date": "2026-10-19",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.005251,
+          "tokens": {
+            "input": 3095,
+            "cached": 3092,
+            "output": 123
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-lista",
+        "tag": "create_items",
+        "input": "lança: farmácia 37, padaria 15, estacionamento 20",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 37
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "saude",
+                      "farmacia",
+                      "academia",
+                      "esporte",
+                      "bem-estar",
+                      "medic"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 15
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 20
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Farmácia",
+                  "description": "Compra em farmácia",
+                  "amount": 37,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Saúde"
+                },
+                {
+                  "name": "Padaria",
+                  "description": "Compra em padaria",
+                  "amount": 15,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Estacionamento",
+                  "description": "Pagamento de estacionamento",
+                  "amount": 20,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0063905,
+          "tokens": {
+            "input": 3094,
+            "cached": 3071,
+            "output": 158
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Farmácia",
+                  "description": "Compra em farmácia",
+                  "amount": 37,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Saúde"
+                },
+                {
+                  "name": "Padaria",
+                  "description": "Compra na padaria",
+                  "amount": 15,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Estacionamento",
+                  "description": "Pagamento de estacionamento",
+                  "amount": 20,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0061505,
+          "tokens": {
+            "input": 3094,
+            "cached": 3091,
+            "output": 153
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Farmácia",
+                  "description": "Compra em farmácia",
+                  "amount": 37,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Saúde"
+                },
+                {
+                  "name": "Padaria",
+                  "description": "Compra em padaria",
+                  "amount": 15,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Estacionamento",
+                  "description": "Pagamento de estacionamento",
+                  "amount": 20,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0060905,
+          "tokens": {
+            "input": 3094,
+            "cached": 3091,
+            "output": 151
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "batch-quatro",
+        "tag": "create_items",
+        "input": "hoje: cinema 70, pipoca 30, uber 25 e ifood 80",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 70
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "lazer",
+                      "entretenimento",
+                      "cinema",
+                      "diversao",
+                      "assinatura",
+                      "streaming"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 30
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "lazer",
+                      "entretenimento",
+                      "cinema",
+                      "diversao",
+                      "assinatura",
+                      "streaming",
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 25
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 80
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "aliment",
+                      "restaurante",
+                      "comida",
+                      "refeic",
+                      "lanche",
+                      "delivery"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Cinema",
+                  "description": "Ingresso de cinema",
+                  "amount": 70,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Lazer e Entretenimento"
+                },
+                {
+                  "name": "Pipoca",
+                  "description": "Pipoca no cinema",
+                  "amount": 30,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Corrida de Uber",
+                  "amount": 25,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "iFood",
+                  "description": "Pedido no iFood",
+                  "amount": 80,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0076705,
+          "tokens": {
+            "input": 3098,
+            "cached": 3071,
+            "output": 200
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Cinema",
+                  "description": "Ingresso de cinema",
+                  "amount": 70,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Lazer e entretenimento"
+                },
+                {
+                  "name": "Pipoca",
+                  "description": "Pipoca no cinema",
+                  "amount": 30,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Corrida de Uber",
+                  "amount": 25,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "iFood",
+                  "description": "Pedido no iFood",
+                  "amount": 80,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0080425,
+          "tokens": {
+            "input": 3098,
+            "cached": 3095,
+            "output": 216
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItems",
+          "toolCalls": [
+            "createNewItems"
+          ],
+          "args": [
+            {
+              "name": "items",
+              "ok": true,
+              "got": [
+                {
+                  "name": "Cinema",
+                  "description": "Ingresso de cinema",
+                  "amount": 70,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Lazer e entretenimento"
+                },
+                {
+                  "name": "Pipoca",
+                  "description": "Pipoca no cinema",
+                  "amount": 30,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                },
+                {
+                  "name": "Uber",
+                  "description": "Corrida de Uber",
+                  "amount": 25,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Transporte"
+                },
+                {
+                  "name": "iFood",
+                  "description": "Pedido pelo iFood",
+                  "amount": 80,
+                  "type": "expense",
+                  "date": "2026-10-20",
+                  "suggestedCategoryName": "Alimentação"
+                }
+              ]
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0075625,
+          "tokens": {
+            "input": 3098,
+            "cached": 3095,
+            "output": 200
+          }
+        }
+      ]
+    }
+  ]
+}

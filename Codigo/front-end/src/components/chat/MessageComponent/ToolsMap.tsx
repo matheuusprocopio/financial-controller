@@ -13,6 +13,7 @@ import DeleteCreditCardForm from "@/components/ToolsComponents/CreditCards/Delet
 import ListCreditCardActions from "@/components/ToolsComponents/CreditCards/ListCreditCardActions";
 import CreditCardsList from "@/components/ToolsComponents/CreditCards/ListCreditCards";
 import CreateItemForm from "@/components/ToolsComponents/Items/CreateItemForm";
+import CreateItemsForm from "@/components/ToolsComponents/Items/CreateItemsForm";
 import DeleteItemForm from "@/components/ToolsComponents/Items/DeleteItemForm";
 import EditItemForm from "@/components/ToolsComponents/Items/EditItemForm";
 import ItemsList from "@/components/ToolsComponents/Items/ListItems";
@@ -144,6 +145,13 @@ export const NewToolsMap = (
 
     "tool-createNewItem": (p, helpers) => (
       <CreateItemForm
+        data={p.output as any}
+        onError={(msg, payload) => helpers.onError(msg, payload)}
+        onSubmitted={helpers.onSubmitted}
+      />
+    ),
+    "tool-createNewItems": (p, helpers) => (
+      <CreateItemsForm
         data={p.output as any}
         onError={(msg, payload) => helpers.onError(msg, payload)}
         onSubmitted={helpers.onSubmitted}

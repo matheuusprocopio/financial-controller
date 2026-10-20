@@ -33,6 +33,8 @@ type RunResult = {
   ok: boolean;
   toolOk: boolean;
   toolName: string | null;
+  /** Every tool the model called, in order — shows e.g. one call per transaction. */
+  toolCalls?: string[];
   args: ArgResult[];
   text: string;
   costUsd: number;
@@ -72,6 +74,19 @@ const checkArg = (check: Check, value: unknown): boolean => {
     return check.date.includes(v);
   }
   if ("includes" in check) return Array.isArray(value) && value.includes(check.includes);
+  if ("items" in check) {
+    if (!Array.isArray(value) || value.length !== check.items.length) return false;
+    // Greedy pairing: fine because the expected entries of a case have distinct amounts.
+    const unmatched = [...value] as Record<string, unknown>[];
+    return check.items.every((expected) => {
+      const i = unmatched.findIndex(
+        (got) => !!got && Object.entries(expected).every(([name, c]) => checkArg(c, got[name])),
+      );
+      if (i < 0) return false;
+      unmatched.splice(i, 1);
+      return true;
+    });
+  }
   return typeof value === "string" && value.startsWith(check.startsWith);
 };
 
@@ -105,13 +120,14 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
       output: result.totalUsage.outputTokens ?? 0,
     };
 
+    const toolCalls = result.toolCalls.map((tc) => tc.toolName);
     const call = result.toolCalls[0];
     const toolName = call?.toolName ?? null;
     const input = (call?.input ?? {}) as Record<string, unknown>;
 
     if ("noTool" in c.expect) {
       const ok = toolName === null;
-      return { ok, toolOk: ok, toolName, args: [], text: result.text, costUsd, tokens };
+      return { ok, toolOk: ok, toolName, toolCalls, args: [], text: result.text, costUsd, tokens };
     }
 
     const toolOk = toolName !== null && c.expect.tool.includes(toolName);
@@ -123,7 +139,7 @@ const runCase = async (c: EvalCase): Promise<RunResult> => {
         }))
       : [];
 
-    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, args, text: result.text, costUsd, tokens };
+    return { ok: toolOk && args.every((a) => a.ok), toolOk, toolName, toolCalls, args, text: result.text, costUsd, tokens };
   } catch (error) {
     return { ok: false, toolOk: false, toolName: null, args: [], text: "", costUsd, error: String(error) };
   }
@@ -228,7 +244,7 @@ const main = async () => {
       const why = r.error
         ? `error: ${r.error.slice(0, 120)}`
         : !r.toolOk
-          ? `tool=${r.toolName ?? "none"}${r.text ? ` text="${r.text.slice(0, 80).replace(/\s+/g, " ")}"` : ""}`
+          ? `tool=${r.toolCalls?.length ? r.toolCalls.join("+") : "none"}${r.text ? ` text="${r.text.slice(0, 80).replace(/\s+/g, " ")}"` : ""}`
           : r.args
               .filter((a) => !a.ok)
               .map((a) => `${a.name}=${JSON.stringify(a.got)}`)

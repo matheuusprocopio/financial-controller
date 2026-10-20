@@ -8,6 +8,8 @@ import type { DateHelpers } from "./dates";
  * - date: value is one of the accepted ISO dates (`undefined` = argument omitted)
  * - includes: array argument contains the value
  * - startsWith: string argument starts with the prefix
+ * - items: array argument has exactly these entries, in any order, each entry
+ *   matching every check of one expected entry
  */
 export type Check =
   | { eq: unknown }
@@ -15,7 +17,8 @@ export type Check =
   | { has: string[] }
   | { date: (string | undefined)[] }
   | { includes: string }
-  | { startsWith: string };
+  | { startsWith: string }
+  | { items: Record<string, Check>[] };
 
 export type Expectation =
   | { tool: string[]; args?: Record<string, Check> }
@@ -23,7 +26,7 @@ export type Expectation =
 
 export type EvalCase = {
   id: string;
-  tag: "create_item" | "query" | "analytics" | "entities" | "edit" | "scope" | "clarify";
+  tag: "create_item" | "create_items" | "query" | "analytics" | "entities" | "edit" | "scope" | "clarify";
   input: string;
   expect: Expectation;
 };
@@ -60,6 +63,33 @@ const item = (
     },
 });
 
+type BatchEntry = {
+  type: "income" | "expense";
+  amount: number;
+  date: (string | undefined)[];
+  category?: string[];
+};
+
+/** Several transactions in one message: expects a single batch call with all of them. */
+const items = (id: string, input: string, entries: BatchEntry[]): EvalCase => ({
+  id,
+  tag: "create_items",
+  input,
+  expect: {
+    tool: ["createNewItems"],
+    args: {
+      items: {
+        items: entries.map(({ type, amount, date, category }) => ({
+          type: { eq: type },
+          amount: { approx: amount },
+          date: { date },
+          ...(category ? { suggestedCategoryName: { has: category } } : {}),
+        })),
+      },
+    },
+  },
+});
+
 export const buildDataset = (d: DateHelpers): EvalCase[] => {
   // No date in the message: the tool falls back to today when it is omitted.
   const noDate = [d.today, undefined];
@@ -88,6 +118,36 @@ export const buildDataset = (d: DateHelpers): EvalCase[] => {
     item("item-presente", "ganhei 250 de presente da minha vó", "income", 250, noDate),
     item("item-cinema", "cinema com a namorada, 70 reais", "expense", 70, noDate, LEISURE),
     item("item-dia-semana-passada", `dia ${d.ddmm(d.daysAgo(7))} gastei 95 no dentista`, "expense", 95, [d.daysAgo(7)], HEALTH),
+
+    // --- Several transactions in one message -----------------------------------------
+    items("batch-cafe-uber-mercado", "hoje gastei 12 de café, 38 de uber e 150 no mercado", [
+      { type: "expense", amount: 12, date: noDate, category: FOOD },
+      { type: "expense", amount: 38, date: noDate, category: TRANSPORT },
+      { type: "expense", amount: 150, date: noDate, category: GROCERY },
+    ]),
+    items("batch-luz-internet-ontem", "ontem paguei 89,90 de luz e 99,90 de internet", [
+      { type: "expense", amount: 89.9, date: [d.daysAgo(1)], category: BILLS },
+      { type: "expense", amount: 99.9, date: [d.daysAgo(1)], category: TELECOM },
+    ]),
+    items("batch-salario-aluguel", "recebi 5000 de salário e paguei 2000 de aluguel", [
+      { type: "income", amount: 5000, date: noDate, category: SALARY },
+      { type: "expense", amount: 2000, date: noDate, category: HOUSING },
+    ]),
+    items("batch-datas-diferentes", "anteontem almocei por 35 e ontem jantei por 60", [
+      { type: "expense", amount: 35, date: [d.daysAgo(2)], category: FOOD },
+      { type: "expense", amount: 60, date: [d.daysAgo(1)], category: FOOD },
+    ]),
+    items("batch-lista", "lança: farmácia 37, padaria 15, estacionamento 20", [
+      { type: "expense", amount: 37, date: noDate, category: HEALTH },
+      { type: "expense", amount: 15, date: noDate, category: FOOD },
+      { type: "expense", amount: 20, date: noDate, category: TRANSPORT },
+    ]),
+    items("batch-quatro", "hoje: cinema 70, pipoca 30, uber 25 e ifood 80", [
+      { type: "expense", amount: 70, date: noDate, category: LEISURE },
+      { type: "expense", amount: 30, date: noDate, category: [...LEISURE, ...FOOD] },
+      { type: "expense", amount: 25, date: noDate, category: TRANSPORT },
+      { type: "expense", amount: 80, date: noDate, category: FOOD },
+    ]),
 
     // --- Querying transactions -----------------------------------------------------
     {
@@ -282,6 +342,19 @@ export const buildHoldoutDataset = (d: DateHelpers): EvalCase[] => {
     item("h-item-spotify", "spotify 21,90", "expense", 21.9, noDate, LEISURE),
     item("h-item-happy-hour", "ontem rolou um happy hour, gastei 120", "expense", 120, [d.daysAgo(1)], [...LEISURE, ...FOOD]),
     item("h-item-aluguel-recebido", "transferiram 500 pra mim do aluguel do apê", "income", 500, noDate),
+
+    items("h-batch-gasolina-lavagem", "abasteci 200 e lavei o carro por 50", [
+      { type: "expense", amount: 200, date: noDate, category: TRANSPORT },
+      { type: "expense", amount: 50, date: noDate, category: TRANSPORT },
+    ]),
+    items("h-batch-freela-pix", "caiu 800 de um freela e 120 de um pix do pedro", [
+      { type: "income", amount: 800, date: noDate },
+      { type: "income", amount: 120, date: noDate },
+    ]),
+    items("h-batch-mercado-farmacia-ontem", "ontem: mercado 230,50 e farmácia 42", [
+      { type: "expense", amount: 230.5, date: [d.daysAgo(1)], category: GROCERY },
+      { type: "expense", amount: 42, date: [d.daysAgo(1)], category: HEALTH },
+    ]),
 
     {
       id: "h-query-entradas-mes",

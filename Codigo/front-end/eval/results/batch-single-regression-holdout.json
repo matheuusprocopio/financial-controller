@@ -1,0 +1,1464 @@
+{
+  "label": "batch-single-regression-holdout",
+  "dataset": "holdout",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-20",
+  "runs": 3,
+  "summary": {
+    "cases": "100.0%",
+    "toolSelection": "100.0%",
+    "byTag": {
+      "create_item": "100.0%"
+    },
+    "byField": {
+      "type": "100.0% (n=30)",
+      "amount": "100.0% (n=30)",
+      "date": "100.0% (n=30)",
+      "suggestedCategoryName": "100.0% (n=24)"
+    },
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.1239,
+    "costPerCallUsd": 0.0041
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "h-item-uber",
+        "tag": "create_item",
+        "input": "uber pra casa 23,40",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 23.4
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "transporte",
+                "combustivel",
+                "gasolina",
+                "carro",
+                "mobilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 23.4
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040055,
+          "tokens": {
+            "input": 3085,
+            "cached": 3071,
+            "output": 80
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 23.4
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003926,
+          "tokens": {
+            "input": 3085,
+            "cached": 3082,
+            "output": 79
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 23.4
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Transporte"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003716,
+          "tokens": {
+            "input": 3085,
+            "cached": 3082,
+            "output": 72
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-salario-hj",
+        "tag": "create_item",
+        "input": "caiu 3.250,00 de salário hj",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 3250
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "salario",
+                "renda",
+                "receita",
+                "trabalho"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 3250
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Salário"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041805,
+          "tokens": {
+            "input": 3090,
+            "cached": 3071,
+            "output": 85
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 3250
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Salário"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041685,
+          "tokens": {
+            "input": 3090,
+            "cached": 3087,
+            "output": 87
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 3250
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Salário"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038985,
+          "tokens": {
+            "input": 3090,
+            "cached": 3087,
+            "output": 78
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-lanche-extenso",
+        "tag": "create_item",
+        "input": "gastei trinta reais de lanche",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 30
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 30
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039855,
+          "tokens": {
+            "input": 3087,
+            "cached": 3071,
+            "output": 79
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 30
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003807,
+          "tokens": {
+            "input": 3087,
+            "cached": 3084,
+            "output": 75
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 30
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Alimentação"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004287,
+          "tokens": {
+            "input": 3087,
+            "cached": 3084,
+            "output": 91
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-internet-ontem",
+        "tag": "create_item",
+        "input": "paguei a fatura da internet ontem, 99,90",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 99.9
+            },
+            "date": {
+              "date": [
+                "2026-10-19"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "internet",
+                "telefon",
+                "conta",
+                "servico",
+                "moradia",
+                "casa",
+                "utilidade"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 99.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Internet"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0044605,
+          "tokens": {
+            "input": 3092,
+            "cached": 3071,
+            "output": 94
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 99.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041395,
+          "tokens": {
+            "input": 3092,
+            "cached": 3089,
+            "output": 86
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 99.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Internet"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0044395,
+          "tokens": {
+            "input": 3092,
+            "cached": 3089,
+            "output": 96
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-remedio",
+        "tag": "create_item",
+        "input": "comprei remédio 48 reais anteontem",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 48
+            },
+            "date": {
+              "date": [
+                "2026-10-18"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "saude",
+                "farmacia",
+                "academia",
+                "esporte",
+                "bem-estar",
+                "medic"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 48
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-18"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0040255,
+          "tokens": {
+            "input": 3089,
+            "cached": 3071,
+            "output": 80
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 48
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-18"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004378,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 94
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 48
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-18"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Saúde"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003988,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 81
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-reembolso",
+        "tag": "create_item",
+        "input": "recebi 75 de reembolso da empresa",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 75
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 75
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0039555,
+          "tokens": {
+            "input": 3087,
+            "cached": 3071,
+            "output": 78
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 75
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003747,
+          "tokens": {
+            "input": 3087,
+            "cached": 3084,
+            "output": 73
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 75
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003837,
+          "tokens": {
+            "input": 3087,
+            "cached": 3084,
+            "output": 76
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-condominio",
+        "tag": "create_item",
+        "input": "dia 17 paguei 1.100 de condomínio",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 1100
+            },
+            "date": {
+              "date": [
+                "2026-10-17"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "moradia",
+                "casa",
+                "aluguel",
+                "habitac"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 1100
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-17"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0043855,
+          "tokens": {
+            "input": 3089,
+            "cached": 3071,
+            "output": 92
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 1100
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-17"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004468,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 97
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 1100
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-17"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Moradia"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004228,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 89
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-spotify",
+        "tag": "create_item",
+        "input": "spotify 21,90",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 21.9
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 21.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Assinaturas"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0038155,
+          "tokens": {
+            "input": 3083,
+            "cached": 3071,
+            "output": 74
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 21.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Assinaturas e serviços"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.003895,
+          "tokens": {
+            "input": 3083,
+            "cached": 3080,
+            "output": 78
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 21.9
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Assinaturas"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004075,
+          "tokens": {
+            "input": 3083,
+            "cached": 3080,
+            "output": 84
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-happy-hour",
+        "tag": "create_item",
+        "input": "ontem rolou um happy hour, gastei 120",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "expense"
+            },
+            "amount": {
+              "approx": 120
+            },
+            "date": {
+              "date": [
+                "2026-10-19"
+              ]
+            },
+            "suggestedCategoryName": {
+              "has": [
+                "lazer",
+                "entretenimento",
+                "cinema",
+                "diversao",
+                "assinatura",
+                "streaming",
+                "aliment",
+                "restaurante",
+                "comida",
+                "refeic",
+                "lanche",
+                "delivery"
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 120
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Lazer"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0041855,
+          "tokens": {
+            "input": 3091,
+            "cached": 3071,
+            "output": 85
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 120
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Lazer"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004049,
+          "tokens": {
+            "input": 3091,
+            "cached": 3088,
+            "output": 83
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "expense"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 120
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-19"
+            },
+            {
+              "name": "suggestedCategoryName",
+              "ok": true,
+              "got": "Lazer"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004529,
+          "tokens": {
+            "input": 3091,
+            "cached": 3088,
+            "output": 99
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-item-aluguel-recebido",
+        "tag": "create_item",
+        "input": "transferiram 500 pra mim do aluguel do apê",
+        "expect": {
+          "tool": [
+            "createNewItem"
+          ],
+          "args": {
+            "type": {
+              "eq": "income"
+            },
+            "amount": {
+              "approx": 500
+            },
+            "date": {
+              "date": [
+                "2026-10-20",
+                null
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 500
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.0046555,
+          "tokens": {
+            "input": 3089,
+            "cached": 3071,
+            "output": 101
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 500
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004468,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 97
+          }
+        },
+        {
+          "ok": true,
+          "toolOk": true,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem"
+          ],
+          "args": [
+            {
+              "name": "type",
+              "ok": true,
+              "got": "income"
+            },
+            {
+              "name": "amount",
+              "ok": true,
+              "got": 500
+            },
+            {
+              "name": "date",
+              "ok": true,
+              "got": "2026-10-20"
+            }
+          ],
+          "text": "",
+          "costUsd": 0.004228,
+          "tokens": {
+            "input": 3089,
+            "cached": 3086,
+            "output": 89
+          }
+        }
+      ]
+    }
+  ]
+}

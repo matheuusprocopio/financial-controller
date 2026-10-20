@@ -1,0 +1,352 @@
+{
+  "label": "batch-baseline-holdout",
+  "dataset": "holdout",
+  "model": "gpt-5.6-sol",
+  "today": "2026-10-20",
+  "runs": 3,
+  "summary": {
+    "cases": "0.0%",
+    "toolSelection": "0.0%",
+    "byTag": {
+      "create_items": "0.0%"
+    },
+    "byField": {},
+    "errors": 0,
+    "skipped": 0,
+    "estimatedCostUsd": 0.054,
+    "costPerCallUsd": 0.006
+  },
+  "cases": [
+    {
+      "case": {
+        "id": "h-batch-gasolina-lavagem",
+        "tag": "create_items",
+        "input": "abasteci 200 e lavei o carro por 50",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 200
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 50
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "transporte",
+                      "combustivel",
+                      "gasolina",
+                      "carro",
+                      "mobilidade"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0060165,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 154
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.00576,
+          "tokens": {
+            "input": 2613,
+            "cached": 2610,
+            "output": 148
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.006,
+          "tokens": {
+            "input": 2613,
+            "cached": 2610,
+            "output": 156
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-batch-freela-pix",
+        "tag": "create_items",
+        "input": "caiu 800 de um freela e 120 de um pix do pedro",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 800
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "income"
+                  },
+                  "amount": {
+                    "approx": 120
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-20",
+                      null
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0067615,
+          "tokens": {
+            "input": 2618,
+            "cached": 2593,
+            "output": 178
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0059725,
+          "tokens": {
+            "input": 2618,
+            "cached": 2615,
+            "output": 155
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0060925,
+          "tokens": {
+            "input": 2618,
+            "cached": 2615,
+            "output": 159
+          }
+        }
+      ]
+    },
+    {
+      "case": {
+        "id": "h-batch-mercado-farmacia-ontem",
+        "tag": "create_items",
+        "input": "ontem: mercado 230,50 e farmácia 42",
+        "expect": {
+          "tool": [
+            "createNewItems"
+          ],
+          "args": {
+            "items": {
+              "items": [
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 230.5
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "mercado",
+                      "supermercado",
+                      "aliment",
+                      "compras"
+                    ]
+                  }
+                },
+                {
+                  "type": {
+                    "eq": "expense"
+                  },
+                  "amount": {
+                    "approx": 42
+                  },
+                  "date": {
+                    "date": [
+                      "2026-10-19"
+                    ]
+                  },
+                  "suggestedCategoryName": {
+                    "has": [
+                      "saude",
+                      "farmacia",
+                      "academia",
+                      "esporte",
+                      "bem-estar",
+                      "medic"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "runs": [
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.0057465,
+          "tokens": {
+            "input": 2613,
+            "cached": 2593,
+            "output": 145
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.00564,
+          "tokens": {
+            "input": 2613,
+            "cached": 2610,
+            "output": 144
+          }
+        },
+        {
+          "ok": false,
+          "toolOk": false,
+          "toolName": "createNewItem",
+          "toolCalls": [
+            "createNewItem",
+            "createNewItem"
+          ],
+          "args": [],
+          "text": "",
+          "costUsd": 0.00606,
+          "tokens": {
+            "input": 2613,
+            "cached": 2610,
+            "output": 158
+          }
+        }
+      ]
+    }
+  ]
+}

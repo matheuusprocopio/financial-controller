@@ -1,4 +1,6 @@
-# Divulgação: Vídeo do Projeto
+# Divulgação: vídeo do projeto
 
-Nesta pasta inclua arquivos de vídeo produzidos para divulgação do projeto e seus resutados.
+Este diretório é destinado aos vídeos de demonstração e divulgação dos resultados do Financial Controller.
+
+No momento, não há vídeo versionado no repositório.
 

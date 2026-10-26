@@ -1,99 +1,104 @@
-# Financial Controller – Uma solução para gestão financeira pessoal
+# Documentação do Financial Controller
 
-## 1. Introdução
+## Visão do produto
 
-Aplicação web para controle financeiro pessoal e empresarial, ajudando os usuários a gerenciar suas receitas, despesas, investimentos e contas, com uma visão clara de sua saúde financeira. O projeto evoluiu de uma ferramenta simples para uma solução full-stack com back-end em Java, banco PostgreSQL e integração com inteligência artificial (IA) para relatórios financeiros automatizados.
+O Financial Controller é um assistente de finanças pessoais que substitui fluxos extensos de navegação por uma conversa. A aplicação interpreta solicitações em linguagem natural, consulta os dados do usuário e apresenta formulários revisáveis antes de criar ou alterar registros.
 
-## 2. Objetivo Do Projeto
+O produto atende pessoas que desejam registrar receitas e despesas, organizar contas e categorias, acompanhar metas e analisar o fluxo financeiro sem integração direta com instituições bancárias.
 
-O Financial Controller tem como objetivo fornecer uma solução completa e intuitiva para o controle e planejamento financeiro, tanto para indivíduos quanto para empresas. A aplicação visa otimizar o gerenciamento de receitas, despesas, contas bancárias, por meio de uma interface amigável e ferramentas avançadas, como categorização automática de transações, geração de relatórios financeiros automatizados com inteligência artificial, e visualização de dados por meio de gráficos interativos. O projeto busca não só centralizar as informações financeiras, mas também permitir que os usuários tomem decisões mais informadas e estratégicas, promovendo uma gestão financeira mais eficiente e transparente.
+## Escopo funcional
 
-## 3. Equipe
+### Autenticação e sessões
 
-* Arthur Mendes Lima
-* Heitor Lima Moreira
-* Matheus Procópio Duarte
-* Nicolas Alexandre Torres Dias
+- login por e-mail/senha ou Google por meio do Firebase Authentication;
+- validação do ID token pelo Firebase Admin no back-end;
+- sessão própria, renovável e persistida no PostgreSQL;
+- isolamento dos recursos pelo usuário autenticado.
 
-## 4. Visão geral da Solução
+### Assistente conversacional
 
-O Financial Controller oferece:
-* Cadastro de contas e cartões de crédito para controle de transações;
-* Categorização de receitas e despesas para facilitar o acompanhamento de gastos;
-* Relatórios financeiros automatizados com IA para geração de insights e previsões;
-* Gráficos interativos para visualizar a evolução das finanças ao longo do tempo;
-* Análises comparativas entre períodos, categorias e tipos de transações financeiras.
+- conversas e mensagens persistidas;
+- interpretação de datas relativas no fuso `America/Sao_Paulo`;
+- ferramentas para contas, categorias, lançamentos, metas e análises;
+- formulários preenchidos pelo agente e confirmados pelo usuário nas operações de escrita;
+- gráficos de receitas, despesas e saldo dentro da conversa.
 
-## 5. Arquitetura Atual
+### Gestão financeira
 
-### 5.1 Front-End Web
-* TypeScript, Next.js
-* TailWind CSS
-* Interface responsiva com telas de:
-    * Home (dashboard financeiro, resumos de despesas e receitas)
-    * Cadastro e gestão de contas, cartões de crédito, e categorias de despesas
-    * Relatórios e gráficos de evolução financeira
-    * Login e cadastro de usuários
+- contas com instituição financeira e saldo;
+- categorias e subcategorias;
+- lançamentos de receita ou despesa, com conta, categoria, valor e data;
+- metas globais ou vinculadas a uma conta;
+- filtros, paginação e busca semântica.
 
-### 5.2 Back-end - API REST
-* Java + Spark Framework
-* Implementação de endpoints para:
-    * Autenticação de usuário
-    * CRUD de contas, cartões de crédito, receitas e despesas
-    * Consultas de itens financeiros, relatórios e gráficos
-    * Análises de dados utilizando IA para relatórios automatizados
+### Entrada por voz
 
-### 5.3 Banco de Dados 
-* PostgreSQL
-* Tabelas principais (conceituais):
-    * contas
-    * cartões_de_credito
-    * transações (receitas e despesas)
-    * categorias
-    * investimentos
+O front-end aceita arquivos de áudio de até 1 MB. O áudio é transcrito com `whisper-1`; em seguida, o modelo do agente revisa ruídos e repetições antes de enviar o texto ao chat.
 
-### 5.4 Módulo Inteligente
-* Serviço responsável por:
-    * Gerar relatórios financeiros detalhados sobre receitas, despesas e saldos
-    * Analisar dados financeiros para sugerir previsões e estratégias financeiras
-    * Usar OpenAI API para gerar relatórios automatizados e insights baseados no histórico de dados financeiros
-    * Sistema de speech-to-text
+## Limites atuais
 
-### 5.5 Ferramentas de Desenvolvimento
-* Eclipse - desenvolvimento back-end em Java
-* VS Code – desenvolvimento do front-end com TypeScript e Next.js
-* GitHub – versionamento e hospedagem do código
-* Discord – comunicação da equipe
+- não há integração automática com bancos;
+- investimentos, carteiras de ativos, previsões financeiras e orçamentos por categoria não estão implementados;
+- as ferramentas de cartão de crédito são experimentais e ainda não persistem dados;
+- o sistema não substitui orientação contábil ou financeira profissional.
 
-## 6. Tecnologias Utilizadas
-* Modelo whisper da OpenAI via next AI SDK no front end pra transição de áudio
-* Modelo de embbending text-embedding-3-small da OpenAI
-* Extensão de pg vector pra vector embbending no Postgres
-* Vercel AI SDK pra construção do agente de AI
+## Arquitetura técnica
 
-## 7. Funcionalidades
+| Componente | Responsabilidade |
+| --- | --- |
+| Aplicação Next.js | autenticação no cliente, chat, formulários, gráficos e rotas intermediárias |
+| Agente OpenAI | interpretação das mensagens e seleção das ferramentas financeiras |
+| API Spark Java | regras de negócio, autorização, CRUD, paginação e análises |
+| PostgreSQL | usuários, sessões, contas, categorias, lançamentos, metas, chats e mensagens |
+| pgvector | armazenamento dos embeddings usados em busca semântica |
+| Firebase | provedor de identidade; os dados financeiros permanecem no PostgreSQL |
 
-### 7.1 Gerenciamento de Contas
-* Cadastro e controle de contas bancárias.
-* Visualização dos saldos das contas e monitoramento de transações realizadas.
+### Fluxo de uma solicitação
 
-### 7.2 Categorização de Despesas e Receitas
-* Classificação automática ou manual de despesas e receitas em categorias predefinidas (ex: Alimentação, Transporte, Lazer).
-* Acompanhamento detalhado das despesas mensais e receitas.
-* Definição de orçamentos mensais por categoria e visualização do progresso.
+1. O navegador envia a mensagem ao route handler de chat do Next.js.
+2. O agente escolhe uma ferramenta ou responde com base nos resultados disponíveis.
+3. Consultas são encaminhadas à API com o identificador da sessão.
+4. Criações e edições exibem um formulário para revisão e confirmação.
+5. A API valida a sessão, aplica a regra de negócio e acessa o PostgreSQL.
+6. As mensagens do usuário e do assistente são gravadas no histórico da conversa.
 
-### 7.3 Relatórios Financeiros Automáticos
-* Geração de relatórios financeiros personalizados com a ajuda de inteligência artificial (OpenAI API).
-* Relatórios de gastos totais, receitas, saldo, e previsões financeiras.
-* Visualização de gráficos interativos (linha e barra) sobre a evolução financeira ao longo do tempo.
+## Modelo de dados
 
-### 7.4 Gestão de Investimentos Empresariais
-* Acompanhamento de investimentos corporativos e seu retorno.
-* Relatórios sobre a rentabilidade dos ativos da empresa.
+| Entidade | Descrição |
+| --- | --- |
+| `users` | perfil associado ao usuário autenticado |
+| `sessions` | sessões renováveis da API |
+| `accounts` | contas e respectivos saldos |
+| `categories` | categorias hierárquicas de lançamentos |
+| `items` | receitas e despesas |
+| `goals` | metas financeiras globais ou por conta |
+| `chat` | conversas do usuário |
+| `messages` | conteúdo estruturado das mensagens |
 
-## 8. Conclusão
-O Financial Controller é mais do que apenas uma ferramenta de gerenciamento financeiro — é um assistente inteligente que proporciona aos indivíduos e empresas o controle completo sobre suas finanças, oferecendo uma visão clara e detalhada dos seus fluxos de caixa. Com uma interface intuitiva, categorização automática de despesas e receitas, e relatórios automatizados gerados pela OpenAI, a aplicação facilita a gestão e otimização de recursos financeiros, permitindo que os usuários tomem decisões mais informadas e estratégicas.
+O schema executável e idempotente está em [`Codigo/back-end/database/schema.sql`](../Codigo/back-end/database/schema.sql). Os diagramas acadêmicos estão em [`Artefatos/Modelos Diagrama BD's`](../Artefatos/Modelos%20Diagrama%20BD's/).
 
-## 9. Licença
+## API
 
-Este projeto está licenciado sob a Creative Commons Attribution 4.0 International Public License (CC BY 4.0). Você pode compartilhar, modificar e usar o código para qualquer finalidade, desde que atribua os devidos créditos aos autores originais.
+A API usa JSON e, exceto em autenticação e health check, exige o cabeçalho `X-Session-Id`.
+
+| Recurso | Operações principais |
+| --- | --- |
+| `/health` | verificação de disponibilidade |
+| `/auth` | login, validação e logout |
+| `/users` | consulta e manutenção do perfil |
+| `/accounts` | CRUD e listagem paginada de contas |
+| `/categories` | CRUD e listagem paginada de categorias |
+| `/items` | CRUD, filtros e análise de lançamentos |
+| `/goals` | CRUD e busca de metas |
+| `/chats` | CRUD e paginação de conversas |
+| `/chats/:chatId/messages` | criação, listagem e atualização de mensagens |
+
+## Operação e deploy
+
+O ambiente de referência usa Vercel para o front-end, Render para a API e Neon para o PostgreSQL. O arquivo `render.yaml` contém o blueprint da API, e os arquivos `.env.example` documentam todas as variáveis necessárias.
+
+Consulte o [README principal](../README.md) para execução local e [`Codigo/README.md`](../Codigo/README.md) para instruções detalhadas de banco e publicação.
+
+## Licença
+
+Este projeto é distribuído sob a licença Creative Commons Attribution 4.0 International (CC BY 4.0).

@@ -1,55 +1,129 @@
-## Financial Controller
+# Financial Controller
 
-Controle financeiro pessoal por conversa. Em vez de preencher formulários, o usuário escreve ou fala em linguagem natural ("gastei 45 no ifood", "quanto gastei com alimentação esse mês?") e um agente de IA transforma o pedido em ações no sistema: lançar transações, consultar gastos, gerar gráficos, gerenciar contas, cartões, categorias e metas.
+Assistente web de finanças pessoais orientado por conversa. O usuário descreve uma movimentação ou faz uma pergunta em linguagem natural, e o agente transforma a solicitação em consultas, análises ou formulários de confirmação.
 
-Projeto desenvolvido na disciplina de Trabalho Interdisciplinar 2 (Ciência da Computação, PUC Minas).
+Projeto desenvolvido na disciplina de Trabalho Interdisciplinar 2 do curso de Ciência da Computação da PUC Minas.
 
-## O que o sistema faz
+## Funcionalidades
 
-- **Chat com agente financeiro** que usa 28 ferramentas (tools) sobre os dados do usuário: transações, contas, cartões de crédito, categorias, metas e análises.
-- **Confirmação humana antes de gravar**: as ferramentas de criação e edição não salvam nada sozinhas. Elas abrem um formulário pré-preenchido que o usuário revisa, corrige se precisar e confirma.
-- **Entrada por voz**: o áudio é transcrito (Whisper) e revisado pelo modelo antes de ir para o chat.
-- **Gráficos no chat**: evolução de gastos, receitas e saldo por mês, categoria ou conta.
-- **Busca semântica** de transações e metas com embeddings (`text-embedding-3-small`) armazenados no PostgreSQL com `pgvector`.
+- autenticação com Firebase (e-mail/senha e Google) e sessões persistidas no PostgreSQL;
+- conversas com histórico por usuário;
+- cadastro, consulta, edição e exclusão de contas, categorias, lançamentos e metas financeiras;
+- registro de receitas e despesas com revisão humana antes da gravação;
+- filtros e busca semântica em contas, categorias, lançamentos e metas;
+- análises de receitas, despesas e saldo, apresentadas com gráficos no chat;
+- entrada por voz com transcrição e revisão do texto;
+- interface responsiva para desktop e dispositivos móveis.
 
-Fora do escopo hoje: investimentos e integração automática com bancos. O agente informa isso quando perguntado.
+> Cartões de crédito aparecem como ferramentas experimentais na interface do agente, mas ainda não possuem persistência no back-end. Investimentos e integração bancária automática não fazem parte do escopo atual.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    U[Usuário] -->|texto ou voz| FE[Next.js + AI SDK]
-    FE -->|prompt + 28 tools| LLM[OpenAI GPT-5.6 Sol]
-    LLM -->|tool call| FE
-    FE -->|formulário de confirmação| U
-    FE -->|REST| BE[API Java / Spark]
+    U[Usuário] -->|texto ou áudio| FE[Next.js 15]
+    FE -->|AI SDK e tools| LLM[OpenAI]
+    FE -->|REST e X-Session-Id| BE[API Java / Spark]
     BE --> DB[(PostgreSQL + pgvector)]
     BE -->|embeddings| EMB[OpenAI Embeddings]
-    FE -->|auth| FB[Firebase Auth]
+    FE -->|identidade| FB[Firebase Auth]
 ```
 
-| Camada | Tecnologias |
-|---|---|
-| Front-end | Next.js 15, React 19, Vercel AI SDK, Tailwind, shadcn/ui |
-| Agente | `src/lib/agent` (prompt e modelo), `src/lib/tools` (uma pasta por domínio) |
-| Back-end | Java 17, Spark, HikariCP, Firebase Admin |
-| Dados | PostgreSQL (Neon) com `pgvector` |
-| Deploy | Vercel (front) e Render (API, via `render.yaml`) |
+| Camada | Tecnologias principais |
+| --- | --- |
+| Front-end | Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui, AI SDK |
+| Agente | OpenAI `gpt-5.6-sol`, tools tipadas com Zod e respostas generativas |
+| Back-end | Java 17, Spark Java, HikariCP, Firebase Admin SDK |
+| Dados | PostgreSQL com pgvector e embeddings `text-embedding-3-small` |
+| Infraestrutura | Docker Compose, Vercel, Render e Neon |
 
-## Como executar o projeto
+## Estrutura do repositório
 
-**Back-end** (`Codigo/back-end`): copie `.env.example` para `.env`, preencha `DB_URL`, as credenciais do Firebase e `OPENAI_API_KEY`, aplique `database/schema.sql` e rode `docker compose up` ou `mvn package && java -jar target/*.jar`.
+```text
+.
+├── Codigo/
+│   ├── back-end/       # API REST, schema e configuração Docker
+│   └── front-end/      # aplicação Next.js e agente financeiro
+├── Artefatos/          # modelos e diagramas do banco de dados
+├── Documentacao/       # visão funcional e técnica do projeto
+├── Divulgacao/         # apresentações e materiais de divulgação
+└── render.yaml         # blueprint de deploy da API no Render
+```
 
-**Front-end** (`Codigo/front-end`): copie `.env.example` para `.env.local`, preencha `NEXT_PUBLIC_API_URL`, as chaves do Firebase e `OPENAI_API_KEY`, e rode `bun install && bun dev`.
+## Execução local
 
-## Alunos integrantes da equipe
+### Pré-requisitos
 
-* Arthur Mendes Lima
-* Heitor Lima Moreira
-* Matheus Procópio Duarte
-* Nicolas Alexandre Torres Dias
+- Docker com Docker Compose; ou Java 17 e Maven 3.9+;
+- Bun (recomendado) ou Node.js 20+;
+- projeto Firebase com autenticação configurada;
+- chave da OpenAI.
+
+### 1. Back-end e banco de dados
+
+```bash
+cd Codigo/back-end
+cp .env.example .env
+# preencha as credenciais no arquivo .env
+docker compose --profile local-db up --build
+```
+
+O perfil `local-db` inicia a API na porta `8080` e um PostgreSQL com pgvector, aplicando `database/schema.sql` na primeira criação do volume.
+
+Para conferir a API:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Resposta esperada: `{"status":"ok"}`.
+
+### 2. Front-end
+
+Em outro terminal:
+
+```bash
+cd Codigo/front-end
+cp .env.example .env.local
+# preencha as credenciais no arquivo .env.local
+bun install
+bun dev
+```
+
+A aplicação fica disponível em [http://localhost:3000](http://localhost:3000).
+
+As instruções para banco externo, execução sem Docker e deploy estão em [Codigo/README.md](Codigo/README.md). As variáveis aceitas estão documentadas nos arquivos `.env.example` de cada aplicação.
+
+## Qualidade e validação
+
+No front-end:
+
+```bash
+cd Codigo/front-end
+bun test
+bun run lint
+bun run build
+```
+
+No back-end não há suíte automatizada no momento. Para validar a compilação:
+
+```bash
+cd Codigo/back-end
+mvn clean package
+```
+
+## Equipe
+
+- Arthur Mendes Lima
+- Heitor Lima Moreira
+- Matheus Procópio Duarte
+- Nicolas Alexandre Torres Dias
 
 ## Professores responsáveis
 
-* Wladmir Cardoso Brandao
-* Carolina Stephanie Jerônimo de Almeida
+- Wladmir Cardoso Brandao
+- Carolina Stephanie Jerônimo de Almeida
+
+## Licença
+
+Distribuído sob a licença [Creative Commons Attribution 4.0 International](LICENSE).

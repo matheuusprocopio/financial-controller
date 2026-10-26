@@ -75,7 +75,7 @@ Front-end na Vercel, API no Render e banco no Neon (todos com plano gratuito).
    - `CORS_ALLOWED_ORIGINS`: URL do front na Vercel (pode ajustar depois do passo 3)
 3. Verifique: `https://<sua-api>.onrender.com/health`.
 
-No plano gratuito a API hiberna após 15 minutos sem uso: a primeira requisição demora cerca de 1 minuto e, como as sessões ficam em memória, os usuários precisam entrar de novo.
+No plano gratuito, a API pode hibernar após um período sem uso e a primeira requisição após a retomada pode demorar. As sessões permanecem no PostgreSQL e sobrevivem a reinícios da API.
 
 ### 3. Front-end (Vercel)
 

@@ -1,17 +1,12 @@
-## 📄 Apresentações - Financial Controller
+# Apresentações do Financial Controller
 
-Estão reunidas nesse diretório as apresentações produzidas ao longo das sprints do projeto Financial Controller, documentando a evolução do projeto ao longo das Sprints
+Este diretório reúne as apresentações produzidas ao longo das sprints e documenta a evolução do projeto.
 
-### Conteúdo
+## Conteúdo
 
-* Sprint 1 - TI2 - FinancialController.pdf
-   Primeira entrega: definição do escopo inicial
-    
-* Sprint 2 - TI2 - FinancialController.pdf
-   Avanço das funcionalidades principais, requisitos, modelos do banco de dados e do front end
+- `Sprint 1 - TI2 - FinancialController.pdf`: definição do escopo inicial.
+- `Sprint 2 - TI2 - FinancialController.pdf`: evolução das funcionalidades, requisitos e modelos do banco de dados e do front-end.
+- `Sprint 3 - TI2 - FinancialController.pdf`: consolidação dos módulos, integração do back-end e especificação do componente inteligente.
 
-* Sprint 3 - TI2 - FinancialController.pdf
-   Consolidação de módulos, implementação e integração do back end junto a especificações do sistema inteligente
-
-
+As apresentações são registros históricos. Para a descrição atual do sistema, consulte o [README principal](../../README.md).
 

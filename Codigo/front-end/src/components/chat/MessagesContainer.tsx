@@ -20,7 +20,7 @@ const MessagesContainer = ({
   chatId,
   isWaitingResponse = false,
 }: MessageContainerProps) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { backendUser, loadBackendUser } = useAuth();
 
   const [displayName, setDisplayName] = useState<string>(
@@ -28,7 +28,15 @@ const MessagesContainer = ({
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // scrollIntoView also scrolls outer ancestors in Safari. When a tool renders
+    // a tall form, that can move the whole chat layout out of the viewport.
+    scrollContainer.scrollTo({
+      top: scrollContainer.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages, isWaitingResponse]);
 
   useEffect(() => {
@@ -53,7 +61,10 @@ const MessagesContainer = ({
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto chat-scroll-dark">
+    <div
+      ref={scrollContainerRef}
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain chat-scroll-dark"
+    >
       <div className="mx-auto w-full max-w-3xl space-y-8 px-4 py-8 sm:px-6">
         {messages.map((message) => (
           <MessageComponent
@@ -74,7 +85,6 @@ const MessagesContainer = ({
             </span>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
     </div>
   );

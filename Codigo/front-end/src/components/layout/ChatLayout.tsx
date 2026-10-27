@@ -29,7 +29,7 @@ const ChatLayout = ({
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <ChatTopBar
           title={currentChat?.name ?? "Conversa"}
           onOpenSidebar={() => setSidebarOpen(true)}

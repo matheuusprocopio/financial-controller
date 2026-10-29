@@ -22,6 +22,7 @@ const transformItemFromBackend = (backendItem: any): ItemType => ({
 });
 
 const transformItemToBackend = (item: CreateItemType | UpdateItemType) => ({
+  duplicateConfirmed: (item as CreateItemType).duplicateConfirmed,
   categoryId: (item as CreateItemType).categoryId,
   userId: (item as CreateItemType).userId,
   accountId: item.accountId,
@@ -31,6 +32,18 @@ const transformItemToBackend = (item: CreateItemType | UpdateItemType) => ({
   date: item.date,
   type: item.type,
 });
+
+export type DuplicateMatch = {
+  source: "history" | "batch";
+  batchIndex: number;
+  item: ItemType | null;
+};
+
+export const checkItemDuplicates = async (sessionId: string, items: CreateItemType[]) =>
+  provider.post<DuplicateMatch[][], ReturnType<typeof transformItemToBackend>[]>("items/duplicates", {
+    body: items.map(transformItemToBackend),
+    headers: { "X-Session-Id": sessionId },
+  });
 
 export const listItems = async (
   sessionId: string,

@@ -11,6 +11,7 @@ export type ItemType = {
 };
 
 export type CreateItemType = {
+  duplicateConfirmed?: boolean;
   categoryId: string;
   userId: string;
   accountId: string;

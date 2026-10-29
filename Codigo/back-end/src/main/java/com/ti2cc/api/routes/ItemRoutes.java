@@ -19,6 +19,7 @@ public class ItemRoutes {
     public void register() {
         path("/items", () -> {
             post("", controller::create);
+            post("/duplicates", controller::checkDuplicates);
             get("", controller::list);
             get("/:itemId", controller::getById);
             get("/user/:userId", controller::listByUserPath);

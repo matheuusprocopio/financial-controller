@@ -17,6 +17,7 @@ import com.ti2cc.api.dto.PaginationRequestDTO;
 import com.ti2cc.api.dto.UpdateItemDTO;
 import com.ti2cc.api.model.Item;
 import com.ti2cc.api.service.ItemService;
+import com.ti2cc.api.service.ItemService.PossibleDuplicateException;
 import com.ti2cc.api.util.GsonUtil;
 
 import spark.Request;
@@ -47,16 +48,8 @@ public class ItemController {
                 return gson.toJson("Request body is required.");
             }
 
-            Item item = new Item();
-            item.setCategoryId(dto.getCategoryId() != null ? UUID.fromString(dto.getCategoryId()) : null);
-            item.setAccountId(dto.getAccountId() != null ? UUID.fromString(dto.getAccountId()) : null);
-            item.setUserId(sessionUserId);
-            item.setName(dto.getName());
-            item.setDescription(dto.getDescription());
-            item.setAmount(dto.getAmount());
-            item.setDate(dto.getDate());
-            item.setType(dto.getType());
-            boolean created = itemService.createItem(item);
+            Item item = toItem(dto, sessionUserId);
+            boolean created = itemService.createItem(item, dto.isDuplicateConfirmed());
 
             if (created) {
                 res.status(201);
@@ -65,6 +58,9 @@ public class ItemController {
                 res.status(400);
                 return gson.toJson("Failed to create item.");
             }
+        } catch (PossibleDuplicateException e) {
+            res.status(409);
+            return gson.toJson(new DuplicateResponse(e.getMatches().stream().map(this::toResponse).toList()));
         } catch (JsonSyntaxException e) {
             res.status(400);
             return gson.toJson("Invalid JSON format: " + e.getMessage());
@@ -73,6 +69,62 @@ public class ItemController {
             return gson.toJson("Invalid request body: " + e.getMessage());
         }
     }
+
+    public Object checkDuplicates(Request req, Response res) {
+        res.type("application/json");
+        UUID userId = getUserIdFromRequest(req);
+        if (userId == null) {
+            res.status(401);
+            return gson.toJson("Sessão inválida ou usuário não identificado.");
+        }
+        try {
+            CreateItemDTO[] entries = gson.fromJson(req.body(), CreateItemDTO[].class);
+            if (entries == null || entries.length == 0 || entries.length > 20) {
+                res.status(400);
+                return gson.toJson("Expected 1 to 20 transactions.");
+            }
+            Item[] items = new Item[entries.length];
+            java.util.List<java.util.List<DuplicateMatch>> matches = new java.util.ArrayList<>();
+            for (int i = 0; i < entries.length; i++) {
+                if (entries[i] == null || entries[i].getAccountId() == null
+                        || entries[i].getDate() == null || entries[i].getType() == null
+                        || entries[i].getAmount() == null || entries[i].getAmount() <= 0
+                        || entries[i].getName() == null || entries[i].getName().isBlank()) {
+                    res.status(400);
+                    return gson.toJson("Invalid transaction at index " + i);
+                }
+                items[i] = toItem(entries[i], userId);
+                java.util.List<DuplicateMatch> row = new java.util.ArrayList<>();
+                for (Item existing : itemService.findPossibleDuplicates(items[i])) {
+                    row.add(new DuplicateMatch("history", -1, toResponse(existing)));
+                }
+                for (int j : itemService.findEarlierBatchDuplicates(java.util.Arrays.asList(items), i)) {
+                    row.add(new DuplicateMatch("batch", j, null));
+                }
+                matches.add(row);
+            }
+            return gson.toJson(matches);
+        } catch (JsonSyntaxException | IllegalArgumentException e) {
+            res.status(400);
+            return gson.toJson(e.getMessage());
+        }
+    }
+
+    private Item toItem(CreateItemDTO dto, UUID userId) {
+        Item item = new Item();
+        item.setCategoryId(dto.getCategoryId() != null ? UUID.fromString(dto.getCategoryId()) : null);
+        item.setAccountId(dto.getAccountId() != null ? UUID.fromString(dto.getAccountId()) : null);
+        item.setUserId(userId);
+        item.setName(dto.getName());
+        item.setDescription(dto.getDescription());
+        item.setAmount(dto.getAmount());
+        item.setDate(dto.getDate());
+        item.setType(dto.getType());
+        return item;
+    }
+
+    private record DuplicateMatch(String source, int batchIndex, ItemResponseDTO item) {}
+    private record DuplicateResponse(java.util.List<ItemResponseDTO> duplicates) {}
 
     public Object list(Request req, Response res) {
         res.type("application/json");

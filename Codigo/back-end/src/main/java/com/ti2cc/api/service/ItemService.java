@@ -26,6 +26,10 @@ public class ItemService {
     }
 
     public boolean createItem(Item item) {
+        return createItem(item, false);
+    }
+
+    public boolean createItem(Item item, boolean duplicateConfirmed) {
         if (item == null) {
             System.err.println("Item cannot be null.");
             return false;
@@ -71,12 +75,17 @@ public class ItemService {
             return false;
         }
 
+        List<Item> duplicates = findPossibleDuplicates(item);
+        if (!duplicateConfirmed && !duplicates.isEmpty()) throw new PossibleDuplicateException(duplicates);
+
         if (item.getId() == null) {
             item.setId(UUID.randomUUID());
         }
 
-        String searchTerm = buildSearchTerm(item.getName(), item.getDescription());
-        float[] embedding = embeddingService.generateEmbedding(searchTerm);
+        float[] embedding = item.getSearchEmbedding();
+        if (embedding == null) {
+            embedding = embeddingService.generateEmbedding(buildSearchTerm(item.getName(), item.getDescription()));
+        }
         if (embedding == null) {
             System.err.println("Failed to generate embedding for item creation. Saving without it; semantic search will rank it last.");
         }
@@ -93,6 +102,48 @@ public class ItemService {
         }
         
         return created;
+    }
+
+    public List<Item> findPossibleDuplicates(Item item) {
+        if (item.getUserId() == null || item.getAccountId() == null || item.getDate() == null
+                || item.getType() == null || item.getAmount() == null) return List.of();
+        List<Item> candidates = itemDAO.findDuplicateCandidates(item);
+        if (candidates.isEmpty()) return List.of();
+        List<Item> textMatches = candidates.stream()
+                .filter(candidate -> ItemDuplicateMatcher.matches(item, candidate)).toList();
+        if (!textMatches.isEmpty()) return textMatches;
+        if (item.getSearchEmbedding() == null) {
+            item.setSearchEmbedding(embeddingService.generateEmbedding(buildSearchTerm(item.getName(), item.getDescription())));
+        }
+        return candidates.stream().filter(candidate -> ItemDuplicateMatcher.matches(item, candidate)).toList();
+    }
+
+    public List<Integer> findEarlierBatchDuplicates(List<Item> items, int index) {
+        List<Integer> matches = new java.util.ArrayList<>();
+        for (int i = 0; i < index; i++) {
+            Item incoming = items.get(index);
+            Item earlier = items.get(i);
+            if (!ItemDuplicateMatcher.sameFacts(incoming, earlier)) continue;
+            if (ItemDuplicateMatcher.matches(incoming, earlier)) {
+                matches.add(i);
+                continue;
+            }
+            if (incoming.getSearchEmbedding() == null) incoming.setSearchEmbedding(
+                    embeddingService.generateEmbedding(buildSearchTerm(incoming.getName(), incoming.getDescription())));
+            if (earlier.getSearchEmbedding() == null) earlier.setSearchEmbedding(
+                    embeddingService.generateEmbedding(buildSearchTerm(earlier.getName(), earlier.getDescription())));
+            if (ItemDuplicateMatcher.matches(incoming, earlier)) matches.add(i);
+        }
+        return matches;
+    }
+
+    public static class PossibleDuplicateException extends RuntimeException {
+        private final List<Item> matches;
+        public PossibleDuplicateException(List<Item> matches) {
+            super("Possible duplicate transaction");
+            this.matches = matches;
+        }
+        public List<Item> getMatches() { return matches; }
     }
 
     public boolean updateItem(Item item) {

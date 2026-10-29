@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Check, Loader2, X } from "lucide-react";
-import { createItemAction } from "@/actions/item";
+import { createItemAction, checkItemDuplicatesAction } from "@/actions/item";
+import type { CreateItemType } from "@/types/item.type";
+import type { DuplicateMatch } from "@/utils/services/items";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -87,6 +89,8 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState<number | null>(null);
+  const [duplicateReview, setDuplicateReview] = useState<{ signature: string; matches: DuplicateMatch[][] } | null>(null);
+  const [cancelled, setCancelled] = useState(false);
 
   useEffect(() => {
     setRows(toRows(data?.items));
@@ -95,11 +99,15 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
   const categories = data?.categories ?? [];
   const accounts = data?.accounts ?? [];
 
-  const updateRow = (key: number, patch: Partial<Row>) =>
+  const updateRow = (key: number, patch: Partial<Row>) => {
+    setDuplicateReview(null);
     setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  };
 
-  const removeRow = (key: number) =>
+  const removeRow = (key: number) => {
+    setDuplicateReview(null);
     setRows((prev) => prev.filter((row) => row.key !== key));
+  };
 
   const totals = rows.reduce(
     (acc, row) => {
@@ -129,29 +137,47 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
       return;
     }
 
+    const payloads: CreateItemType[] = toSave.map((row) => ({
+      name: row.name.trim(), description: row.description.trim() || row.name.trim(),
+      amount: parseCurrencyToNumber(row.amount), type: row.type,
+      categoryId: row.categoryId, accountId: row.accountId, date: row.date,
+      userId: backendUser.id,
+    }));
+    const signature = JSON.stringify(payloads);
+    const reviewed = duplicateReview?.signature === signature;
     setIsSubmitting(true);
-    const results = await Promise.all(
-      toSave.map(async (row) => {
-        try {
-          const resp = await createItemAction({
-            name: row.name.trim(),
-            description: row.description.trim() || row.name.trim(),
-            amount: parseCurrencyToNumber(row.amount),
-            type: row.type,
-            categoryId: row.categoryId,
-            accountId: row.accountId,
-            date: row.date,
-            userId: backendUser.id,
-          });
-          if (resp && typeof resp === "object" && "error" in resp) {
-            return { key: row.key, error: getErrorMessage((resp as RequestError).error) || "Erro ao salvar." };
-          }
-          return { key: row.key };
-        } catch (err) {
-          return { key: row.key, error: getErrorMessage(err) || "Erro ao salvar." };
+    if (!reviewed) {
+      try {
+        const preview = await checkItemDuplicatesAction(payloads);
+        if ("error" in preview) {
+          setFormError(getErrorMessage(preview.error) || "Erro ao verificar duplicatas.");
+          setIsSubmitting(false);
+          return;
         }
-      })
-    );
+        if (preview.some((matches) => matches.length > 0)) {
+          setDuplicateReview({ signature, matches: preview });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        setFormError(getErrorMessage(error) || "Erro ao verificar duplicatas.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+    const results = [];
+    for (const [index, row] of toSave.entries()) {
+        try {
+          const resp = await createItemAction({ ...payloads[index], duplicateConfirmed: reviewed && !!duplicateReview?.matches[index]?.length });
+          if (resp && typeof resp === "object" && "error" in resp) {
+            results.push({ key: row.key, error: getErrorMessage((resp as RequestError).error) || "Erro ao salvar." });
+          } else {
+            results.push({ key: row.key });
+          }
+        } catch (err) {
+          results.push({ key: row.key, error: getErrorMessage(err) || "Erro ao salvar." });
+        }
+    }
     setIsSubmitting(false);
 
     const byKey = new Map(results.map((r) => [r.key, r]));
@@ -163,6 +189,7 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
         : { ...row, status: "saved", error: undefined };
     });
     setRows(nextRows);
+    setDuplicateReview(null);
 
     const failed = nextRows.filter((row) => row.status === "failed").length;
     if (failed > 0) {
@@ -198,6 +225,8 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
       </Card>
     );
   }
+
+  if (cancelled) return <Card><CardContent className="pt-6">Novos registros cancelados.</CardContent></Card>;
 
   const pendingCount = rows.filter((row) => row.status !== "saved").length;
 
@@ -360,6 +389,19 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
           )}
 
           {formError && <p className="text-sm text-destructive">{formError}</p>}
+          {duplicateReview && (
+            <div role="alert" className="rounded border border-amber-500/60 bg-amber-500/10 p-3 text-sm">
+              <p className="font-medium">Possíveis duplicatas. Confira antes de salvar:</p>
+              {duplicateReview.matches.flatMap((matches, index) => matches.map((match, matchIndex) => (
+                <p key={`${index}-${matchIndex}`}>
+                  Transação {index + 1}: {match.source === "batch"
+                    ? `semelhante à transação ${match.batchIndex + 1} deste lote`
+                    : `${match.item?.name} · ${match.item?.description} · R$ ${match.item?.amount.toFixed(2)} · ${match.item?.date} · Conta ${accounts.find((a) => a.id === match.item?.accountId)?.name ?? match.item?.accountId}`}
+                </p>
+              )))}
+              <Button type="button" variant="ghost" onClick={() => setCancelled(true)}>Cancelar novos registros</Button>
+            </div>
+          )}
         </CardContent>
 
         <CardFooter>
@@ -372,7 +414,7 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting
               ? "Salvando..."
-              : pendingCount === 1
+              : duplicateReview ? "Confirmar mesmo assim" : pendingCount === 1
                 ? "Confirmar e adicionar 1 transação"
                 : `Confirmar e adicionar ${pendingCount} transações`}
           </Button>

@@ -12,6 +12,10 @@ public class CreateItemDTO {
     private Double amount;
     private LocalDate date;
     private ItemType type;
+    private boolean duplicateConfirmed;
+
+    public boolean isDuplicateConfirmed() { return duplicateConfirmed; }
+    public void setDuplicateConfirmed(boolean duplicateConfirmed) { this.duplicateConfirmed = duplicateConfirmed; }
 
     public String getCategoryId() {
         return categoryId;

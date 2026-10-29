@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createItemAction } from "@/actions/item";
+import { createItemAction, checkItemDuplicatesAction } from "@/actions/item";
+import type { CreateItemType } from "@/types/item.type";
+import type { DuplicateMatch } from "@/utils/services/items";
 import FormCard, { type FormField } from "@/components/chat/gen-ui/FormCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
@@ -50,6 +52,8 @@ const CreateItemForm = ({ data, onError, onSubmitted }: ICreateItemForm) => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateReview, setDuplicateReview] = useState<{ payload: CreateItemType; matches: DuplicateMatch[] } | null>(null);
+  const [cancelled, setCancelled] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(!!data?.alreadySubmitted);
   const [lastSubmittedData, setLastSubmittedData] = useState<{
     amount: number;
@@ -232,7 +236,7 @@ const handleSubmit = async (values: Record<string, string>) => {
     }
 
     try {
-      const resp = await createItemAction({
+      const payload: CreateItemType = {
         name: values.name ?? "",
         description: values.description ?? "",
         amount: parseCurrencyToNumber(values.amount),
@@ -241,9 +245,29 @@ const handleSubmit = async (values: Record<string, string>) => {
         accountId: values.accountId ?? "",
         date: values.date ?? getLocalIsoDate(),
         userId: backendUser.id,
-      });
+      };
+      const sameReview = duplicateReview && JSON.stringify(duplicateReview.payload) === JSON.stringify(payload);
+      if (!sameReview) {
+        const preview = await checkItemDuplicatesAction([payload]);
+        if ("error" in preview) {
+          handleError(getErrorMessage(preview.error) || "Erro ao verificar duplicatas.");
+          return false;
+        }
+        if (preview[0]?.length) {
+          setDuplicateReview({ payload, matches: preview[0] });
+          return false;
+        }
+      }
+      const resp = await createItemAction({ ...payload, duplicateConfirmed: !!sameReview });
 
       if (resp && typeof resp === "object" && "error" in resp) {
+        if ((resp as RequestError).error.status === 409) {
+          const current = await checkItemDuplicatesAction([payload]);
+          if (!("error" in current) && current[0]?.length) {
+            setDuplicateReview({ payload, matches: current[0] });
+            return false;
+          }
+        }
         handleError(
           getErrorMessage((resp as RequestError).error) || "Erro ao criar transação.",
           resp
@@ -300,14 +324,26 @@ const handleSubmit = async (values: Record<string, string>) => {
     );
   }
 
+  if (cancelled) return <Card><CardContent className="pt-6">Novo registro cancelado.</CardContent></Card>;
+
   return (
     <FormCard
+      alert={duplicateReview && (
+        <div role="alert" className="rounded border border-amber-500/60 bg-amber-500/10 p-3 text-sm">
+          <p className="font-medium">Possível transação duplicada. Confira antes de salvar:</p>
+          {duplicateReview.matches.map((match, index) => match.item && (
+            <p key={index}>{match.item.name} · {match.item.description} · R$ {match.item.amount.toFixed(2)} · {match.item.date} · Conta {accountsOptions.find((a) => a.value === match.item?.accountId)?.label ?? match.item.accountId}</p>
+          ))}
+          <button type="button" className="mt-2 underline" onClick={() => setCancelled(true)}>Cancelar novo registro</button>
+        </div>
+      )}
       title="✨ Confirmar Transação"
       description="A IA preencheu automaticamente. Revise e confirme ou ajuste conforme necessário."
       fields={fields}
-      submitLabel="Confirmar e adicionar"
+      submitLabel={duplicateReview ? "Confirmar mesmo assim" : "Confirmar e adicionar"}
       defaultFormData={defaultValues}
       onSubmit={handleSubmit}
+      onChange={() => setDuplicateReview(null)}
       onSubmitted={onSubmitted}
     />
   );

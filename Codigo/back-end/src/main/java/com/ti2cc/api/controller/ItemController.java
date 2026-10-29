@@ -86,6 +86,13 @@ public class ItemController {
             Item[] items = new Item[entries.length];
             java.util.List<java.util.List<DuplicateMatch>> matches = new java.util.ArrayList<>();
             for (int i = 0; i < entries.length; i++) {
+                if (entries[i] == null || entries[i].getAccountId() == null
+                        || entries[i].getDate() == null || entries[i].getType() == null
+                        || entries[i].getAmount() == null || entries[i].getAmount() <= 0
+                        || entries[i].getName() == null || entries[i].getName().isBlank()) {
+                    res.status(400);
+                    return gson.toJson("Invalid transaction at index " + i);
+                }
                 items[i] = toItem(entries[i], userId);
                 java.util.List<DuplicateMatch> row = new java.util.ArrayList<>();
                 for (Item existing : itemService.findPossibleDuplicates(items[i])) {
@@ -97,7 +104,7 @@ public class ItemController {
                 matches.add(row);
             }
             return gson.toJson(matches);
-        } catch (IllegalArgumentException e) {
+        } catch (JsonSyntaxException | IllegalArgumentException e) {
             res.status(400);
             return gson.toJson(e.getMessage());
         }

@@ -343,6 +343,7 @@ const handleSubmit = async (values: Record<string, string>) => {
       submitLabel={duplicateReview ? "Confirmar mesmo assim" : "Confirmar e adicionar"}
       defaultFormData={defaultValues}
       onSubmit={handleSubmit}
+      onChange={() => setDuplicateReview(null)}
       onSubmitted={onSubmitted}
     />
   );

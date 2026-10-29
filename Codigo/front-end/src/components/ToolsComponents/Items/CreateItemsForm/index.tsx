@@ -99,11 +99,15 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
   const categories = data?.categories ?? [];
   const accounts = data?.accounts ?? [];
 
-  const updateRow = (key: number, patch: Partial<Row>) =>
+  const updateRow = (key: number, patch: Partial<Row>) => {
+    setDuplicateReview(null);
     setRows((prev) => prev.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  };
 
-  const removeRow = (key: number) =>
+  const removeRow = (key: number) => {
+    setDuplicateReview(null);
     setRows((prev) => prev.filter((row) => row.key !== key));
+  };
 
   const totals = rows.reduce(
     (acc, row) => {
@@ -143,14 +147,20 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
     const reviewed = duplicateReview?.signature === signature;
     setIsSubmitting(true);
     if (!reviewed) {
-      const preview = await checkItemDuplicatesAction(payloads);
-      if ("error" in preview) {
-        setFormError(getErrorMessage(preview.error) || "Erro ao verificar duplicatas.");
-        setIsSubmitting(false);
-        return;
-      }
-      if (preview.some((matches) => matches.length > 0)) {
-        setDuplicateReview({ signature, matches: preview });
+      try {
+        const preview = await checkItemDuplicatesAction(payloads);
+        if ("error" in preview) {
+          setFormError(getErrorMessage(preview.error) || "Erro ao verificar duplicatas.");
+          setIsSubmitting(false);
+          return;
+        }
+        if (preview.some((matches) => matches.length > 0)) {
+          setDuplicateReview({ signature, matches: preview });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (error) {
+        setFormError(getErrorMessage(error) || "Erro ao verificar duplicatas.");
         setIsSubmitting(false);
         return;
       }
@@ -179,6 +189,7 @@ const CreateItemsForm = ({ data, onError, onSubmitted }: ICreateItemsForm) => {
         : { ...row, status: "saved", error: undefined };
     });
     setRows(nextRows);
+    setDuplicateReview(null);
 
     const failed = nextRows.filter((row) => row.status === "failed").length;
     if (failed > 0) {

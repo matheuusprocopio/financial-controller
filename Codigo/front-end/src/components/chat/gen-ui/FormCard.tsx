@@ -52,6 +52,7 @@ interface IFormCard {
   submitLabel?: string;
   alreadySubmitted?: boolean;
   onSubmitted?: () => void;
+  onChange?: () => void;
   onSubmit: (
     data: Record<string, string>
   ) => void | boolean | Promise<void | boolean>;
@@ -70,6 +71,7 @@ const FormCard = ({
   defaultFormData,
   onSubmitted,
   alert,
+  onChange,
 }: IFormCard) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -108,6 +110,7 @@ const FormCard = ({
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    onChange?.();
   };
 
   useEffect(() => {

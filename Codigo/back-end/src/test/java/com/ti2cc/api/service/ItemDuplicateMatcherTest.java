@@ -53,14 +53,27 @@ class ItemDuplicateMatcherTest {
         other.setDescription("Compra de material de limpeza");
         other.setName("Material");
         assertFalse(ItemDuplicateMatcher.matches(other, original));
+        other.setName(original.getName());
+        other.setDescription(original.getDescription());
+        other.setAmount(150.001);
+        assertTrue(ItemDuplicateMatcher.matches(other, original));
+        other.setAmount(150.01);
+        assertFalse(ItemDuplicateMatcher.matches(other, original));
+        other.setAmount(150.0);
+        other.setName("Transporte");
+        other.setDescription("Uber para casa");
+        original.setSearchEmbedding(new float[] {1, 0});
+        other.setSearchEmbedding(new float[] {0.94f, 0.34f});
+        assertFalse(ItemDuplicateMatcher.matches(other, original));
     }
 
     @Test void requiresExplicitConfirmationAtPersistence() {
         Item existing = item("Faxineira", "Pagamento da faxineira");
         class FakeDao extends ItemDAO {
             int saved;
+            int checks;
             FakeDao() { super(null); }
-            @Override public List<Item> findDuplicateCandidates(Item item) { return List.of(existing); }
+            @Override public List<Item> findDuplicateCandidates(Item item) { checks++; return List.of(existing); }
             @Override public boolean create(Item item) { saved++; return true; }
         }
         FakeDao dao = new FakeDao();
@@ -75,6 +88,7 @@ class ItemDuplicateMatcherTest {
         assertEquals(0, dao.saved);
         assertTrue(service.createItem(item("Faxineira", "Pagamento da faxineira"), true));
         assertEquals(1, dao.saved);
+        assertEquals(2, dao.checks);
     }
 
     @Test void detectsEarlierDuplicateWithinBatch() {
@@ -89,5 +103,22 @@ class ItemDuplicateMatcherTest {
         assertEquals(List.of(0), service.findEarlierBatchDuplicates(List.of(first, different, second), 2));
         Item paraphrase = item("Limpeza", "Serviço doméstico");
         assertEquals(List.of(0), service.findEarlierBatchDuplicates(List.of(first, paraphrase), 1));
+    }
+
+    @Test void generatesSearchEmbeddingWhenThereAreNoCandidates() {
+        class FakeDao extends ItemDAO {
+            Item saved;
+            FakeDao() { super(null); }
+            @Override public List<Item> findDuplicateCandidates(Item item) { return List.of(); }
+            @Override public boolean create(Item item) { saved = item; return true; }
+        }
+        FakeDao dao = new FakeDao();
+        ItemService service = new ItemService(dao, new AccountDAO(null) {
+            @Override public boolean decreaseBalance(UUID id, double amount) { return true; }
+        }, new EmbeddingService() {
+            @Override public float[] generateEmbedding(String text) { return new float[] {1, 0}; }
+        });
+        assertTrue(service.createItem(item("Mercado", "Compras do mês")));
+        assertArrayEquals(new float[] {1, 0}, dao.saved.getSearchEmbedding());
     }
 }

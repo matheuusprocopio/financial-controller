@@ -33,7 +33,7 @@ public class ItemDAO {
 
     public List<Item> findDuplicateCandidates(Item item) {
         String query = "SELECT * FROM items WHERE user_id = ? AND account_id = ? AND date = ? "
-                + "AND type = ?::item_type AND amount = ?";
+                + "AND type = ?::item_type AND amount = ROUND(?::numeric, 2)";
         List<Item> candidates = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {

@@ -84,6 +84,9 @@ public class ItemService {
 
         float[] embedding = item.getSearchEmbedding();
         if (embedding == null) {
+            embedding = embeddingService.generateEmbedding(buildSearchTerm(item.getName(), item.getDescription()));
+        }
+        if (embedding == null) {
             System.err.println("Failed to generate embedding for item creation. Saving without it; semantic search will rank it last.");
         }
         item.setSearchEmbedding(embedding);

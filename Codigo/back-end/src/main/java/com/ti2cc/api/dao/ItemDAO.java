@@ -31,6 +31,26 @@ public class ItemDAO {
         this.dataSource = dataSource;
     }
 
+    public List<Item> findDuplicateCandidates(Item item) {
+        String query = "SELECT * FROM items WHERE user_id = ? AND account_id = ? AND date = ? "
+                + "AND type = ?::item_type AND amount = ?";
+        List<Item> candidates = new ArrayList<>();
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setObject(1, item.getUserId());
+            statement.setObject(2, item.getAccountId());
+            statement.setDate(3, Date.valueOf(item.getDate()));
+            statement.setString(4, item.getType().name());
+            statement.setDouble(5, item.getAmount());
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) candidates.add(mapItem(rs));
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("Failed to check duplicate transactions", e);
+        }
+        return candidates;
+    }
+
     public boolean create(Item item) {
         StringBuilder sb = new StringBuilder();
 

@@ -45,6 +45,7 @@ export interface FormField {
 }
 
 interface IFormCard {
+  alert?: React.ReactNode;
   title: string;
   description?: string;
   fields: FormField[];
@@ -68,6 +69,7 @@ const FormCard = ({
   alreadySubmitted,
   defaultFormData,
   onSubmitted,
+  alert,
 }: IFormCard) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -144,6 +146,7 @@ const FormCard = ({
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {alert}
           {fields.map((field) => (
           <div key={field.name} className="space-y-2">
             <Label htmlFor={field.name} className="text-sm font-medium">

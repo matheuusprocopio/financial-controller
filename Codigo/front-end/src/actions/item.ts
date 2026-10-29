@@ -3,7 +3,13 @@
 import { CreateItemType, UpdateItemType } from "@/types/item.type";
 import { RequestError, createRequestError } from "@/utils/requestProvider";
 import { getSessionId } from "@/utils/server-cookies";
-import { createItem, updateItem, deleteItem } from "@/utils/services/items";
+import { createItem, updateItem, deleteItem, checkItemDuplicates } from "@/utils/services/items";
+
+export const checkItemDuplicatesAction = async (items: CreateItemType[]) => {
+  const sessionId = await getSessionId();
+  if (!sessionId) return createRequestError(401, "Invalid session", "items/duplicates");
+  return checkItemDuplicates(sessionId, items);
+};
 
 export const createItemAction = async (
   payload: CreateItemType
